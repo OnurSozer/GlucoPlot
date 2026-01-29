@@ -1,0 +1,135 @@
+# GlucoPlot Development Progress
+
+## Last Updated: Session ended after completing Mobile App
+
+---
+
+## COMPLETED
+
+### 1. Backend (Supabase) - DONE
+- **Database Schema** (4 migration files)
+  - `supabase/migrations/20240101000000_initial_schema.sql` - Core tables (doctors, patients, patient_invites)
+  - `supabase/migrations/20240101000001_measurements_and_logs.sql` - Health data tables
+  - `supabase/migrations/20240101000002_risk_alerts.sql` - Alert system tables
+  - `supabase/migrations/20240101000003_rls_policies.sql` - Row Level Security
+
+- **Edge Functions** (3 functions)
+  - `supabase/functions/create-patient-v1/` - Creates patient + generates QR invite
+  - `supabase/functions/redeem-invite-v1/` - Two-step OTP flow for patient activation
+  - `supabase/functions/evaluate-risk-v1/` - Evaluates measurements against thresholds
+  - `supabase/functions/_shared/` - Shared utilities (CORS, Supabase client, responses)
+
+### 2. Mobile App (Flutter) - DONE
+Full Clean Architecture implementation:
+
+**Core Layer:**
+- Theme (AppColors, AppTypography, AppSpacing, AppTheme)
+- Widgets (AppButton, MeasurementCard, GradientHeader, AppTextField, AppLoading)
+- Config (EnvConfig for dev/prod)
+- Constants (AppConstants, AppStrings)
+- Error handling (Failures, Exceptions)
+- Dependency Injection (GetIt + injection_container.dart)
+
+**Features (each with domain + data + presentation layers):**
+
+1. **Auth Feature:**
+   - Domain: Patient entity, AuthRepository interface
+   - Data: PatientModel, AuthRemoteDataSource, AuthRepositoryImpl
+   - Presentation: AuthBloc, WelcomePage, QrScanPage, OtpPage
+
+2. **Dashboard Feature:**
+   - Domain: RiskAlert entity, DashboardRepository interface, UseCases
+   - Data: RiskAlertModel, DashboardRemoteDataSource, DashboardRepositoryImpl
+   - Presentation: DashboardBloc, DashboardPage
+
+3. **Measurements Feature:**
+   - Domain: Measurement entity + MeasurementType enum, MeasurementRepository interface, UseCases
+   - Data: MeasurementModel, MeasurementRemoteDataSource, MeasurementRepositoryImpl
+   - Presentation: MeasurementBloc, MeasurementsPage, AddMeasurementPage
+
+4. **Logging Feature:**
+   - Domain: DailyLog entity + MealType/ExerciseIntensity enums, DailyLogRepository interface, UseCases
+   - Data: DailyLogModel, DailyLogRemoteDataSource, DailyLogRepositoryImpl
+   - Presentation: DailyLogBloc, DailyLogPage, AddLogEntryPage
+
+5. **Settings Feature:**
+   - Presentation: SettingsPage
+
+**App Structure:**
+- main.dart & main_prod.dart (entry points)
+- app.dart (root widget with GoRouter + MultiBlocProvider)
+- shell_page.dart (bottom navigation shell)
+
+---
+
+## NOT STARTED
+
+### 3. Web Portal (React + TypeScript + Vite) - TODO
+Doctor-facing dashboard. Structure should be:
+```
+apps/web/src/
+├── features/
+│   ├── auth/        # Doctor login (email/password)
+│   ├── dashboard/   # Overview of all patients
+│   ├── patients/    # Patient management + create invites
+│   └── alerts/      # Risk alert management
+├── components/      # Shared UI components
+├── hooks/           # Custom React hooks
+├── lib/             # Utilities (supabase client)
+└── types/           # TypeScript types
+```
+
+Key features to implement:
+- Doctor authentication (email/password via Supabase Auth)
+- Patient list with search/filter
+- Create new patient (calls create-patient-v1 Edge Function)
+- Patient detail view with measurements, logs, alerts
+- Risk alert management (acknowledge, resolve)
+- Charts/graphs for patient data visualization
+
+---
+
+## TO RUN THE PROJECT
+
+### Mobile App:
+```bash
+cd apps/mobile
+flutter pub get
+flutter run
+```
+
+### Backend (Local Supabase):
+```bash
+cd supabase
+supabase start
+supabase db reset  # Apply migrations
+```
+
+### Web Portal (after implementation):
+```bash
+cd apps/web
+npm install
+npm run dev
+```
+
+---
+
+## DESIGN NOTES
+
+- **Theme**: Apple Health inspired - warm peach/coral gradients, soft rounded cards
+- **Mobile Architecture**: Clean Architecture (data/domain/presentation) + BLoC pattern
+- **Web Architecture**: Feature-based structure
+- **Backend**: Supabase (PostgreSQL + RLS + Edge Functions)
+- **Auth Flow**: Doctors use email/password, Patients use QR + OTP
+
+---
+
+## NEXT SESSION
+
+Start with: **React Web Portal**
+1. Set up Vite + React + TypeScript project
+2. Configure Supabase client
+3. Create auth feature (doctor login)
+4. Build dashboard with patient list
+5. Implement patient detail views
+6. Add chart components with real data
