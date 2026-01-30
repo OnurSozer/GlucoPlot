@@ -1,0 +1,65 @@
+{
+  "title": "Hastalar",
+  "subtitle": "Hastalarınızı yönetin ve izleyin",
+  "addPatient": "Hasta Ekle",
+  "searchPlaceholder": "Hasta ara...",
+  "noPatients": "Henüz hasta yok",
+  "noPatientsDesc": "Sağlık izlemeye başlamak için ilk hastanızı ekleyin",
+  "noMatchingPatients": "Eşleşen hasta bulunamadı",
+  "noMatchingPatientsDesc": "Arama veya filtreleri ayarlamayı deneyin",
+  "patientCard": {
+    "phone": "Telefon",
+    "viewDetails": "Detayları Gör"
+  },
+  "status": {
+    "active": "Aktif",
+    "pending": "Beklemede",
+    "inactive": "Pasif"
+  },
+  "detail": {
+    "back": "Hastalara Dön",
+    "medicalNotes": "Tıbbi Notlar",
+    "noMedicalNotes": "Tıbbi not mevcut değil",
+    "measurements": "Ölçümler",
+    "noMeasurements": "Kayıtlı ölçüm yok",
+    "lastReading": "Son ölçüm",
+    "noReadings": "Henüz ölçüm yok"
+  },
+  "measurementTypes": {
+    "glucose": "Glukoz",
+    "blood_pressure": "Kan Basıncı",
+    "heart_rate": "Kalp Atış Hızı",
+    "weight": "Kilo",
+    "temperature": "Sıcaklık",
+    "spo2": "SpO2"
+  },
+  "createModal": {
+    "title": "Yeni Hasta Ekle",
+    "titleSuccess": "Hasta Oluşturuldu",
+    "fullName": "Ad Soyad",
+    "fullNamePlaceholder": "Ahmet Yılmaz",
+    "phone": "Telefon Numarası",
+    "phonePlaceholder": "+90-555-0123",
+    "dateOfBirth": "Doğum Tarihi",
+    "gender": "Cinsiyet",
+    "medicalNotes": "Tıbbi Notlar",
+    "medicalNotesPlaceholder": "İlgili tıbbi geçmiş veya notları ekleyin...",
+    "createButton": "Hasta Oluştur",
+    "successTitle": "Hasta Başarıyla Oluşturuldu!",
+    "successDesc": "Hastanın hesabını aktif etmesi için bu QR kodu paylaşın",
+    "token": "Token",
+    "done": "Tamam",
+    "nameRequired": "Hasta adı zorunludur",
+    "createFailed": "Hasta oluşturulamadı"
+  },
+  "qrModal": {
+    "title": "Hasta QR Kodu",
+    "scanToActivate": "Hasta hesabını aktif etmek için bu QR kodu tarayabilir",
+    "status": "Durum",
+    "expires": "Son Geçerlilik",
+    "expired": "Süresi Dolmuş",
+    "alreadyActivated": "Hasta Zaten Aktif",
+    "alreadyActivatedDesc": "Bu hasta QR kodu tarayıp hesabını aktif etmiş.",
+    "loadingFailed": "QR kodu yüklenemedi"
+  }
+}

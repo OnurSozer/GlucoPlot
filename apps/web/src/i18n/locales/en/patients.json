@@ -1,0 +1,65 @@
+{
+  "title": "Patients",
+  "subtitle": "Manage and monitor your patients",
+  "addPatient": "Add Patient",
+  "searchPlaceholder": "Search patients...",
+  "noPatients": "No patients yet",
+  "noPatientsDesc": "Add your first patient to start monitoring their health",
+  "noMatchingPatients": "No matching patients",
+  "noMatchingPatientsDesc": "Try adjusting your search or filters",
+  "patientCard": {
+    "phone": "Phone",
+    "viewDetails": "View Details"
+  },
+  "status": {
+    "active": "Active",
+    "pending": "Pending",
+    "inactive": "Inactive"
+  },
+  "detail": {
+    "back": "Back to Patients",
+    "medicalNotes": "Medical Notes",
+    "noMedicalNotes": "No medical notes available",
+    "measurements": "Measurements",
+    "noMeasurements": "No measurements recorded",
+    "lastReading": "Last reading",
+    "noReadings": "No readings yet"
+  },
+  "measurementTypes": {
+    "glucose": "Glucose",
+    "blood_pressure": "Blood Pressure",
+    "heart_rate": "Heart Rate",
+    "weight": "Weight",
+    "temperature": "Temperature",
+    "spo2": "SpO2"
+  },
+  "createModal": {
+    "title": "Add New Patient",
+    "titleSuccess": "Patient Created",
+    "fullName": "Full Name",
+    "fullNamePlaceholder": "John Smith",
+    "phone": "Phone Number",
+    "phonePlaceholder": "+1-555-0123",
+    "dateOfBirth": "Date of Birth",
+    "gender": "Gender",
+    "medicalNotes": "Medical Notes",
+    "medicalNotesPlaceholder": "Add any relevant medical history or notes...",
+    "createButton": "Create Patient",
+    "successTitle": "Patient Created Successfully!",
+    "successDesc": "Share this QR code with the patient to activate their account",
+    "token": "Token",
+    "done": "Done",
+    "nameRequired": "Patient name is required",
+    "createFailed": "Failed to create patient"
+  },
+  "qrModal": {
+    "title": "Patient QR Code",
+    "scanToActivate": "Patient can scan this QR code to activate their account",
+    "status": "Status",
+    "expires": "Expires",
+    "expired": "Expired",
+    "alreadyActivated": "Patient Already Activated",
+    "alreadyActivatedDesc": "This patient has already scanned the QR code and activated their account.",
+    "loadingFailed": "Failed to load QR code"
+  }
+}

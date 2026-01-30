@@ -72,3 +72,12 @@ supabase/.temp/
 # Misc
 *.cache
 .turbo/
+whereweleft
+
+# TypeScript build info
+*.tsbuildinfo
+*.d.ts
+!src/**/*.d.ts
+
+# Claude Code local settings
+.claude/

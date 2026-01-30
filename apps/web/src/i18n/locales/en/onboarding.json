@@ -1,0 +1,196 @@
+{
+  "title": "Patient Onboarding",
+  "subtitle": "Complete the form to register a new patient",
+  "errors": {
+    "title": "Error",
+    "submissionFailed": "Failed to create patient. Please try again."
+  },
+  "steps": {
+    "basicInfo": "Basic Information",
+    "notifications": "Notification Preferences",
+    "physical": "Physical Data",
+    "habits": "Health Habits",
+    "goals": "Health Goals",
+    "medicalHistory": "Medical History",
+    "insulinSchedule": "Insulin Schedule",
+    "oralMedication": "Oral Medication",
+    "chronicDiseases": "Chronic Diseases",
+    "labInfo": "Lab Information"
+  },
+  "basicInfo": {
+    "title": "Basic Information",
+    "fullName": "Full Name",
+    "nationalId": "National ID / Patient ID",
+    "sex": "Sex",
+    "dateOfBirth": "Date of Birth",
+    "phone": "Phone Number",
+    "emergencyContact": "Emergency Contact",
+    "emergencyPhone": "Emergency Contact Phone",
+    "emergencyEmail": "Emergency Contact Email",
+    "relativeName": "Relative Name",
+    "relativePhone": "Relative Phone",
+    "relativeEmail": "Relative Email",
+    "doctorPhone": "Doctor's Phone",
+    "doctorEmail": "Doctor's Email"
+  },
+  "notifications": {
+    "title": "Notification Preferences",
+    "description": "Select how you want to be notified for each condition",
+    "triggers": {
+      "hypoglycemia": "Hypoglycemia (<40 mg/dl)",
+      "surveyNotSubmitted": "Survey not submitted (>12 hours)",
+      "glucoseNotMeasured": "Glucose not measured (>3 hours)"
+    },
+    "channels": {
+      "doctorSms": "Doctor SMS",
+      "doctorEmail": "Doctor Email",
+      "relativeSms": "Relative SMS",
+      "relativeEmail": "Relative Email"
+    }
+  },
+  "physical": {
+    "title": "Physical Data",
+    "height": "Height (cm)",
+    "weight": "Weight (kg)",
+    "bmi": "BMI (kg/m²)",
+    "bmiCalculated": "Calculated automatically"
+  },
+  "habits": {
+    "title": "Health Habits",
+    "description": "Rate your habits on a scale of 1-10",
+    "healthyEating": "I have healthy eating habits",
+    "medicationAdherence": "I take my medications on time",
+    "diseaseMonitoring": "I closely monitor my condition",
+    "activityLevel": "I am active",
+    "stressLevel": "I don't feel stressed",
+    "stressLow": "Stressed",
+    "stressHigh": "Not stressed",
+    "hypoglycemicAttacks": "I don't have hypoglycemic attacks",
+    "attacksFrequent": "Frequent attacks",
+    "attacksNone": "No attacks",
+    "saltAwareness": "I pay attention to low salt/sodium intake",
+    "saltLow": "Not paying attention",
+    "saltHigh": "Paying attention",
+    "exerciseFrequency": "Do you exercise?",
+    "exerciseDuration": "How long is each exercise session?",
+    "exerciseOptions": {
+      "daily": "Daily",
+      "weekly": "A few times a week",
+      "rarely": "Rarely",
+      "never": "Never"
+    },
+    "durationOptions": {
+      "0-15": "0-15 minutes",
+      "15-30": "15-30 minutes",
+      "30-60": "30-60 minutes",
+      "60+": "More than 60 minutes"
+    }
+  },
+  "goals": {
+    "title": "Health Goals",
+    "description": "What goals are priorities for you?",
+    "healthyEating": "Healthy eating",
+    "regularMedication": "Regular medication use",
+    "checkups": "Check-ups and controls",
+    "regularExercise": "Regular exercise",
+    "lowSalt": "Low salt/sodium intake",
+    "stressReduction": "Stress reduction",
+    "priorities": {
+      "veryImportant": "Very Important",
+      "important": "Important",
+      "secondary": "Secondary",
+      "unimportant": "Unimportant"
+    }
+  },
+  "medicalHistory": {
+    "title": "Medical History",
+    "hasDiabetes": "Have you been diagnosed with diabetes or related condition?",
+    "diabetesType": "What is your diabetes type?",
+    "types": {
+      "type1": "Type 1",
+      "type2": "Type 2",
+      "prediabetes": "Prediabetes",
+      "gestational": "Gestational",
+      "lada": "LADA",
+      "mody": "MODY",
+      "secondary": "Secondary to exocrine pancreatic disease",
+      "chemicallyInduced": "Chemically induced"
+    },
+    "diagnosisDate": "When were you diagnosed?",
+    "medicationType": "Do you use medication for diabetes?",
+    "medicationOptions": {
+      "oralHypoglycemic": "Oral hypoglycemic",
+      "insulin": "Insulin",
+      "none": "No"
+    }
+  },
+  "insulinSchedule": {
+    "title": "Insulin Doses and Times",
+    "description": "Enter your insulin schedule for each time period",
+    "timePeriods": {
+      "morning": "Morning",
+      "noon": "Noon",
+      "evening": "Evening",
+      "night": "Night",
+      "other1": "Other 1",
+      "other2": "Other 2"
+    },
+    "insulinTypes": {
+      "none": "None",
+      "nph": "NPH",
+      "lente": "Lente",
+      "ultralente": "Ultralente",
+      "regular": "Regular",
+      "rapid": "Rapid-acting",
+      "long": "Long-acting"
+    },
+    "dose": "Dose (IU)",
+    "time": "Time"
+  },
+  "oralMedication": {
+    "title": "Oral Medication Doses and Times",
+    "description": "Enter your medication schedule for each time period",
+    "hasmedication": "Do you take medication?",
+    "medicationOptions": {
+      "none": "None",
+      "yes": "Yes"
+    },
+    "dose": "Dose",
+    "time": "Time"
+  },
+  "chronicDiseases": {
+    "title": "Other Chronic Diseases",
+    "description": "Select any other chronic conditions you have",
+    "diseases": {
+      "hypertension": "Hypertension",
+      "cardiovascular": "Cardiovascular disease",
+      "heartFailure": "Heart failure",
+      "hyperlipidemia": "Hyperlipidemia",
+      "kidneyFailure": "Kidney failure",
+      "chronicPain": "Chronic pain",
+      "majorDepression": "Major depression",
+      "anxiety": "Anxiety",
+      "sleepDisorder": "Sleep disorder",
+      "physicalDisability": "Physical disability",
+      "other": "Other"
+    },
+    "otherDetails": "Please specify other conditions"
+  },
+  "labInfo": {
+    "title": "Lab Information",
+    "hba1c": "HbA1c Value (%)",
+    "hba1cPlaceholder": "e.g., 6.5",
+    "testDate": "Test Date",
+    "targetGlucoseMin": "Target Glucose Lower Limit (mg/dl)",
+    "targetGlucoseMax": "Target Glucose Upper Limit (mg/dl)",
+    "glucoseRangeHint": "These values will be used for alerts"
+  },
+  "navigation": {
+    "back": "Back",
+    "next": "Next",
+    "submit": "Create Patient",
+    "submitting": "Creating...",
+    "cancel": "Cancel",
+    "stepOf": "Step {{current}} of {{total}}"
+  }
+}

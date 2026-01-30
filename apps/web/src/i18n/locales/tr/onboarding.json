@@ -1,0 +1,196 @@
+{
+  "title": "Hasta Kayıt Formu",
+  "subtitle": "Yeni hasta kaydı için formu doldurun",
+  "errors": {
+    "title": "Hata",
+    "submissionFailed": "Hasta oluşturulamadı. Lütfen tekrar deneyin."
+  },
+  "steps": {
+    "basicInfo": "Temel Bilgiler",
+    "notifications": "Uyarı Tercihleri",
+    "physical": "Fiziksel Veriler",
+    "habits": "Alışkanlıklar",
+    "goals": "Hedefler",
+    "medicalHistory": "Hastalık Bilgileri",
+    "insulinSchedule": "İnsülin Takvimi",
+    "oralMedication": "Oral İlaç",
+    "chronicDiseases": "Kronik Hastalıklar",
+    "labInfo": "Laboratuvar Bilgileri"
+  },
+  "basicInfo": {
+    "title": "Temel Bilgiler",
+    "fullName": "Ad Soyad",
+    "nationalId": "TC Kimlik No / Hasta No",
+    "sex": "Cinsiyet",
+    "dateOfBirth": "Doğum Tarihi",
+    "phone": "Telefon Numarası",
+    "emergencyContact": "Acil Durum İletişimi",
+    "emergencyPhone": "Acil Durum Telefonu",
+    "emergencyEmail": "Acil Durum E-postası",
+    "relativeName": "Yakın Adı",
+    "relativePhone": "Yakın Telefonu",
+    "relativeEmail": "Yakın E-postası",
+    "doctorPhone": "Doktor Telefonu",
+    "doctorEmail": "Doktor E-postası"
+  },
+  "notifications": {
+    "title": "Uyarı Tercihleri",
+    "description": "Her durum için nasıl bilgilendirilmek istediğinizi seçin",
+    "triggers": {
+      "hypoglycemia": "Hipoglisemi (<40 mg/dl)",
+      "surveyNotSubmitted": "Anket bilgilerinin girilmemesi (>12 saat)",
+      "glucoseNotMeasured": "Glukoz ölçümü yapılmaması (>3 saat)"
+    },
+    "channels": {
+      "doctorSms": "Doktor SMS",
+      "doctorEmail": "Doktor E-posta",
+      "relativeSms": "Yakını SMS",
+      "relativeEmail": "Yakını E-posta"
+    }
+  },
+  "physical": {
+    "title": "Fiziksel Veriler",
+    "height": "Boy (cm)",
+    "weight": "Kilo (kg)",
+    "bmi": "BMI (kg/m²)",
+    "bmiCalculated": "Otomatik hesaplanır"
+  },
+  "habits": {
+    "title": "Alışkanlıklar",
+    "description": "Alışkanlıklarınızı 1-10 arası puanlayın",
+    "healthyEating": "Sağlıklı yeme alışkanlığım vardır",
+    "medicationAdherence": "İlaçlarımı zamanında alırım",
+    "diseaseMonitoring": "Hastalığımı yakından izliyorum",
+    "activityLevel": "Aktifim",
+    "stressLevel": "Stres hissetmiyorum",
+    "stressLow": "Stresliyim",
+    "stressHigh": "Stresli değilim",
+    "hypoglycemicAttacks": "Hiposemik ataklar geçirmiyorum",
+    "attacksFrequent": "Sık sık atak geçiriyorum",
+    "attacksNone": "Hiç atak geçirmiyorum",
+    "saltAwareness": "Düşük tuz/sodyum alımına dikkat ediyorum",
+    "saltLow": "Dikkat etmiyorum",
+    "saltHigh": "Dikkat ediyorum",
+    "exerciseFrequency": "Spor veya egzersiz yapar mısınız?",
+    "exerciseDuration": "Her bir egzersiziniz ne kadar sürer?",
+    "exerciseOptions": {
+      "daily": "Her gün",
+      "weekly": "Haftada birkaç kez",
+      "rarely": "Nadiren",
+      "never": "Hiç"
+    },
+    "durationOptions": {
+      "0-15": "0-15 dakika",
+      "15-30": "15-30 dakika",
+      "30-60": "30-60 dakika",
+      "60+": "60 dakikadan fazla"
+    }
+  },
+  "goals": {
+    "title": "Hedefler",
+    "description": "Hangi hedefler sizin için önceliklidir?",
+    "healthyEating": "Sağlıklı yemek",
+    "regularMedication": "Düzenli ilaç kullanımı",
+    "checkups": "Muayene ve kontroller",
+    "regularExercise": "Düzenli egzersiz",
+    "lowSalt": "Düşük tuz/sodyum kullanımı",
+    "stressReduction": "Stres azaltma",
+    "priorities": {
+      "veryImportant": "Çok öncelikli",
+      "important": "Öncelikli",
+      "secondary": "İkinci planda",
+      "unimportant": "Önemsiz"
+    }
+  },
+  "medicalHistory": {
+    "title": "Hastalık Bilgileri",
+    "hasDiabetes": "Diyabet veya ilişkili bir tanı aldınız mı?",
+    "diabetesType": "Diyabet tipiniz nedir?",
+    "types": {
+      "type1": "Tip 1",
+      "type2": "Tip 2",
+      "prediabetes": "Prediyabet",
+      "gestational": "Gestasyonel",
+      "lada": "LADA",
+      "mody": "MODY",
+      "secondary": "Ekzokrin pankreas hastalığına sekonder",
+      "chemicallyInduced": "Kimyasal ile indüklenmiş"
+    },
+    "diagnosisDate": "Ne zaman tanı aldınız?",
+    "medicationType": "Diyabet için ilaç kullanıyor musunuz?",
+    "medicationOptions": {
+      "oralHypoglycemic": "Oral hipoglisemik",
+      "insulin": "İnsülin",
+      "none": "Hayır"
+    }
+  },
+  "insulinSchedule": {
+    "title": "İnsülin Dozu ve Saatleri",
+    "description": "Her zaman dilimi için insülin takvimizi girin",
+    "timePeriods": {
+      "morning": "Sabah",
+      "noon": "Öğle",
+      "evening": "Akşam",
+      "night": "Gece",
+      "other1": "Diğer 1",
+      "other2": "Diğer 2"
+    },
+    "insulinTypes": {
+      "none": "Yok",
+      "nph": "NPH",
+      "lente": "Lente",
+      "ultralente": "Ultralente",
+      "regular": "Regular",
+      "rapid": "Hızlı etkili",
+      "long": "Uzun etkili"
+    },
+    "dose": "Doz (IU)",
+    "time": "Saat"
+  },
+  "oralMedication": {
+    "title": "İlaç Dozu ve Saatleri",
+    "description": "Her zaman dilimi için ilaç takvimizi girin",
+    "hasmedication": "İlaç alıyor musunuz?",
+    "medicationOptions": {
+      "none": "Yok",
+      "yes": "Var"
+    },
+    "dose": "Doz",
+    "time": "Saat"
+  },
+  "chronicDiseases": {
+    "title": "Diğer Önemli Kronik Hastalıklar",
+    "description": "Sahip olduğunuz diğer kronik hastalıkları seçin",
+    "diseases": {
+      "hypertension": "Hipertansiyon",
+      "cardiovascular": "Kalp damar hastalığı",
+      "heartFailure": "Kalp yetmezliği",
+      "hyperlipidemia": "Hiperlipidemi",
+      "kidneyFailure": "Böbrek yetmezliği",
+      "chronicPain": "Kronik ağrı",
+      "majorDepression": "Majör depresyon",
+      "anxiety": "Anksiyete",
+      "sleepDisorder": "Uyku Bozukluğu",
+      "physicalDisability": "Fiziksel engel",
+      "other": "Diğer"
+    },
+    "otherDetails": "Lütfen diğer durumları belirtin"
+  },
+  "labInfo": {
+    "title": "Laboratuvar Bilgileri",
+    "hba1c": "Hb A1C Değeri (%)",
+    "hba1cPlaceholder": "örn. 6,5",
+    "testDate": "Test Tarihi",
+    "targetGlucoseMin": "Hedef Glukoz Alt Değeri (mg/dl)",
+    "targetGlucoseMax": "Hedef Glukoz Üst Değeri (mg/dl)",
+    "glucoseRangeHint": "Bu değerler uyarılar için kullanılacak"
+  },
+  "navigation": {
+    "back": "Geri",
+    "next": "İleri",
+    "submit": "Hasta Oluştur",
+    "submitting": "Oluşturuluyor...",
+    "cancel": "İptal",
+    "stepOf": "Adım {{current}} / {{total}}"
+  }
+}

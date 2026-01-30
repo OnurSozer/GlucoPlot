@@ -5,7 +5,7 @@
 
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
-import type { User } from '@supabase/supabase-js';
+import type { User, Subscription } from '@supabase/supabase-js';
 import type { Doctor } from '../types/database.types';
 
 interface AuthState {
@@ -14,22 +14,40 @@ interface AuthState {
     isLoading: boolean;
     isInitialized: boolean;
     error: string | null;
+    _subscription: Subscription | null;
 
     // Actions
     initialize: () => Promise<void>;
     signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
     signOut: () => Promise<void>;
     clearError: () => void;
+    cleanup: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+// Helper to fetch doctor profile
+async function fetchDoctorProfile(userId: string): Promise<Doctor | null> {
+    const { data } = await supabase
+        .from('doctors')
+        .select('*')
+        .eq('id', userId)
+        .single();
+    return data || null;
+}
+
+export const useAuthStore = create<AuthState>((set, get) => ({
     user: null,
     doctor: null,
     isLoading: false,
     isInitialized: false,
     error: null,
+    _subscription: null,
 
     initialize: async () => {
+        // Prevent double initialization
+        if (get().isInitialized || get()._subscription) {
+            return;
+        }
+
         try {
             set({ isLoading: true });
 
@@ -38,15 +56,11 @@ export const useAuthStore = create<AuthState>((set) => ({
 
             if (session?.user) {
                 // Fetch doctor profile
-                const { data: doctor } = await supabase
-                    .from('doctors')
-                    .select('*')
-                    .eq('id', session.user.id)
-                    .single();
+                const doctor = await fetchDoctorProfile(session.user.id);
 
                 set({
                     user: session.user,
-                    doctor: doctor || null,
+                    doctor,
                     isLoading: false,
                     isInitialized: true,
                 });
@@ -59,20 +73,33 @@ export const useAuthStore = create<AuthState>((set) => ({
                 });
             }
 
-            // Listen for auth changes
-            supabase.auth.onAuthStateChange(async (event, session) => {
-                if (event === 'SIGNED_IN' && session?.user) {
-                    const { data: doctor } = await supabase
-                        .from('doctors')
-                        .select('*')
-                        .eq('id', session.user.id)
-                        .single();
+            // Listen for auth changes - handle ALL relevant events
+            const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+                console.log('Auth event:', event);
 
-                    set({ user: session.user, doctor: doctor || null });
+                if (event === 'SIGNED_IN' && session?.user) {
+                    const doctor = await fetchDoctorProfile(session.user.id);
+                    set({ user: session.user, doctor });
+                } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+                    // Token refresh doesn't change user data, only the JWT
+                    // Only update state if user ID changed (shouldn't happen, but safety check)
+                    const currentUser = get().user;
+                    if (!currentUser || currentUser.id !== session.user.id) {
+                        const doctor = await fetchDoctorProfile(session.user.id);
+                        set({ user: session.user, doctor });
+                    }
+                    // If same user, don't update state - avoids unnecessary re-renders
                 } else if (event === 'SIGNED_OUT') {
                     set({ user: null, doctor: null });
+                } else if (event === 'USER_UPDATED' && session?.user) {
+                    // Refetch doctor profile on user update
+                    const doctor = await fetchDoctorProfile(session.user.id);
+                    set({ user: session.user, doctor });
                 }
             });
+
+            // Store subscription for cleanup
+            set({ _subscription: subscription });
         } catch (error) {
             console.error('Auth initialization error:', error);
             set({
@@ -145,4 +172,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     },
 
     clearError: () => set({ error: null }),
+
+    cleanup: () => {
+        const subscription = get()._subscription;
+        if (subscription) {
+            subscription.unsubscribe();
+            set({ _subscription: null });
+        }
+    },
 }));

@@ -2,39 +2,43 @@
  * Patients Page - List all patients
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Search, Plus, ChevronRight, QrCode } from 'lucide-react';
 import { Card, CardContent } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { StatusBadge } from '../../components/common/Badge';
-import { CreatePatientModal } from './CreatePatientModal';
+import { PatientOnboardingModal } from './components/onboarding';
 import { ViewQRModal } from './ViewQRModal';
 import { patientsService } from '../../services/patients.service';
-import { formatDate, calculateAge } from '../../utils/format';
+import { onboardingService } from '../../services/onboarding.service';
+import { useAuthStore } from '../../stores/auth-store';
+import { calculateAge } from '../../utils/format';
 import type { Patient, PatientStatus } from '../../types/database.types';
-
-const statusFilters: { value: PatientStatus | 'all'; label: string }[] = [
-    { value: 'all', label: 'All Patients' },
-    { value: 'active', label: 'Active' },
-    { value: 'pending', label: 'Pending' },
-    { value: 'inactive', label: 'Inactive' },
-];
+import type { PatientOnboardingData } from '../../types/onboarding.types';
 
 export function PatientsPage() {
+    const { t } = useTranslation('patients');
     const [patients, setPatients] = useState<Patient[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<PatientStatus | 'all'>('all');
-    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showOnboardingModal, setShowOnboardingModal] = useState(false);
     const [viewQrPatient, setViewQrPatient] = useState<Patient | null>(null);
+    const [_newPatientQr, setNewPatientQr] = useState<{ id: string; name: string; qr: string } | null>(null);
 
-    useEffect(() => {
-        loadPatients();
-    }, [statusFilter, searchQuery]);
+    const statusFilters: { value: PatientStatus | 'all'; labelKey: string }[] = [
+        { value: 'all', labelKey: 'common:common.all' },
+        { value: 'active', labelKey: 'status.active' },
+        { value: 'pending', labelKey: 'status.pending' },
+        { value: 'inactive', labelKey: 'status.inactive' },
+    ];
 
-    const loadPatients = async () => {
+    const { user, isInitialized } = useAuthStore();
+
+    const loadPatients = useCallback(async (signal?: AbortSignal) => {
         try {
             setIsLoading(true);
             const { data, error } = await patientsService.getPatientsFiltered({
@@ -42,18 +46,40 @@ export function PatientsPage() {
                 search: searchQuery,
             });
 
+            if (signal?.aborted) return;
+
             if (error) {
                 console.error('Error loading patients:', error);
             } else {
                 setPatients(data || []);
             }
         } finally {
-            setIsLoading(false);
+            if (!signal?.aborted) {
+                setIsLoading(false);
+            }
         }
-    };
+    }, [statusFilter, searchQuery]);
 
-    const handlePatientCreated = () => {
-        setShowCreateModal(false);
+    useEffect(() => {
+        if (!isInitialized || !user) return;
+
+        const abortController = new AbortController();
+        loadPatients(abortController.signal);
+
+        return () => {
+            abortController.abort();
+        };
+    }, [isInitialized, user, loadPatients]);
+
+    const handlePatientCreated = async (data: PatientOnboardingData) => {
+        const result = await onboardingService.createPatientWithOnboarding(data);
+        if (result.data) {
+            setNewPatientQr({
+                id: result.data.patient_id,
+                name: data.basicInfo.full_name,
+                qr: result.data.qr_data,
+            });
+        }
         loadPatients();
     };
 
@@ -62,14 +88,14 @@ export function PatientsPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Patients</h1>
-                    <p className="text-gray-500 mt-1">Manage and monitor your patients</p>
+                    <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
+                    <p className="text-gray-500 mt-1">{t('subtitle')}</p>
                 </div>
                 <Button
                     leftIcon={<Plus size={18} />}
-                    onClick={() => setShowCreateModal(true)}
+                    onClick={() => setShowOnboardingModal(true)}
                 >
-                    Add Patient
+                    {t('addPatient')}
                 </Button>
             </div>
 
@@ -77,7 +103,7 @@ export function PatientsPage() {
             <div className="flex items-center gap-4">
                 <div className="flex-1 max-w-md">
                     <Input
-                        placeholder="Search patients..."
+                        placeholder={t('searchPlaceholder')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         leftIcon={<Search size={18} />}
@@ -85,7 +111,7 @@ export function PatientsPage() {
                 </div>
 
                 <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-xl p-1 border border-gray-200">
-                    {statusFilters.map(({ value, label }) => (
+                    {statusFilters.map(({ value, labelKey }) => (
                         <button
                             key={value}
                             onClick={() => setStatusFilter(value)}
@@ -97,7 +123,7 @@ export function PatientsPage() {
                                 }
               `}
                         >
-                            {label}
+                            {t(labelKey)}
                         </button>
                     ))}
                 </div>
@@ -116,15 +142,17 @@ export function PatientsPage() {
                         <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <Search size={24} className="text-gray-400" />
                         </div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-1">No patients found</h3>
+                        <h3 className="text-lg font-medium text-gray-900 mb-1">
+                            {searchQuery || statusFilter !== 'all' ? t('noMatchingPatients') : t('noPatients')}
+                        </h3>
                         <p className="text-gray-500 mb-4">
                             {searchQuery || statusFilter !== 'all'
-                                ? 'Try adjusting your filters'
-                                : 'Get started by adding your first patient'
+                                ? t('noMatchingPatientsDesc')
+                                : t('noPatientsDesc')
                             }
                         </p>
-                        <Button onClick={() => setShowCreateModal(true)} leftIcon={<Plus size={18} />}>
-                            Add Patient
+                        <Button onClick={() => setShowOnboardingModal(true)} leftIcon={<Plus size={18} />}>
+                            {t('addPatient')}
                         </Button>
                     </CardContent>
                 </Card>
@@ -140,11 +168,11 @@ export function PatientsPage() {
                 </div>
             )}
 
-            {/* Create Patient Modal */}
-            <CreatePatientModal
-                isOpen={showCreateModal}
-                onClose={() => setShowCreateModal(false)}
-                onCreated={handlePatientCreated}
+            {/* Patient Onboarding Modal */}
+            <PatientOnboardingModal
+                isOpen={showOnboardingModal}
+                onClose={() => setShowOnboardingModal(false)}
+                onComplete={handlePatientCreated}
             />
 
             {/* View QR Modal */}
@@ -159,7 +187,29 @@ export function PatientsPage() {
 }
 
 function PatientCard({ patient, onViewQr }: { patient: Patient; onViewQr: () => void }) {
+    const { t, i18n } = useTranslation('common');
     const age = calculateAge(patient.date_of_birth);
+
+    // Get localized gender label
+    const getGenderLabel = (gender: string | undefined | null) => {
+        if (!gender) return '';
+        const genderMap: Record<string, string> = {
+            male: t('common.male'),
+            female: t('common.female'),
+            other: t('common.other'),
+        };
+        return genderMap[gender] || gender;
+    };
+
+    // Format date based on current locale
+    const formatLocalizedDate = (date: string) => {
+        const dateObj = new Date(date);
+        return dateObj.toLocaleDateString(i18n.language === 'tr' ? 'tr-TR' : 'en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+        });
+    };
 
     return (
         <Card hover className="h-full flex flex-col">
@@ -175,8 +225,8 @@ function PatientCard({ patient, onViewQr }: { patient: Patient; onViewQr: () => 
                             <div>
                                 <h3 className="font-semibold text-gray-900">{patient.full_name}</h3>
                                 <p className="text-sm text-gray-500">
-                                    {age ? `${age} years` : 'Age unknown'}
-                                    {patient.gender ? ` • ${patient.gender}` : ''}
+                                    {age ? `${age} ${t('common.years')}` : t('common.ageUnknown')}
+                                    {patient.gender ? ` • ${getGenderLabel(patient.gender)}` : ''}
                                 </p>
                             </div>
                         </div>
@@ -187,7 +237,7 @@ function PatientCard({ patient, onViewQr }: { patient: Patient; onViewQr: () => 
 
             <div className="px-5 pb-5 mt-auto flex items-center justify-between border-t border-gray-100 pt-4">
                 <span className="text-sm text-gray-500">
-                    {formatDate(patient.created_at)}
+                    {formatLocalizedDate(patient.created_at)}
                 </span>
 
                 <div className="flex items-center gap-2">

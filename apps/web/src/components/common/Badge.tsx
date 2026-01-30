@@ -3,6 +3,7 @@
  */
 
 import { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 
 type BadgeVariant = 'default' | 'success' | 'warning' | 'error' | 'info';
 type BadgeSize = 'sm' | 'md';
@@ -65,26 +66,30 @@ export function Badge({
  */
 
 export function StatusBadge({ status }: { status: 'active' | 'pending' | 'inactive' }) {
-    const config: Record<string, { variant: BadgeVariant; label: string }> = {
-        active: { variant: 'success', label: 'Active' },
-        pending: { variant: 'warning', label: 'Pending' },
-        inactive: { variant: 'default', label: 'Inactive' },
+    const { t } = useTranslation('patients');
+
+    const config: Record<string, { variant: BadgeVariant; labelKey: string }> = {
+        active: { variant: 'success', labelKey: 'status.active' },
+        pending: { variant: 'warning', labelKey: 'status.pending' },
+        inactive: { variant: 'default', labelKey: 'status.inactive' },
     };
 
-    const { variant, label } = config[status] || config.inactive;
+    const { variant, labelKey } = config[status] || config.inactive;
 
-    return <Badge variant={variant} dot>{label}</Badge>;
+    return <Badge variant={variant} dot>{t(labelKey)}</Badge>;
 }
 
 export function SeverityBadge({ severity }: { severity: 'low' | 'medium' | 'high' | 'critical' }) {
-    const config: Record<string, { variant: BadgeVariant; label: string }> = {
-        low: { variant: 'info', label: 'Low' },
-        medium: { variant: 'warning', label: 'Medium' },
-        high: { variant: 'error', label: 'High' },
-        critical: { variant: 'error', label: 'Critical' },
+    const { t } = useTranslation('common');
+
+    const config: Record<string, { variant: BadgeVariant; labelKey: string }> = {
+        low: { variant: 'info', labelKey: 'severity.low' },
+        medium: { variant: 'warning', labelKey: 'severity.medium' },
+        high: { variant: 'error', labelKey: 'severity.high' },
+        critical: { variant: 'error', labelKey: 'severity.critical' },
     };
 
-    const { variant, label } = config[severity] || config.low;
+    const { variant, labelKey } = config[severity] || config.low;
 
-    return <Badge variant={variant}>{label}</Badge>;
+    return <Badge variant={variant}>{t(labelKey)}</Badge>;
 }

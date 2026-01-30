@@ -1,0 +1,95 @@
+{
+  "app": {
+    "name": "GlucoPlot",
+    "subtitle": "Doktor Portalı"
+  },
+  "nav": {
+    "dashboard": "Kontrol Paneli",
+    "patients": "Hastalar",
+    "alerts": "Uyarılar",
+    "signOut": "Çıkış Yap"
+  },
+  "dashboard": {
+    "welcome": "Tekrar hoş geldiniz, {{name}}",
+    "overview": "Bugünkü hastalarınızın genel durumu",
+    "totalPatients": "Toplam Hasta",
+    "activePatients": "Aktif Hastalar",
+    "pendingActivation": "Aktivasyon Bekliyor",
+    "newAlerts": "Yeni Uyarılar",
+    "currentlyMonitoring": "Şu anda izleniyor",
+    "awaitingQrScan": "QR taraması bekliyor",
+    "requiresAttention": "Dikkat gerektiriyor",
+    "recentAlerts": "Son Uyarılar",
+    "viewAll": "Tümünü gör",
+    "noNewAlerts": "Yeni uyarı yok",
+    "allPatientsNormal": "Tüm hastalar normal aralıkta",
+    "quickActions": "Hızlı İşlemler",
+    "addNewPatient": "Yeni Hasta Ekle",
+    "createPatientQr": "Hasta oluştur ve QR üret",
+    "reviewAlerts": "Uyarıları İncele",
+    "pendingReview": "{{count}} inceleme bekliyor"
+  },
+  "alerts": {
+    "title": "Uyarılar",
+    "subtitle": "Hasta sağlık uyarılarını ve bildirimlerini izleyin",
+    "allAlerts": "Tüm Uyarılar",
+    "new": "Yeni",
+    "acknowledged": "Onaylandı",
+    "resolved": "Çözüldü",
+    "noAlerts": "Uyarı bulunamadı",
+    "noAlertsDesc": "Hastaların endişe verici ölçümleri olduğunda burada görünecek",
+    "unknownPatient": "Bilinmeyen hasta",
+    "acknowledge": "Onayla",
+    "resolve": "Çöz"
+  },
+  "common": {
+    "loading": "Yükleniyor...",
+    "error": "Hata",
+    "success": "Başarılı",
+    "cancel": "İptal",
+    "save": "Kaydet",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "close": "Kapat",
+    "back": "Geri",
+    "next": "İleri",
+    "submit": "Gönder",
+    "search": "Ara",
+    "filter": "Filtrele",
+    "all": "Tümü",
+    "active": "Aktif",
+    "inactive": "Pasif",
+    "pending": "Beklemede",
+    "male": "Erkek",
+    "female": "Kadın",
+    "other": "Diğer",
+    "yes": "Evet",
+    "no": "Hayır",
+    "select": "Seçin...",
+    "required": "Zorunlu",
+    "optional": "İsteğe bağlı",
+    "years": "yaş",
+    "ageUnknown": "Yaş bilinmiyor"
+  },
+  "severity": {
+    "low": "Düşük",
+    "medium": "Orta",
+    "high": "Yüksek",
+    "critical": "Kritik"
+  },
+  "auth": {
+    "login": "Giriş Yap",
+    "logout": "Çıkış Yap",
+    "email": "E-posta",
+    "password": "Şifre",
+    "welcomeBack": "Tekrar Hoş Geldiniz",
+    "signInToContinue": "Doktor hesabınıza giriş yapın",
+    "invalidCredentials": "Geçersiz e-posta veya şifre",
+    "generalPractice": "Genel Uygulama"
+  },
+  "language": {
+    "label": "Dil",
+    "english": "English",
+    "turkish": "Türkçe"
+  }
+}

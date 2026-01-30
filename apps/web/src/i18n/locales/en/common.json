@@ -1,0 +1,95 @@
+{
+  "app": {
+    "name": "GlucoPlot",
+    "subtitle": "Doctor Portal"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "patients": "Patients",
+    "alerts": "Alerts",
+    "signOut": "Sign Out"
+  },
+  "dashboard": {
+    "welcome": "Welcome back, {{name}}",
+    "overview": "Here's an overview of your patients today",
+    "totalPatients": "Total Patients",
+    "activePatients": "Active Patients",
+    "pendingActivation": "Pending Activation",
+    "newAlerts": "New Alerts",
+    "currentlyMonitoring": "Currently monitoring",
+    "awaitingQrScan": "Awaiting QR scan",
+    "requiresAttention": "Requires attention",
+    "recentAlerts": "Recent Alerts",
+    "viewAll": "View all",
+    "noNewAlerts": "No new alerts",
+    "allPatientsNormal": "All patients are within normal ranges",
+    "quickActions": "Quick Actions",
+    "addNewPatient": "Add New Patient",
+    "createPatientQr": "Create patient & generate QR",
+    "reviewAlerts": "Review Alerts",
+    "pendingReview": "{{count}} pending review"
+  },
+  "alerts": {
+    "title": "Alerts",
+    "subtitle": "Monitor patient health alerts and notifications",
+    "allAlerts": "All Alerts",
+    "new": "New",
+    "acknowledged": "Acknowledged",
+    "resolved": "Resolved",
+    "noAlerts": "No alerts found",
+    "noAlertsDesc": "When patients have concerning readings, they will appear here",
+    "unknownPatient": "Unknown patient",
+    "acknowledge": "Acknowledge",
+    "resolve": "Resolve"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "search": "Search",
+    "filter": "Filter",
+    "all": "All",
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "male": "Male",
+    "female": "Female",
+    "other": "Other",
+    "yes": "Yes",
+    "no": "No",
+    "select": "Select...",
+    "required": "Required",
+    "optional": "Optional",
+    "years": "years",
+    "ageUnknown": "Age unknown"
+  },
+  "severity": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "critical": "Critical"
+  },
+  "auth": {
+    "login": "Sign In",
+    "logout": "Sign Out",
+    "email": "Email",
+    "password": "Password",
+    "welcomeBack": "Welcome Back",
+    "signInToContinue": "Sign in to your doctor account",
+    "invalidCredentials": "Invalid email or password",
+    "generalPractice": "General Practice"
+  },
+  "language": {
+    "label": "Language",
+    "english": "English",
+    "turkish": "Türkçe"
+  }
+}

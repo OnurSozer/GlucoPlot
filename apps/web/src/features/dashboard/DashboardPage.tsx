@@ -2,8 +2,9 @@
  * Dashboard Page - Overview of patients and alerts
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Users, Bell, Activity, TrendingUp, ChevronRight, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../../stores/auth-store';
 import { StatCard } from '../../components/common/StatCard';
@@ -26,7 +27,8 @@ interface AlertWithPatient extends RiskAlert {
 }
 
 export function DashboardPage() {
-    const { doctor } = useAuthStore();
+    const { t } = useTranslation();
+    const { doctor, user, isInitialized } = useAuthStore();
     const [stats, setStats] = useState<DashboardStats>({
         totalPatients: 0,
         activePatients: 0,
@@ -36,25 +38,25 @@ export function DashboardPage() {
     const [recentAlerts, setRecentAlerts] = useState<AlertWithPatient[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        loadDashboardData();
-    }, []);
-
-    const loadDashboardData = async () => {
+    const loadDashboardData = useCallback(async (signal: AbortSignal) => {
+        console.log('[Dashboard] Starting data load...');
         try {
             setIsLoading(true);
 
-            // Load patient counts
-            const patientCounts = await patientsService.getPatientCounts();
+            // Load all data in parallel for faster loading
+            const [patientCounts, alertCounts, alertsResult] = await Promise.all([
+                patientsService.getPatientCounts(),
+                alertsService.getAlertCounts(),
+                alertsService.getAlerts({ status: 'new', limit: 5 })
+            ]);
 
-            // Load alert counts
-            const alertCounts = await alertsService.getAlertCounts();
+            // Check if request was aborted
+            if (signal.aborted) {
+                console.log('[Dashboard] Request aborted, skipping state update');
+                return;
+            }
 
-            // Load recent alerts
-            const { data: alerts } = await alertsService.getAlerts({
-                status: 'new',
-                limit: 5
-            });
+            console.log('[Dashboard] Data loaded successfully', { patientCounts, alertCounts });
 
             setStats({
                 totalPatients: patientCounts.total,
@@ -63,13 +65,33 @@ export function DashboardPage() {
                 newAlerts: alertCounts.new,
             });
 
-            setRecentAlerts(alerts || []);
+            setRecentAlerts(alertsResult.data || []);
         } catch (error) {
-            console.error('Error loading dashboard data:', error);
+            if (signal.aborted) return;
+            console.error('[Dashboard] Error loading data:', error);
         } finally {
-            setIsLoading(false);
+            if (!signal.aborted) {
+                setIsLoading(false);
+            }
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        console.log('[Dashboard] Effect running', { isInitialized, hasUser: !!user });
+
+        if (!isInitialized || !user) {
+            console.log('[Dashboard] Auth not ready, skipping load');
+            return;
+        }
+
+        const abortController = new AbortController();
+        loadDashboardData(abortController.signal);
+
+        return () => {
+            console.log('[Dashboard] Cleanup - aborting pending requests');
+            abortController.abort();
+        };
+    }, [isInitialized, user, loadDashboardData]);
 
     if (isLoading) {
         return (
@@ -89,37 +111,37 @@ export function DashboardPage() {
             {/* Header */}
             <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                    Welcome back, {doctor?.full_name?.split(' ')[0] || 'Doctor'}
+                    {t('dashboard.welcome', { name: doctor?.full_name?.split(' ')[0] || 'Doctor' })}
                 </h1>
-                <p className="text-gray-500 mt-1">Here's an overview of your patients today</p>
+                <p className="text-gray-500 mt-1">{t('dashboard.overview')}</p>
             </div>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard
-                    title="Total Patients"
+                    title={t('dashboard.totalPatients')}
                     value={stats.totalPatients}
                     icon={<Users size={24} />}
                     color="#E8A87C"
                 />
                 <StatCard
-                    title="Active Patients"
+                    title={t('dashboard.activePatients')}
                     value={stats.activePatients}
-                    subtitle="Currently monitoring"
+                    subtitle={t('dashboard.currentlyMonitoring')}
                     icon={<Activity size={24} />}
                     color="#4CAF50"
                 />
                 <StatCard
-                    title="Pending Activation"
+                    title={t('dashboard.pendingActivation')}
                     value={stats.pendingPatients}
-                    subtitle="Awaiting QR scan"
+                    subtitle={t('dashboard.awaitingQrScan')}
                     icon={<TrendingUp size={24} />}
                     color="#FF9800"
                 />
                 <StatCard
-                    title="New Alerts"
+                    title={t('dashboard.newAlerts')}
                     value={stats.newAlerts}
-                    subtitle="Requires attention"
+                    subtitle={t('dashboard.requiresAttention')}
                     icon={<Bell size={24} />}
                     color={stats.newAlerts > 0 ? '#E53935' : '#9CA3AF'}
                 />
@@ -133,13 +155,13 @@ export function DashboardPage() {
                         <CardHeader className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <AlertCircle size={20} className="text-red-500" />
-                                <h2 className="text-lg font-semibold text-gray-900">Recent Alerts</h2>
+                                <h2 className="text-lg font-semibold text-gray-900">{t('dashboard.recentAlerts')}</h2>
                             </div>
                             <Link
                                 to="/alerts"
                                 className="text-sm text-primary-dark hover:text-primary flex items-center gap-1"
                             >
-                                View all <ChevronRight size={16} />
+                                {t('dashboard.viewAll')} <ChevronRight size={16} />
                             </Link>
                         </CardHeader>
                         <CardContent className="p-0">
@@ -148,8 +170,8 @@ export function DashboardPage() {
                                     <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
                                         <Bell size={24} className="text-green-500" />
                                     </div>
-                                    <p className="text-gray-500">No new alerts</p>
-                                    <p className="text-sm text-gray-400 mt-1">All patients are within normal ranges</p>
+                                    <p className="text-gray-500">{t('dashboard.noNewAlerts')}</p>
+                                    <p className="text-sm text-gray-400 mt-1">{t('dashboard.allPatientsNormal')}</p>
                                 </div>
                             ) : (
                                 <div className="divide-y divide-gray-100">
@@ -171,7 +193,7 @@ export function DashboardPage() {
                                                 <div>
                                                     <p className="font-medium text-gray-900">{alert.title}</p>
                                                     <p className="text-sm text-gray-500">
-                                                        {alert.patients?.full_name || 'Unknown patient'}
+                                                        {alert.patients?.full_name || t('alerts.unknownPatient')}
                                                     </p>
                                                 </div>
                                             </div>
@@ -193,7 +215,7 @@ export function DashboardPage() {
                 <div>
                     <Card>
                         <CardHeader>
-                            <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
+                            <h2 className="text-lg font-semibold text-gray-900">{t('dashboard.quickActions')}</h2>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             <Link
@@ -204,8 +226,8 @@ export function DashboardPage() {
                                     <Users size={20} className="text-primary-dark" />
                                 </div>
                                 <div>
-                                    <p className="font-medium text-gray-900">Add New Patient</p>
-                                    <p className="text-sm text-gray-500">Create patient & generate QR</p>
+                                    <p className="font-medium text-gray-900">{t('dashboard.addNewPatient')}</p>
+                                    <p className="text-sm text-gray-500">{t('dashboard.createPatientQr')}</p>
                                 </div>
                             </Link>
 
@@ -217,8 +239,8 @@ export function DashboardPage() {
                                     <Bell size={20} className="text-red-500" />
                                 </div>
                                 <div>
-                                    <p className="font-medium text-gray-900">Review Alerts</p>
-                                    <p className="text-sm text-gray-500">{stats.newAlerts} pending review</p>
+                                    <p className="font-medium text-gray-900">{t('dashboard.reviewAlerts')}</p>
+                                    <p className="text-sm text-gray-500">{t('dashboard.pendingReview', { count: stats.newAlerts })}</p>
                                 </div>
                             </Link>
                         </CardContent>

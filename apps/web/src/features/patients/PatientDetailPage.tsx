@@ -19,6 +19,7 @@ import {
 import { Card, CardContent, CardHeader } from '../../components/common/Card';
 import { StatusBadge } from '../../components/common/Badge';
 import { MeasurementChart } from './MeasurementChart';
+import { PatientProfileView } from './PatientProfileView';
 import { patientsService } from '../../services/patients.service';
 import { measurementsService } from '../../services/measurements.service';
 import {
@@ -47,31 +48,46 @@ export function PatientDetailPage() {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        if (id) {
-            loadPatientData(id);
-        }
-    }, [id]);
+        if (!id) return;
 
-    const loadPatientData = async (patientId: string) => {
-        try {
-            setIsLoading(true);
+        const abortController = new AbortController();
 
-            // Load patient
-            const { data: patientData } = await patientsService.getPatientById(patientId);
-            if (patientData) {
-                setPatient(patientData);
+        const loadPatientData = async () => {
+            try {
+                setIsLoading(true);
+
+                // Load patient
+                const { data: patientData } = await patientsService.getPatientById(id);
+
+                if (abortController.signal.aborted) return;
+
+                if (patientData) {
+                    setPatient(patientData);
+                }
+
+                // Load latest measurements
+                const latest = await measurementsService.getLatestMeasurements(id);
+
+                if (abortController.signal.aborted) return;
+
+                setLatestMeasurements(latest);
+
+            } catch (error) {
+                if (abortController.signal.aborted) return;
+                console.error('Error loading patient data:', error);
+            } finally {
+                if (!abortController.signal.aborted) {
+                    setIsLoading(false);
+                }
             }
+        };
 
-            // Load latest measurements
-            const latest = await measurementsService.getLatestMeasurements(patientId);
-            setLatestMeasurements(latest);
+        loadPatientData();
 
-        } catch (error) {
-            console.error('Error loading patient data:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        return () => {
+            abortController.abort();
+        };
+    }, [id]);
 
     if (isLoading) {
         return (
@@ -221,6 +237,9 @@ export function PatientDetailPage() {
                     />
                 </CardContent>
             </Card>
+
+            {/* Comprehensive Patient Profile */}
+            <PatientProfileView patientId={patient.id} />
         </div>
     );
 }

@@ -35,40 +35,51 @@ export function MeasurementChart({ patientId, type, days = 14 }: MeasurementChar
     const [stats, setStats] = useState<{ min: number; max: number; avg: number } | null>(null);
 
     useEffect(() => {
-        loadChartData();
-    }, [patientId, type, days]);
+        const abortController = new AbortController();
 
-    const loadChartData = async () => {
-        try {
-            setIsLoading(true);
+        const loadChartData = async () => {
+            try {
+                setIsLoading(true);
 
-            const { data: measurements, stats: measurementStats } = await measurementsService.getMeasurementStats(
-                patientId,
-                type,
-                days
-            );
+                const { data: measurements, stats: measurementStats } = await measurementsService.getMeasurementStats(
+                    patientId,
+                    type,
+                    days
+                );
 
-            if (measurements) {
-                const chartData: ChartDataPoint[] = measurements.map((m: Measurement) => ({
-                    date: formatDate(m.measured_at, 'MMM d'),
-                    value: m.value_primary,
-                    secondary: m.value_secondary || undefined,
-                    fullDate: formatDate(m.measured_at, 'MMM d, yyyy h:mm a'),
-                }));
+                if (abortController.signal.aborted) return;
 
-                setData(chartData);
-                setStats(measurementStats);
-            } else {
+                if (measurements) {
+                    const chartData: ChartDataPoint[] = measurements.map((m: Measurement) => ({
+                        date: formatDate(m.measured_at, 'MMM d'),
+                        value: m.value_primary,
+                        secondary: m.value_secondary || undefined,
+                        fullDate: formatDate(m.measured_at, 'MMM d, yyyy h:mm a'),
+                    }));
+
+                    setData(chartData);
+                    setStats(measurementStats);
+                } else {
+                    setData([]);
+                    setStats(null);
+                }
+            } catch (error) {
+                if (abortController.signal.aborted) return;
+                console.error('Error loading chart data:', error);
                 setData([]);
-                setStats(null);
+            } finally {
+                if (!abortController.signal.aborted) {
+                    setIsLoading(false);
+                }
             }
-        } catch (error) {
-            console.error('Error loading chart data:', error);
-            setData([]);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        };
+
+        loadChartData();
+
+        return () => {
+            abortController.abort();
+        };
+    }, [patientId, type, days]);
 
     const color = getMeasurementColor(type);
 

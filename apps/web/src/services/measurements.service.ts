@@ -61,7 +61,7 @@ export const measurementsService = {
                 .eq('type', type)
                 .order('measured_at', { ascending: false })
                 .limit(1)
-                .single();
+                .maybeSingle();
 
             if (data) {
                 results[type] = data as Measurement;

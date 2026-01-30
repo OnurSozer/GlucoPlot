@@ -2,12 +2,14 @@
  * Alerts Page - Risk alert management
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertCircle, Check, CheckCircle, Clock } from 'lucide-react';
 import { Card, CardContent } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { SeverityBadge, Badge } from '../../components/common/Badge';
 import { alertsService } from '../../services/alerts.service';
+import { useAuthStore } from '../../stores/auth-store';
 import { formatRelativeTime } from '../../utils/format';
 import type { RiskAlert, Patient, AlertStatus } from '../../types/database.types';
 
@@ -15,29 +17,29 @@ interface AlertWithPatient extends RiskAlert {
     patients?: Pick<Patient, 'id' | 'full_name'>;
 }
 
-const statusFilters: { value: AlertStatus | 'all'; label: string; icon: typeof AlertCircle }[] = [
-    { value: 'all', label: 'All Alerts', icon: AlertCircle },
-    { value: 'new', label: 'New', icon: AlertCircle },
-    { value: 'acknowledged', label: 'Acknowledged', icon: Clock },
-    { value: 'resolved', label: 'Resolved', icon: CheckCircle },
-];
-
 export function AlertsPage() {
+    const { t } = useTranslation();
+    const { user, isInitialized } = useAuthStore();
     const [alerts, setAlerts] = useState<AlertWithPatient[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState<AlertStatus | 'all'>('new');
     const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-    useEffect(() => {
-        loadAlerts();
-    }, [statusFilter]);
+    const statusFilters: { value: AlertStatus | 'all'; labelKey: string; icon: typeof AlertCircle }[] = [
+        { value: 'all', labelKey: 'alerts.allAlerts', icon: AlertCircle },
+        { value: 'new', labelKey: 'alerts.new', icon: AlertCircle },
+        { value: 'acknowledged', labelKey: 'alerts.acknowledged', icon: Clock },
+        { value: 'resolved', labelKey: 'alerts.resolved', icon: CheckCircle },
+    ];
 
-    const loadAlerts = async () => {
+    const loadAlerts = useCallback(async (signal?: AbortSignal) => {
         try {
             setIsLoading(true);
             const { data, error } = await alertsService.getAlerts({
                 status: statusFilter,
             });
+
+            if (signal?.aborted) return;
 
             if (error) {
                 console.error('Error loading alerts:', error);
@@ -45,9 +47,22 @@ export function AlertsPage() {
                 setAlerts(data || []);
             }
         } finally {
-            setIsLoading(false);
+            if (!signal?.aborted) {
+                setIsLoading(false);
+            }
         }
-    };
+    }, [statusFilter]);
+
+    useEffect(() => {
+        if (!isInitialized || !user) return;
+
+        const abortController = new AbortController();
+        loadAlerts(abortController.signal);
+
+        return () => {
+            abortController.abort();
+        };
+    }, [isInitialized, user, loadAlerts]);
 
     const handleAcknowledge = async (alertId: string) => {
         try {
@@ -77,13 +92,13 @@ export function AlertsPage() {
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Risk Alerts</h1>
-                <p className="text-gray-500 mt-1">Manage and respond to patient health alerts</p>
+                <h1 className="text-2xl font-bold text-gray-900">{t('alerts.title')}</h1>
+                <p className="text-gray-500 mt-1">{t('alerts.subtitle')}</p>
             </div>
 
             {/* Status Filter Tabs */}
             <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-xl p-1 border border-gray-200 w-fit">
-                {statusFilters.map(({ value, label, icon: Icon }) => (
+                {statusFilters.map(({ value, labelKey, icon: Icon }) => (
                     <button
                         key={value}
                         onClick={() => setStatusFilter(value)}
@@ -96,7 +111,7 @@ export function AlertsPage() {
             `}
                     >
                         <Icon size={16} />
-                        {label}
+                        {t(labelKey)}
                     </button>
                 ))}
             </div>
@@ -114,13 +129,8 @@ export function AlertsPage() {
                         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <CheckCircle size={32} className="text-green-500" />
                         </div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-1">No alerts</h3>
-                        <p className="text-gray-500">
-                            {statusFilter === 'new'
-                                ? 'Great! All alerts have been addressed.'
-                                : `No ${statusFilter} alerts to show.`
-                            }
-                        </p>
+                        <h3 className="text-lg font-medium text-gray-900 mb-1">{t('alerts.noAlerts')}</h3>
+                        <p className="text-gray-500">{t('alerts.noAlertsDesc')}</p>
                     </CardContent>
                 </Card>
             ) : (
@@ -148,6 +158,7 @@ interface AlertCardProps {
 }
 
 function AlertCard({ alert, onAcknowledge, onResolve, isLoading }: AlertCardProps) {
+    const { t } = useTranslation();
     const severityColors = {
         critical: 'border-l-red-500 bg-red-50/50',
         high: 'border-l-orange-500 bg-orange-50/50',
@@ -164,10 +175,10 @@ function AlertCard({ alert, onAcknowledge, onResolve, isLoading }: AlertCardProp
                             <h3 className="font-semibold text-gray-900">{alert.title}</h3>
                             <SeverityBadge severity={alert.severity} />
                             {alert.status === 'acknowledged' && (
-                                <Badge variant="info" size="sm">Acknowledged</Badge>
+                                <Badge variant="info" size="sm">{t('alerts.acknowledged')}</Badge>
                             )}
                             {alert.status === 'resolved' && (
-                                <Badge variant="success" size="sm">Resolved</Badge>
+                                <Badge variant="success" size="sm">{t('alerts.resolved')}</Badge>
                             )}
                         </div>
 
@@ -175,7 +186,7 @@ function AlertCard({ alert, onAcknowledge, onResolve, isLoading }: AlertCardProp
 
                         <div className="flex items-center gap-4 text-sm text-gray-500">
                             <span>
-                                Patient: <span className="font-medium text-gray-700">{alert.patients?.full_name || 'Unknown'}</span>
+                                Patient: <span className="font-medium text-gray-700">{alert.patients?.full_name || t('alerts.unknownPatient')}</span>
                             </span>
                             <span>{formatRelativeTime(alert.created_at)}</span>
                         </div>
@@ -191,7 +202,7 @@ function AlertCard({ alert, onAcknowledge, onResolve, isLoading }: AlertCardProp
                                 isLoading={isLoading}
                                 leftIcon={<Check size={16} />}
                             >
-                                Acknowledge
+                                {t('alerts.acknowledge')}
                             </Button>
                             <Button
                                 variant="primary"
@@ -200,7 +211,7 @@ function AlertCard({ alert, onAcknowledge, onResolve, isLoading }: AlertCardProp
                                 isLoading={isLoading}
                                 leftIcon={<CheckCircle size={16} />}
                             >
-                                Resolve
+                                {t('alerts.resolve')}
                             </Button>
                         </div>
                     )}
@@ -213,7 +224,7 @@ function AlertCard({ alert, onAcknowledge, onResolve, isLoading }: AlertCardProp
                             isLoading={isLoading}
                             leftIcon={<CheckCircle size={16} />}
                         >
-                            Resolve
+                            {t('alerts.resolve')}
                         </Button>
                     )}
                 </div>

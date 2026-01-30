@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
     LayoutDashboard,
     Users,
@@ -13,14 +14,16 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/auth-store';
 import { alertsService } from '../../services/alerts.service';
+import { LanguageSwitcher } from '../common/LanguageSwitcher';
 
 const navItems = [
-    { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/patients', label: 'Patients', icon: Users },
-    { to: '/alerts', label: 'Alerts', icon: Bell },
+    { to: '/', labelKey: 'nav.dashboard', icon: LayoutDashboard },
+    { to: '/patients', labelKey: 'nav.patients', icon: Users },
+    { to: '/alerts', labelKey: 'nav.alerts', icon: Bell },
 ];
 
 export function Sidebar() {
+    const { t } = useTranslation();
     const location = useLocation();
     const { doctor, signOut } = useAuthStore();
     const [newAlertCount, setNewAlertCount] = useState(0);
@@ -42,8 +45,8 @@ export function Sidebar() {
                         <Activity size={22} className="text-white" />
                     </div>
                     <div>
-                        <h1 className="font-bold text-lg text-gray-900">GlucoPlot</h1>
-                        <p className="text-xs text-gray-500">Doctor Portal</p>
+                        <h1 className="font-bold text-lg text-gray-900">{t('app.name')}</h1>
+                        <p className="text-xs text-gray-500">{t('app.subtitle')}</p>
                     </div>
                 </div>
             </div>
@@ -51,9 +54,10 @@ export function Sidebar() {
             {/* Navigation */}
             <nav className="flex-1 p-4">
                 <ul className="space-y-1">
-                    {navItems.map(({ to, label, icon: Icon }) => {
+                    {navItems.map(({ to, labelKey, icon: Icon }) => {
                         const isActive = location.pathname === to ||
                             (to !== '/' && location.pathname.startsWith(to));
+                        const label = t(labelKey);
 
                         return (
                             <li key={to}>
@@ -70,7 +74,7 @@ export function Sidebar() {
                                 >
                                     <Icon size={20} />
                                     <span>{label}</span>
-                                    {label === 'Alerts' && newAlertCount > 0 && (
+                                    {labelKey === 'nav.alerts' && newAlertCount > 0 && (
                                         <span className="ml-auto bg-red-500 text-white text-xs font-medium px-2 py-0.5 rounded-full">
                                             {newAlertCount}
                                         </span>
@@ -81,6 +85,11 @@ export function Sidebar() {
                     })}
                 </ul>
             </nav>
+
+            {/* Language Switcher */}
+            <div className="px-4 py-2 border-t border-gray-100">
+                <LanguageSwitcher />
+            </div>
 
             {/* User Profile & Sign Out */}
             <div className="p-4 border-t border-gray-100">
@@ -96,7 +105,7 @@ export function Sidebar() {
                             {doctor?.full_name || 'Doctor'}
                         </p>
                         <p className="text-xs text-gray-500 truncate">
-                            {doctor?.specialty || 'General Practice'}
+                            {doctor?.specialty || t('auth.generalPractice')}
                         </p>
                     </div>
                 </div>
@@ -107,7 +116,7 @@ export function Sidebar() {
                     className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors"
                 >
                     <LogOut size={20} />
-                    <span>Sign Out</span>
+                    <span>{t('nav.signOut')}</span>
                 </button>
             </div>
         </aside>
