@@ -10,8 +10,8 @@ import {
     Users,
     Bell,
     LogOut,
-    Activity
 } from 'lucide-react';
+import { GlucoPlotIcon } from '../common/GlucoPlotIcon';
 import { useAuthStore } from '../../stores/auth-store';
 import { alertsService } from '../../services/alerts.service';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
@@ -42,7 +42,7 @@ export function Sidebar() {
             <div className="p-6 border-b border-gray-100">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center">
-                        <Activity size={22} className="text-white" />
+                        <GlucoPlotIcon size={24} className="text-white" />
                     </div>
                     <div>
                         <h1 className="font-bold text-lg text-gray-900">{t('app.name')}</h1>

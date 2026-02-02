@@ -73,28 +73,34 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 });
             }
 
-            // Listen for auth changes - handle ALL relevant events
+            // Listen for auth changes
+            // Note: SIGNED_IN is handled by signIn() directly to avoid race conditions
             const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
                 console.log('Auth event:', event);
 
-                if (event === 'SIGNED_IN' && session?.user) {
-                    const doctor = await fetchDoctorProfile(session.user.id);
-                    set({ user: session.user, doctor });
-                } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-                    // Token refresh doesn't change user data, only the JWT
-                    // Only update state if user ID changed (shouldn't happen, but safety check)
-                    const currentUser = get().user;
-                    if (!currentUser || currentUser.id !== session.user.id) {
+                try {
+                    if (event === 'SIGNED_IN' && session?.user) {
+                        // Skip if signIn() already set the user (avoid race condition)
+                        const currentUser = get().user;
+                        if (currentUser?.id === session.user.id) {
+                            return;
+                        }
+                        // Only fetch if user changed (e.g., OAuth, magic link, page reload)
+                        const doctor = await fetchDoctorProfile(session.user.id);
+                        set({ user: session.user, doctor, isLoading: false });
+                    } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+                        // Token refresh doesn't change user data, only the JWT
+                        // Don't update state - avoids unnecessary re-renders
+                        console.log('Token refreshed for user:', session.user.id);
+                    } else if (event === 'SIGNED_OUT') {
+                        set({ user: null, doctor: null, isLoading: false });
+                    } else if (event === 'USER_UPDATED' && session?.user) {
                         const doctor = await fetchDoctorProfile(session.user.id);
                         set({ user: session.user, doctor });
                     }
-                    // If same user, don't update state - avoids unnecessary re-renders
-                } else if (event === 'SIGNED_OUT') {
-                    set({ user: null, doctor: null });
-                } else if (event === 'USER_UPDATED' && session?.user) {
-                    // Refetch doctor profile on user update
-                    const doctor = await fetchDoctorProfile(session.user.id);
-                    set({ user: session.user, doctor });
+                } catch (error) {
+                    console.error('Auth state change error:', error);
+                    set({ isLoading: false });
                 }
             });
 
@@ -161,13 +167,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     },
 
     signOut: async () => {
+        // Clear local state immediately for instant UI feedback
+        set({ user: null, doctor: null, isLoading: false });
+
+        // Sign out from Supabase in background (don't block UI)
         try {
-            set({ isLoading: true });
             await supabase.auth.signOut();
-            set({ user: null, doctor: null, isLoading: false });
         } catch (error) {
             console.error('Sign out error:', error);
-            set({ isLoading: false });
+            // State already cleared, user sees login screen regardless
         }
     },
 

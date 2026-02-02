@@ -37,6 +37,7 @@ export function PatientsPage() {
     ];
 
     const { user, isInitialized } = useAuthStore();
+    const userId = user?.id; // Use primitive for stable dependency
 
     const loadPatients = useCallback(async (signal?: AbortSignal) => {
         try {
@@ -61,7 +62,7 @@ export function PatientsPage() {
     }, [statusFilter, searchQuery]);
 
     useEffect(() => {
-        if (!isInitialized || !user) return;
+        if (!isInitialized || !userId) return;
 
         const abortController = new AbortController();
         loadPatients(abortController.signal);
@@ -69,7 +70,7 @@ export function PatientsPage() {
         return () => {
             abortController.abort();
         };
-    }, [isInitialized, user, loadPatients]);
+    }, [isInitialized, userId, loadPatients]);
 
     const handlePatientCreated = async (data: PatientOnboardingData) => {
         const result = await onboardingService.createPatientWithOnboarding(data);

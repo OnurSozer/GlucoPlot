@@ -20,6 +20,7 @@ interface AlertWithPatient extends RiskAlert {
 export function AlertsPage() {
     const { t } = useTranslation();
     const { user, isInitialized } = useAuthStore();
+    const userId = user?.id; // Use primitive for stable dependency
     const [alerts, setAlerts] = useState<AlertWithPatient[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState<AlertStatus | 'all'>('new');
@@ -54,7 +55,7 @@ export function AlertsPage() {
     }, [statusFilter]);
 
     useEffect(() => {
-        if (!isInitialized || !user) return;
+        if (!isInitialized || !userId) return;
 
         const abortController = new AbortController();
         loadAlerts(abortController.signal);
@@ -62,7 +63,7 @@ export function AlertsPage() {
         return () => {
             abortController.abort();
         };
-    }, [isInitialized, user, loadAlerts]);
+    }, [isInitialized, userId, loadAlerts]);
 
     const handleAcknowledge = async (alertId: string) => {
         try {

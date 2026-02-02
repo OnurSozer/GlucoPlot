@@ -29,6 +29,7 @@ interface AlertWithPatient extends RiskAlert {
 export function DashboardPage() {
     const { t } = useTranslation();
     const { doctor, user, isInitialized } = useAuthStore();
+    const userId = user?.id; // Use primitive for stable dependency
     const [stats, setStats] = useState<DashboardStats>({
         totalPatients: 0,
         activePatients: 0,
@@ -77,10 +78,7 @@ export function DashboardPage() {
     }, []);
 
     useEffect(() => {
-        console.log('[Dashboard] Effect running', { isInitialized, hasUser: !!user });
-
-        if (!isInitialized || !user) {
-            console.log('[Dashboard] Auth not ready, skipping load');
+        if (!isInitialized || !userId) {
             return;
         }
 
@@ -88,10 +86,9 @@ export function DashboardPage() {
         loadDashboardData(abortController.signal);
 
         return () => {
-            console.log('[Dashboard] Cleanup - aborting pending requests');
             abortController.abort();
         };
-    }, [isInitialized, user, loadDashboardData]);
+    }, [isInitialized, userId, loadDashboardData]);
 
     if (isLoading) {
         return (
