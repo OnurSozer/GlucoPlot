@@ -16,15 +16,36 @@ class DailyLogBloc extends Bloc<DailyLogEvent, DailyLogState> {
     on<DailyLogRefreshRequested>(_onRefreshRequested);
     on<DailyLogDateChanged>(_onDateChanged);
     on<DailyLogCategoryFilterChanged>(_onCategoryFilterChanged);
-    on<DailyLogMealAdded>(_onMealAdded);
-    on<DailyLogExerciseAdded>(_onExerciseAdded);
-    on<DailyLogMedicationAdded>(_onMedicationAdded);
-    on<DailyLogSleepAdded>(_onSleepAdded);
-    on<DailyLogNoteAdded>(_onNoteAdded);
+    on<DailyLogAdded>(_onLogAdded);
     on<DailyLogDeleteRequested>(_onDeleteRequested);
   }
 
   final DailyLogRepository _repository;
+
+  /// Convert string category to LogType
+  LogType? _categoryToLogType(String? category) {
+    if (category == null) return null;
+    switch (category.toLowerCase()) {
+      case 'meal':
+      case 'food':
+        return LogType.food;
+      case 'sleep':
+        return LogType.sleep;
+      case 'exercise':
+      case 'sports':
+        return LogType.exercise;
+      case 'medication':
+      case 'medicine':
+        return LogType.medication;
+      case 'symptom':
+        return LogType.symptom;
+      case 'note':
+      case 'stress':
+        return LogType.note;
+      default:
+        return null;
+    }
+  }
 
   Future<void> _onLoadRequested(
     DailyLogLoadRequested event,
@@ -34,7 +55,7 @@ class DailyLogBloc extends Bloc<DailyLogEvent, DailyLogState> {
 
     final result = await _repository.getLogs(
       date: event.date,
-      category: event.category,
+      logType: event.logType,
       limit: 50,
     );
 
@@ -43,7 +64,7 @@ class DailyLogBloc extends Bloc<DailyLogEvent, DailyLogState> {
         emit(DailyLogLoaded(
           logs: data,
           selectedDate: event.date,
-          filterCategory: event.category,
+          filterLogType: event.logType,
         ));
       case DailyLogFailure(:final message):
         emit(DailyLogError(message));
@@ -61,7 +82,7 @@ class DailyLogBloc extends Bloc<DailyLogEvent, DailyLogState> {
 
     final result = await _repository.getLogs(
       date: currentState.selectedDate,
-      category: currentState.filterCategory,
+      logType: currentState.filterLogType,
       limit: 50,
     );
 
@@ -78,15 +99,15 @@ class DailyLogBloc extends Bloc<DailyLogEvent, DailyLogState> {
     Emitter<DailyLogState> emit,
   ) async {
     final currentState = state;
-    final category = currentState is DailyLogLoaded
-        ? currentState.filterCategory
+    final logType = currentState is DailyLogLoaded
+        ? currentState.filterLogType
         : null;
 
     emit(const DailyLogLoading());
 
     final result = await _repository.getLogs(
       date: event.date,
-      category: category,
+      logType: logType,
       limit: 50,
     );
 
@@ -95,7 +116,7 @@ class DailyLogBloc extends Bloc<DailyLogEvent, DailyLogState> {
         emit(DailyLogLoaded(
           logs: data,
           selectedDate: event.date,
-          filterCategory: category,
+          filterLogType: logType,
         ));
       case DailyLogFailure(:final message):
         emit(DailyLogError(message));
@@ -113,9 +134,11 @@ class DailyLogBloc extends Bloc<DailyLogEvent, DailyLogState> {
 
     emit(const DailyLogLoading());
 
+    final logType = _categoryToLogType(event.category);
+
     final result = await _repository.getLogs(
       date: date,
-      category: event.category,
+      logType: logType,
       limit: 50,
     );
 
@@ -124,144 +147,41 @@ class DailyLogBloc extends Bloc<DailyLogEvent, DailyLogState> {
         emit(DailyLogLoaded(
           logs: data,
           selectedDate: date,
-          filterCategory: event.category,
+          filterLogType: logType,
         ));
       case DailyLogFailure(:final message):
         emit(DailyLogError(message));
     }
   }
 
-  Future<void> _onMealAdded(
-    DailyLogMealAdded event,
+  Future<void> _onLogAdded(
+    DailyLogAdded event,
     Emitter<DailyLogState> emit,
   ) async {
     final currentState = state;
-    if (currentState is! DailyLogLoaded) return;
 
-    emit(currentState.copyWith(isSubmitting: true));
-
-    final result = await _repository.addMealLog(
-      logDate: event.logDate,
-      mealType: event.mealType,
-      mealDescription: event.mealDescription,
-      carbsGrams: event.carbsGrams,
-      notes: event.notes,
-    );
-
-    switch (result) {
-      case DailyLogSuccess(:final data):
-        final updated = [data, ...currentState.logs];
-        emit(currentState.copyWith(
-          logs: updated,
-          isSubmitting: false,
-          submitSuccess: true,
-        ));
-      case DailyLogFailure(:final message):
-        emit(currentState.copyWith(isSubmitting: false, error: message));
+    // If not in loaded state, just add the log without updating UI list
+    if (currentState is! DailyLogLoaded) {
+      await _repository.addLog(
+        logDate: event.logDate,
+        logType: event.logType,
+        title: event.title,
+        description: event.description,
+        metadata: event.metadata,
+        loggedAt: event.loggedAt,
+      );
+      return;
     }
-  }
-
-  Future<void> _onExerciseAdded(
-    DailyLogExerciseAdded event,
-    Emitter<DailyLogState> emit,
-  ) async {
-    final currentState = state;
-    if (currentState is! DailyLogLoaded) return;
 
     emit(currentState.copyWith(isSubmitting: true));
 
-    final result = await _repository.addExerciseLog(
+    final result = await _repository.addLog(
       logDate: event.logDate,
-      exerciseType: event.exerciseType,
-      durationMinutes: event.durationMinutes,
-      intensity: event.intensity,
-      notes: event.notes,
-    );
-
-    switch (result) {
-      case DailyLogSuccess(:final data):
-        final updated = [data, ...currentState.logs];
-        emit(currentState.copyWith(
-          logs: updated,
-          isSubmitting: false,
-          submitSuccess: true,
-        ));
-      case DailyLogFailure(:final message):
-        emit(currentState.copyWith(isSubmitting: false, error: message));
-    }
-  }
-
-  Future<void> _onMedicationAdded(
-    DailyLogMedicationAdded event,
-    Emitter<DailyLogState> emit,
-  ) async {
-    final currentState = state;
-    if (currentState is! DailyLogLoaded) return;
-
-    emit(currentState.copyWith(isSubmitting: true));
-
-    final result = await _repository.addMedicationLog(
-      logDate: event.logDate,
-      taken: event.taken,
-      medicationNotes: event.medicationNotes,
-      notes: event.notes,
-    );
-
-    switch (result) {
-      case DailyLogSuccess(:final data):
-        final updated = [data, ...currentState.logs];
-        emit(currentState.copyWith(
-          logs: updated,
-          isSubmitting: false,
-          submitSuccess: true,
-        ));
-      case DailyLogFailure(:final message):
-        emit(currentState.copyWith(isSubmitting: false, error: message));
-    }
-  }
-
-  Future<void> _onSleepAdded(
-    DailyLogSleepAdded event,
-    Emitter<DailyLogState> emit,
-  ) async {
-    final currentState = state;
-    if (currentState is! DailyLogLoaded) return;
-
-    emit(currentState.copyWith(isSubmitting: true));
-
-    final result = await _repository.addSleepLog(
-      logDate: event.logDate,
-      hours: event.hours,
-      quality: event.quality,
-      notes: event.notes,
-    );
-
-    switch (result) {
-      case DailyLogSuccess(:final data):
-        final updated = [data, ...currentState.logs];
-        emit(currentState.copyWith(
-          logs: updated,
-          isSubmitting: false,
-          submitSuccess: true,
-        ));
-      case DailyLogFailure(:final message):
-        emit(currentState.copyWith(isSubmitting: false, error: message));
-    }
-  }
-
-  Future<void> _onNoteAdded(
-    DailyLogNoteAdded event,
-    Emitter<DailyLogState> emit,
-  ) async {
-    final currentState = state;
-    if (currentState is! DailyLogLoaded) return;
-
-    emit(currentState.copyWith(isSubmitting: true));
-
-    final result = await _repository.addNote(
-      logDate: event.logDate,
-      notes: event.notes,
-      stressLevel: event.stressLevel,
+      logType: event.logType,
+      title: event.title,
+      description: event.description,
+      metadata: event.metadata,
+      loggedAt: event.loggedAt,
     );
 
     switch (result) {

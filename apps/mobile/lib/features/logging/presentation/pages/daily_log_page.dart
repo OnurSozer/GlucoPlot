@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/theme.dart';
@@ -19,18 +18,32 @@ class DailyLogPage extends StatefulWidget {
 }
 
 class _DailyLogPageState extends State<DailyLogPage> {
-  String? _selectedCategory;
+  late DateTime _selectedDate;
 
   @override
   void initState() {
     super.initState();
-    context.read<DailyLogBloc>().add(const DailyLogLoadRequested());
+    _selectedDate = DateTime.now();
+    // Load logs for today
+    context.read<DailyLogBloc>().add(DailyLogLoadRequested(date: _selectedDate));
   }
 
-  void _onCategoryChanged(String? category) {
+  void _onDateChanged(DateTime date) {
     HapticFeedback.selectionClick();
-    setState(() => _selectedCategory = category);
-    context.read<DailyLogBloc>().add(DailyLogCategoryFilterChanged(category));
+    setState(() => _selectedDate = date);
+    context.read<DailyLogBloc>().add(DailyLogDateChanged(date));
+  }
+
+  Future<void> _showDatePicker() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null && picked != _selectedDate) {
+      _onDateChanged(picked);
+    }
   }
 
   void _deleteLog(DailyLog log) {
@@ -80,10 +93,21 @@ class _DailyLogPageState extends State<DailyLogPage> {
       l10n.localeName == 'tr' ? 'Geri Al' : 'Undo';
   String _getTrackActivitiesLabel(AppLocalizations l10n) =>
       l10n.localeName == 'tr' ? 'Günlük aktivitelerinizi takip edin' : 'Track your daily activities';
-  String _getNoEntriesLabel(AppLocalizations l10n) =>
-      l10n.localeName == 'tr' ? 'Henüz kayıt yok' : 'No log entries yet';
-  String _getStartTrackingLabel(AppLocalizations l10n) =>
-      l10n.localeName == 'tr' ? 'Ana sayfadan aktivite ekleyebilirsiniz' : 'Add activities from the home page';
+  String _getNoEntriesLabel(AppLocalizations l10n) {
+    final isToday = DateUtils.isSameDay(_selectedDate, DateTime.now());
+    if (isToday) {
+      return l10n.localeName == 'tr' ? 'Bugün kayıt yok' : 'No entries today';
+    }
+    return l10n.localeName == 'tr' ? 'Bu tarihte kayıt yok' : 'No entries for this date';
+  }
+
+  String _getStartTrackingLabel(AppLocalizations l10n) {
+    final isToday = DateUtils.isSameDay(_selectedDate, DateTime.now());
+    if (isToday) {
+      return l10n.localeName == 'tr' ? 'Ana sayfadan aktivite ekleyebilirsiniz' : 'Add activities from the home page';
+    }
+    return l10n.localeName == 'tr' ? 'Başka bir tarih seçin' : 'Select a different date';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -117,14 +141,14 @@ class _DailyLogPageState extends State<DailyLogPage> {
                   ),
                 ),
 
-                // Category filter
+                // Date picker
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.md,
                       vertical: AppSpacing.sm,
                     ),
-                    child: _buildCategoryFilter(l10n, isDark),
+                    child: _buildDatePicker(l10n, isDark),
                   ),
                 ),
 
@@ -172,29 +196,92 @@ class _DailyLogPageState extends State<DailyLogPage> {
     );
   }
 
-  Widget _buildCategoryFilter(AppLocalizations l10n, bool isDark) {
-    final categories = [
-      (null, l10n.all, null, null),
-      ('meal', l10n.food, Icons.restaurant_rounded, AppColors.food),
-      ('sleep', l10n.sleep, Icons.bedtime_rounded, AppColors.sleep),
-      ('exercise', l10n.exercise, Icons.fitness_center_rounded, AppColors.exercise),
-      ('medication', l10n.medication, Icons.medication_rounded, AppColors.medication),
-    ];
+  Widget _buildDatePicker(AppLocalizations l10n, bool isDark) {
+    final dateFormatter = DateFormat('EEEE, d MMMM yyyy', l10n.localeName);
+    final isToday = DateUtils.isSameDay(_selectedDate, DateTime.now());
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: categories.map((cat) {
-          return _FilterChip(
-            label: cat.$2,
-            icon: cat.$3,
-            color: cat.$4,
-            isSelected: _selectedCategory == cat.$1,
-            isDark: isDark,
-            onTap: () => _onCategoryChanged(cat.$1),
-          );
-        }).toList(),
-      ),
+    final primaryColor = isDark ? AppColors.primaryDarkMode : AppColors.primary;
+    final surfaceColor = isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceVariant;
+    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+
+    return Row(
+      children: [
+        // Previous day button
+        IconButton(
+          onPressed: () => _onDateChanged(_selectedDate.subtract(const Duration(days: 1))),
+          icon: Icon(
+            Icons.chevron_left_rounded,
+            color: textSecondary,
+          ),
+          visualDensity: VisualDensity.compact,
+        ),
+
+        // Date display - tap to open picker
+        Expanded(
+          child: GestureDetector(
+            onTap: _showDatePicker,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: surfaceColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: primaryColor.withValues(alpha: 0.3),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.calendar_today_rounded,
+                    size: 18,
+                    color: primaryColor,
+                  ),
+                  const SizedBox(width: 24),
+                  Column(
+                    children: [
+                      if (isToday)
+                        Text(
+                          l10n.localeName == 'tr' ? 'Bugün' : 'Today',
+                          style: AppTypography.labelMedium.copyWith(
+                            color: primaryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      Text(
+                        dateFormatter.format(_selectedDate),
+                        style: AppTypography.bodySmall.copyWith(
+                          color: isToday ? textSecondary : textPrimary,
+                          fontWeight: isToday ? FontWeight.normal : FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 24),
+                  Icon(
+                    Icons.arrow_drop_down_rounded,
+                    color: textSecondary,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // Next day button (disabled if today)
+        IconButton(
+          onPressed: isToday
+              ? null
+              : () => _onDateChanged(_selectedDate.add(const Duration(days: 1))),
+          icon: Icon(
+            Icons.chevron_right_rounded,
+            color: isToday ? textSecondary.withValues(alpha: 0.3) : textSecondary,
+          ),
+          visualDensity: VisualDensity.compact,
+        ),
+      ],
     );
   }
 
@@ -223,7 +310,7 @@ class _DailyLogPageState extends State<DailyLogPage> {
               label: l10n.retry,
               variant: AppButtonVariant.outlined,
               onPressed: () {
-                context.read<DailyLogBloc>().add(const DailyLogLoadRequested());
+                context.read<DailyLogBloc>().add(DailyLogLoadRequested(date: _selectedDate));
               },
             ),
           ],
@@ -270,72 +357,6 @@ class _DailyLogPageState extends State<DailyLogPage> {
   }
 }
 
-class _FilterChip extends StatelessWidget {
-  const _FilterChip({
-    required this.label,
-    this.icon,
-    this.color,
-    this.isSelected = false,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData? icon;
-  final Color? color;
-  final bool isSelected;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final surfaceColor = isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceVariant;
-    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
-    final chipColor = isDark ? (color ?? AppColors.primaryDarkMode) : (color ?? AppColors.primary);
-
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? chipColor.withValues(alpha: isDark ? 0.2 : 0.15)
-                : surfaceColor,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isSelected ? chipColor : Colors.transparent,
-              width: 2,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (icon != null) ...[
-                Icon(
-                  icon,
-                  size: 18,
-                  color: isSelected ? chipColor : textSecondary,
-                ),
-                const SizedBox(width: 6),
-              ],
-              Text(
-                label,
-                style: AppTypography.labelMedium.copyWith(
-                  color: isSelected ? chipColor : textSecondary,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _LogEntryCard extends StatelessWidget {
   const _LogEntryCard({
     required this.log,
@@ -348,68 +369,100 @@ class _LogEntryCard extends StatelessWidget {
   final VoidCallback? onDelete;
 
   (Color, IconData, String) _getLogTypeInfo() {
-    if (log.isMealLog) {
-      return (AppColors.food, Icons.restaurant_rounded, log.mealType!.displayName);
+    switch (log.logType) {
+      case LogType.food:
+        return (AppColors.food, Icons.restaurant_rounded, log.title);
+      case LogType.exercise:
+        return (AppColors.exercise, Icons.fitness_center_rounded, log.title);
+      case LogType.medication:
+        return (AppColors.medication, Icons.medication_rounded, log.title);
+      case LogType.sleep:
+        return (AppColors.sleep, Icons.bedtime_rounded, log.title);
+      case LogType.symptom:
+        return (AppColors.warning, Icons.psychology_rounded, log.title);
+      case LogType.note:
+        // Check metadata for specific type (water, alcohol, toilet)
+        final subType = log.metadata?['type'] as String?;
+        if (subType == 'water') {
+          return (AppColors.secondaryDark, Icons.water_drop_rounded, log.title);
+        } else if (subType == 'alcohol') {
+          return (AppColors.symptom, Icons.wine_bar_rounded, log.title);
+        } else if (subType == 'toilet') {
+          return (AppColors.secondary, Icons.wc_rounded, log.title);
+        }
+        return (AppColors.secondary, Icons.note_alt_rounded, log.title);
     }
-    if (log.isExerciseLog) {
-      return (AppColors.exercise, Icons.fitness_center_rounded, log.exerciseType ?? 'Exercise');
-    }
-    if (log.isMedicationLog) {
-      return (AppColors.medication, Icons.medication_rounded, 'Medication');
-    }
-    if (log.isSleepLog) {
-      return (AppColors.sleep, Icons.bedtime_rounded, 'Sleep');
-    }
-    return (AppColors.secondary, Icons.note_alt_rounded, 'Note');
   }
 
   String _getDescription() {
-    if (log.isMealLog) {
-      return log.mealDescription ?? 'Meal logged';
-    }
-    if (log.isExerciseLog) {
-      final duration = log.exerciseDurationMinutes;
-      final intensity = log.exerciseIntensity?.displayName;
-      return duration != null
-          ? '$duration minutes${intensity != null ? ' - $intensity' : ''}'
-          : 'Exercise logged';
-    }
-    if (log.isMedicationLog) {
-      return log.medicationTaken == true
-          ? 'Taken${log.medicationNotes != null ? ' - ${log.medicationNotes}' : ''}'
-          : 'Not taken';
-    }
-    if (log.isSleepLog) {
-      final hours = log.sleepHours;
-      final quality = log.sleepQuality;
-      return hours != null
-          ? '${hours.toStringAsFixed(1)} hours${quality != null ? ' - Quality: $quality/5' : ''}'
-          : 'Sleep logged';
-    }
-    return log.notes ?? 'Entry logged';
-  }
+    final parts = <String>[];
 
-  Map<String, String> _getMetadata() {
-    final metadata = <String, String>{};
-
-    if (log.isMealLog && log.carbsGrams != null) {
-      metadata['Carbs'] = '${log.carbsGrams}g';
-    }
-    if (log.isExerciseLog && log.exerciseIntensity != null) {
-      metadata['Intensity'] = log.exerciseIntensity!.displayName;
-    }
-    if (log.stressLevel != null) {
-      metadata['Stress'] = '${log.stressLevel}/5';
+    // Add user description if available
+    if (log.description != null && log.description!.isNotEmpty) {
+      parts.add(log.description!);
     }
 
-    return metadata;
+    // Add metadata based on log type
+    switch (log.logType) {
+      case LogType.food:
+        final calories = log.calories;
+        final carbs = log.carbsGrams;
+        if (carbs != null) parts.add('${carbs}g carbs');
+        if (calories != null) parts.add('$calories cal');
+        if (parts.isEmpty) parts.add('Meal logged');
+
+      case LogType.exercise:
+        final duration = log.exerciseDuration;
+        final intensity = log.exerciseIntensity?.displayName;
+        if (duration != null) parts.add('$duration min');
+        if (intensity != null) parts.add(intensity);
+        if (parts.isEmpty) parts.add('Exercise logged');
+
+      case LogType.sleep:
+        final hours = log.sleepHours;
+        final quality = log.sleepQuality;
+        if (hours != null) parts.add('${hours.toStringAsFixed(1)} hours');
+        if (quality != null) parts.add('Quality: $quality');
+        if (parts.isEmpty) parts.add('Sleep logged');
+
+      case LogType.medication:
+        final dosage = log.metadata?['dosage'] as String?;
+        if (dosage != null) parts.add(dosage);
+        if (parts.isEmpty) parts.add('Medication taken');
+
+      case LogType.symptom:
+        final stressLevel = log.stressLevel;
+        if (stressLevel != null) parts.add('Stress: $stressLevel/10');
+        if (parts.isEmpty) parts.add('Symptom logged');
+
+      case LogType.note:
+        final subType = log.metadata?['type'] as String?;
+        if (subType == 'water') {
+          final amount = log.amountMl;
+          if (amount != null) parts.add('$amount ml');
+          if (parts.isEmpty) parts.add('Water logged');
+        } else if (subType == 'alcohol') {
+          final amount = log.amountMl;
+          final type = log.metadata?['alcohol_type'] as String?;
+          if (amount != null) parts.add('$amount ml');
+          if (type != null) parts.add(type);
+          if (parts.isEmpty) parts.add('Alcohol logged');
+        } else if (subType == 'toilet') {
+          final toiletType = log.metadata?['toilet_type'] as String?;
+          if (toiletType != null) parts.add(toiletType);
+          if (parts.isEmpty) parts.add('Bathroom visit');
+        } else {
+          if (parts.isEmpty) parts.add('Note logged');
+        }
+    }
+
+    return parts.join(' · ');
   }
 
   @override
   Widget build(BuildContext context) {
     final (color, icon, title) = _getLogTypeInfo();
     final description = _getDescription();
-    final metadata = _getMetadata();
     final timeFormatter = DateFormat('h:mm a');
     final time = log.createdAt != null
         ? timeFormatter.format(log.createdAt!)
@@ -419,7 +472,6 @@ class _LogEntryCard extends StatelessWidget {
     final borderColor = isDark ? AppColors.darkBorderSubtle : Colors.transparent;
     final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
     final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
-    final textTertiary = isDark ? AppColors.darkTextTertiary : AppColors.textTertiary;
     final typeColor = isDark ? _getDarkColor(color) : color;
 
     return Container(
@@ -467,42 +519,6 @@ class _LogEntryCard extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (log.notes != null && log.notes!.isNotEmpty && !log.isSleepLog) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    log.notes!,
-                    style: AppTypography.bodySmall.copyWith(
-                      color: textTertiary,
-                      fontStyle: FontStyle.italic,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-                if (metadata.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    children: metadata.entries.map((entry) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: typeColor.withValues(alpha: isDark ? 0.15 : 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          '${entry.key}: ${entry.value}',
-                          style: AppTypography.labelSmall.copyWith(
-                            color: typeColor,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ],
               ],
             ),
           ),

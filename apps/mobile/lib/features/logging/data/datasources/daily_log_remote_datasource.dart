@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../domain/entities/daily_log.dart';
 import '../models/daily_log_model.dart';
 
 /// Remote data source for daily logs
@@ -10,7 +11,7 @@ abstract class DailyLogRemoteDataSource {
     DateTime? date,
     DateTime? startDate,
     DateTime? endDate,
-    String? category,
+    LogType? logType,
     int? limit,
     int? offset,
   });
@@ -47,7 +48,7 @@ class DailyLogRemoteDataSourceImpl implements DailyLogRemoteDataSource {
     DateTime? date,
     DateTime? startDate,
     DateTime? endDate,
-    String? category,
+    LogType? logType,
     int? limit,
     int? offset,
   }) async {
@@ -69,28 +70,15 @@ class DailyLogRemoteDataSourceImpl implements DailyLogRemoteDataSource {
       filterQuery = filterQuery.lte('log_date', endDate.toIso8601String().split('T')[0]);
     }
 
-    // Filter by category
-    if (category != null) {
-      switch (category.toLowerCase()) {
-        case 'meal':
-          filterQuery = filterQuery.not('meal_type', 'is', null);
-          break;
-        case 'exercise':
-          filterQuery = filterQuery.not('exercise_type', 'is', null);
-          break;
-        case 'medication':
-          filterQuery = filterQuery.not('medication_taken', 'is', null);
-          break;
-        case 'sleep':
-          filterQuery = filterQuery.not('sleep_hours', 'is', null);
-          break;
-      }
+    // Filter by log type using the log_type enum column
+    if (logType != null) {
+      filterQuery = filterQuery.eq('log_type', logType.value);
     }
 
     // Chain transform operations
     var transformQuery = filterQuery
         .order('log_date', ascending: false)
-        .order('created_at', ascending: false);
+        .order('logged_at', ascending: false);
 
     if (limit != null) {
       transformQuery = transformQuery.limit(limit);
@@ -130,7 +118,7 @@ class DailyLogRemoteDataSourceImpl implements DailyLogRemoteDataSource {
         .select()
         .eq('patient_id', patientId)
         .eq('log_date', dateStr)
-        .order('created_at', ascending: false);
+        .order('logged_at', ascending: false);
 
     return (response as List)
         .map((json) => DailyLogModel.fromJson(json as Map<String, dynamic>))

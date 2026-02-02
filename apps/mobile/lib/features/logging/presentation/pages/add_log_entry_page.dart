@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import '../../../../core/theme/theme.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../domain/entities/daily_log.dart' as domain;
+import '../bloc/daily_log_bloc.dart';
 import '../widgets/log_type.dart';
 
 /// Add log entry page with full localization and dark mode support
@@ -140,6 +143,101 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
     });
   }
 
+  /// Map UI LogType to domain LogType
+  domain.LogType _mapToDomainLogType() {
+    switch (_selectedType) {
+      case LogType.food:
+        return domain.LogType.food;
+      case LogType.medication:
+        return domain.LogType.medication;
+      case LogType.exercise:
+        return domain.LogType.exercise;
+      case LogType.sleep:
+        return domain.LogType.sleep;
+      case LogType.stress:
+        return domain.LogType.symptom; // Stress is stored as symptom
+      case LogType.water:
+      case LogType.alcohol:
+      case LogType.toilet:
+        return domain.LogType.note; // These are stored as notes with metadata
+    }
+  }
+
+  /// Build metadata based on log type
+  Map<String, dynamic> _buildMetadata() {
+    final metadata = <String, dynamic>{};
+
+    switch (_selectedType) {
+      case LogType.food:
+        if (_caloriesController.text.isNotEmpty) {
+          metadata['calories'] = int.tryParse(_caloriesController.text);
+        }
+        if (_carbsController.text.isNotEmpty) {
+          metadata['carbs_grams'] = int.tryParse(_carbsController.text);
+        }
+        break;
+
+      case LogType.sleep:
+        if (_durationController.text.isNotEmpty) {
+          metadata['hours'] = double.tryParse(_durationController.text);
+        }
+        if (_sleepQuality != null) {
+          metadata['quality'] = _sleepQuality;
+        }
+        break;
+
+      case LogType.exercise:
+        if (_durationController.text.isNotEmpty) {
+          metadata['duration_minutes'] = int.tryParse(_durationController.text);
+        }
+        if (_caloriesController.text.isNotEmpty) {
+          metadata['calories_burned'] = int.tryParse(_caloriesController.text);
+        }
+        break;
+
+      case LogType.medication:
+        if (_dosageController.text.isNotEmpty) {
+          metadata['dosage'] = _dosageController.text;
+        }
+        break;
+
+      case LogType.water:
+        metadata['type'] = 'water';
+        if (_amountController.text.isNotEmpty) {
+          metadata['amount_ml'] = int.tryParse(_amountController.text);
+        }
+        break;
+
+      case LogType.alcohol:
+        metadata['type'] = 'alcohol';
+        if (_amountController.text.isNotEmpty) {
+          metadata['amount_ml'] = int.tryParse(_amountController.text);
+        }
+        if (_alcoholType != null) {
+          metadata['alcohol_type'] = _alcoholType;
+        }
+        break;
+
+      case LogType.toilet:
+        metadata['type'] = 'toilet';
+        if (_toiletType != null) {
+          metadata['toilet_type'] = _toiletType;
+        }
+        break;
+
+      case LogType.stress:
+        if (_stressLevelController.text.isNotEmpty) {
+          metadata['stress_level'] = int.tryParse(_stressLevelController.text);
+        }
+        if (_triggersController.text.isNotEmpty) {
+          metadata['triggers'] = _triggersController.text;
+        }
+        break;
+    }
+
+    return metadata;
+  }
+
   Future<void> _submit() async {
     final l10n = AppLocalizations.of(context)!;
 
@@ -158,31 +256,54 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
     setState(() => _isSubmitting = true);
     HapticFeedback.mediumImpact();
 
-    // TODO: Save to database via repository
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      // Dispatch DailyLogAdded event to BLoC
+      context.read<DailyLogBloc>().add(DailyLogAdded(
+        logDate: _selectedDateTime,
+        logType: _mapToDomainLogType(),
+        title: _titleController.text,
+        description: _descriptionController.text.isNotEmpty
+            ? _descriptionController.text
+            : null,
+        metadata: _buildMetadata(),
+        loggedAt: _selectedDateTime,
+      ));
 
-    if (mounted) {
-      HapticFeedback.lightImpact();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle_rounded, color: Colors.white),
-              const SizedBox(width: 12),
-              Text(
-                l10n.entrySaved,
-                style: const TextStyle(fontWeight: FontWeight.w500),
-              ),
-            ],
+      if (mounted) {
+        HapticFeedback.lightImpact();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle_rounded, color: Colors.white),
+                const SizedBox(width: 12),
+                Text(
+                  l10n.entrySaved,
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+            backgroundColor: AppColors.success,
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          backgroundColor: AppColors.success,
-          duration: const Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
-      context.pop();
+        );
+        context.pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        HapticFeedback.heavyImpact();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.genericError),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 

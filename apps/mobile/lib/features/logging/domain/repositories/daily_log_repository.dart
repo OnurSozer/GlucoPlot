@@ -22,7 +22,7 @@ abstract class DailyLogRepository {
     DateTime? date,
     DateTime? startDate,
     DateTime? endDate,
-    String? category, // meal, exercise, medication, sleep
+    LogType? logType,
     int? limit,
     int? offset,
   });
@@ -33,45 +33,15 @@ abstract class DailyLogRepository {
   /// Get logs for a specific date
   Future<DailyLogResult<List<DailyLog>>> getLogsForDate(DateTime date);
 
-  /// Add a meal log
-  Future<DailyLogResult<DailyLog>> addMealLog({
+  /// Add a log (generic method for all log types)
+  /// Pass metadata for type-specific data (carbs, duration, etc.)
+  Future<DailyLogResult<DailyLog>> addLog({
     required DateTime logDate,
-    required MealType mealType,
-    String? mealDescription,
-    int? carbsGrams,
-    String? notes,
-  });
-
-  /// Add an exercise log
-  Future<DailyLogResult<DailyLog>> addExerciseLog({
-    required DateTime logDate,
-    required String exerciseType,
-    required int durationMinutes,
-    ExerciseIntensity? intensity,
-    String? notes,
-  });
-
-  /// Add a medication log
-  Future<DailyLogResult<DailyLog>> addMedicationLog({
-    required DateTime logDate,
-    required bool taken,
-    String? medicationNotes,
-    String? notes,
-  });
-
-  /// Add a sleep log
-  Future<DailyLogResult<DailyLog>> addSleepLog({
-    required DateTime logDate,
-    required double hours,
-    int? quality, // 1-5
-    String? notes,
-  });
-
-  /// Add a general note
-  Future<DailyLogResult<DailyLog>> addNote({
-    required DateTime logDate,
-    required String notes,
-    int? stressLevel, // 1-5
+    required LogType logType,
+    required String title,
+    String? description,
+    Map<String, dynamic>? metadata,
+    DateTime? loggedAt,
   });
 
   /// Update a log

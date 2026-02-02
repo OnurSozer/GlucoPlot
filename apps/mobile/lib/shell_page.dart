@@ -28,7 +28,7 @@ class ShellPage extends StatelessWidget {
         context.go('/dashboard');
         break;
       case 1:
-        context.go('/measurements');
+        context.go('/log');
         break;
       case 2:
         context.go('/settings');

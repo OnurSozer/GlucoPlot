@@ -23,7 +23,7 @@ class DailyLogLoaded extends DailyLogState {
   const DailyLogLoaded({
     required this.logs,
     this.selectedDate,
-    this.filterCategory,
+    this.filterLogType,
     this.isRefreshing = false,
     this.isSubmitting = false,
     this.submitSuccess = false,
@@ -32,7 +32,7 @@ class DailyLogLoaded extends DailyLogState {
 
   final List<DailyLog> logs;
   final DateTime? selectedDate;
-  final String? filterCategory;
+  final LogType? filterLogType;
   final bool isRefreshing;
   final bool isSubmitting;
   final bool submitSuccess;
@@ -42,7 +42,7 @@ class DailyLogLoaded extends DailyLogState {
   List<Object?> get props => [
         logs,
         selectedDate,
-        filterCategory,
+        filterLogType,
         isRefreshing,
         isSubmitting,
         submitSuccess,
@@ -52,7 +52,8 @@ class DailyLogLoaded extends DailyLogState {
   DailyLogLoaded copyWith({
     List<DailyLog>? logs,
     DateTime? selectedDate,
-    String? filterCategory,
+    LogType? filterLogType,
+    bool clearFilter = false,
     bool? isRefreshing,
     bool? isSubmitting,
     bool? submitSuccess,
@@ -61,7 +62,7 @@ class DailyLogLoaded extends DailyLogState {
     return DailyLogLoaded(
       logs: logs ?? this.logs,
       selectedDate: selectedDate ?? this.selectedDate,
-      filterCategory: filterCategory ?? this.filterCategory,
+      filterLogType: clearFilter ? null : (filterLogType ?? this.filterLogType),
       isRefreshing: isRefreshing ?? this.isRefreshing,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       submitSuccess: submitSuccess ?? false,

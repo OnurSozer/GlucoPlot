@@ -105,10 +105,7 @@ Future<void> initDependencies() async {
   // Use cases
   sl.registerLazySingleton(() => GetDailyLogs(sl()));
   sl.registerLazySingleton(() => GetLogsForDate(sl()));
-  sl.registerLazySingleton(() => AddMealLog(sl()));
-  sl.registerLazySingleton(() => AddExerciseLog(sl()));
-  sl.registerLazySingleton(() => AddMedicationLog(sl()));
-  sl.registerLazySingleton(() => AddSleepLog(sl()));
+  sl.registerLazySingleton(() => AddLogEntry(sl()));
 
   // BLoC
   sl.registerFactory(() => DailyLogBloc(repository: sl()));

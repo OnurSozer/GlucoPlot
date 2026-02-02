@@ -11,7 +11,7 @@ class GetDailyLogs {
     DateTime? date,
     DateTime? startDate,
     DateTime? endDate,
-    String? category,
+    LogType? logType,
     int? limit,
     int? offset,
   }) {
@@ -19,7 +19,7 @@ class GetDailyLogs {
       date: date,
       startDate: startDate,
       endDate: endDate,
-      category: category,
+      logType: logType,
       limit: limit,
       offset: offset,
     );
