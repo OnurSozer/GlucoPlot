@@ -81,6 +81,9 @@ class CurvedGradientHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppColors.darkBackground : AppColors.background;
+
     return Stack(
       children: [
         // Gradient background
@@ -116,7 +119,7 @@ class CurvedGradientHeader extends StatelessWidget {
                         Text(
                           subtitle!,
                           style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.textOnPrimary.withOpacity(0.9),
+                            color: AppColors.textOnPrimary.withValues(alpha: 0.9),
                           ),
                         ),
                       ],
@@ -128,16 +131,16 @@ class CurvedGradientHeader extends StatelessWidget {
             ),
           ),
         ),
-        // Curved white overlay at bottom
+        // Curved overlay at bottom - theme aware
         Positioned(
           bottom: 0,
           left: 0,
           right: 0,
           child: Container(
             height: 32,
-            decoration: const BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.only(
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(32),
                 topRight: Radius.circular(32),
               ),

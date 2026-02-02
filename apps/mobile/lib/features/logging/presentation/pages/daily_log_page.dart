@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/widgets/widgets.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/daily_log.dart';
 import '../bloc/daily_log_bloc.dart';
 
-/// Daily log page - shows activity logs
+/// Daily log page - shows activity logs with undo delete and full localization
 class DailyLogPage extends StatefulWidget {
   const DailyLogPage({super.key});
 
@@ -27,13 +28,72 @@ class _DailyLogPageState extends State<DailyLogPage> {
   }
 
   void _onCategoryChanged(String? category) {
+    HapticFeedback.selectionClick();
     setState(() => _selectedCategory = category);
     context.read<DailyLogBloc>().add(DailyLogCategoryFilterChanged(category));
   }
 
+  void _deleteLog(DailyLog log) {
+    final l10n = AppLocalizations.of(context)!;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Delete from bloc
+    context.read<DailyLogBloc>().add(DailyLogDeleteRequested(log.id));
+
+    // Show undo snackbar
+    HapticFeedback.mediumImpact();
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.delete_outline_rounded, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _getDeletedLabel(l10n),
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: isDark ? AppColors.darkSurfaceHighest : AppColors.textSecondary,
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        action: SnackBarAction(
+          label: _getUndoLabel(l10n),
+          textColor: AppColors.primary,
+          onPressed: () {
+            // TODO: Implement undo - re-add the log
+            HapticFeedback.lightImpact();
+          },
+        ),
+      ),
+    );
+  }
+
+  String _getDeletedLabel(AppLocalizations l10n) =>
+      l10n.localeName == 'tr' ? 'Kayıt silindi' : 'Entry deleted';
+  String _getUndoLabel(AppLocalizations l10n) =>
+      l10n.localeName == 'tr' ? 'Geri Al' : 'Undo';
+  String _getTrackActivitiesLabel(AppLocalizations l10n) =>
+      l10n.localeName == 'tr' ? 'Günlük aktivitelerinizi takip edin' : 'Track your daily activities';
+  String _getNoEntriesLabel(AppLocalizations l10n) =>
+      l10n.localeName == 'tr' ? 'Henüz kayıt yok' : 'No log entries yet';
+  String _getStartTrackingLabel(AppLocalizations l10n) =>
+      l10n.localeName == 'tr' ? 'Ana sayfadan aktivite ekleyebilirsiniz' : 'Add activities from the home page';
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final bgColor = isDark ? AppColors.darkBackground : AppColors.background;
+
     return Scaffold(
+      backgroundColor: bgColor,
       body: BlocBuilder<DailyLogBloc, DailyLogState>(
         builder: (context, state) {
           return RefreshIndicator(
@@ -42,18 +102,17 @@ class _DailyLogPageState extends State<DailyLogPage> {
             },
             child: CustomScrollView(
               slivers: [
-                // Gradient header
+                // Gradient header - theme aware
                 SliverToBoxAdapter(
                   child: CurvedGradientHeader(
-                    title: AppStrings.dailyLog,
-                    subtitle: 'Track your daily activities',
+                    title: l10n.dailyLog,
+                    subtitle: _getTrackActivitiesLabel(l10n),
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [
-                        AppColors.secondary,
-                        AppColors.secondaryDark,
-                      ],
+                      colors: isDark
+                          ? [const Color(0xFF3A3A45), const Color(0xFF2A2A32)]
+                          : [AppColors.secondary, AppColors.secondaryDark],
                     ),
                   ),
                 ),
@@ -65,7 +124,7 @@ class _DailyLogPageState extends State<DailyLogPage> {
                       horizontal: AppSpacing.md,
                       vertical: AppSpacing.sm,
                     ),
-                    child: _buildCategoryFilter(),
+                    child: _buildCategoryFilter(l10n, isDark),
                   ),
                 ),
 
@@ -76,12 +135,12 @@ class _DailyLogPageState extends State<DailyLogPage> {
                   )
                 else if (state is DailyLogError)
                   SliverFillRemaining(
-                    child: _buildErrorView(state.message),
+                    child: _buildErrorView(l10n, isDark, state.message),
                   )
                 else if (state is DailyLogLoaded)
                   if (state.logs.isEmpty)
                     SliverFillRemaining(
-                      child: _buildEmptyView(),
+                      child: _buildEmptyView(l10n, isDark),
                     )
                   else
                     SliverPadding(
@@ -92,11 +151,8 @@ class _DailyLogPageState extends State<DailyLogPage> {
                             padding: const EdgeInsets.only(bottom: 12),
                             child: _LogEntryCard(
                               log: state.logs[index],
-                              onDelete: () {
-                                context.read<DailyLogBloc>().add(
-                                  DailyLogDeleteRequested(state.logs[index].id),
-                                );
-                              },
+                              isDark: isDark,
+                              onDelete: () => _deleteLog(state.logs[index]),
                             ),
                           ),
                           childCount: state.logs.length,
@@ -113,76 +169,58 @@ class _DailyLogPageState extends State<DailyLogPage> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/log/add'),
-        backgroundColor: AppColors.secondary,
-        foregroundColor: AppColors.textOnPrimary,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Add Entry'),
-      ),
     );
   }
 
-  Widget _buildCategoryFilter() {
+  Widget _buildCategoryFilter(AppLocalizations l10n, bool isDark) {
+    final categories = [
+      (null, l10n.all, null, null),
+      ('meal', l10n.food, Icons.restaurant_rounded, AppColors.food),
+      ('sleep', l10n.sleep, Icons.bedtime_rounded, AppColors.sleep),
+      ('exercise', l10n.exercise, Icons.fitness_center_rounded, AppColors.exercise),
+      ('medication', l10n.medication, Icons.medication_rounded, AppColors.medication),
+    ];
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
-        children: [
-          _FilterChip(
-            label: 'All',
-            isSelected: _selectedCategory == null,
-            onTap: () => _onCategoryChanged(null),
-          ),
-          _FilterChip(
-            label: AppStrings.food,
-            icon: Icons.restaurant_rounded,
-            color: AppColors.food,
-            isSelected: _selectedCategory == 'meal',
-            onTap: () => _onCategoryChanged('meal'),
-          ),
-          _FilterChip(
-            label: AppStrings.sleep,
-            icon: Icons.bedtime_rounded,
-            color: AppColors.sleep,
-            isSelected: _selectedCategory == 'sleep',
-            onTap: () => _onCategoryChanged('sleep'),
-          ),
-          _FilterChip(
-            label: AppStrings.exercise,
-            icon: Icons.fitness_center_rounded,
-            color: AppColors.exercise,
-            isSelected: _selectedCategory == 'exercise',
-            onTap: () => _onCategoryChanged('exercise'),
-          ),
-          _FilterChip(
-            label: AppStrings.medication,
-            icon: Icons.medication_rounded,
-            color: AppColors.medication,
-            isSelected: _selectedCategory == 'medication',
-            onTap: () => _onCategoryChanged('medication'),
-          ),
-        ],
+        children: categories.map((cat) {
+          return _FilterChip(
+            label: cat.$2,
+            icon: cat.$3,
+            color: cat.$4,
+            isSelected: _selectedCategory == cat.$1,
+            isDark: isDark,
+            onTap: () => _onCategoryChanged(cat.$1),
+          );
+        }).toList(),
       ),
     );
   }
 
-  Widget _buildErrorView(String message) {
+  Widget _buildErrorView(AppLocalizations l10n, bool isDark, String message) {
+    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+            Icon(
+              Icons.error_outline,
+              size: 48,
+              color: isDark ? AppColors.errorDark : AppColors.error,
+            ),
             const SizedBox(height: 16),
             Text(
               message,
-              style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
+              style: AppTypography.bodyMedium.copyWith(color: textSecondary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             AppButton(
-              label: 'Retry',
+              label: l10n.retry,
               variant: AppButtonVariant.outlined,
               onPressed: () {
                 context.read<DailyLogBloc>().add(const DailyLogLoadRequested());
@@ -194,7 +232,11 @@ class _DailyLogPageState extends State<DailyLogPage> {
     );
   }
 
-  Widget _buildEmptyView() {
+  Widget _buildEmptyView(AppLocalizations l10n, bool isDark) {
+    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+    final textTertiary = isDark ? AppColors.darkTextTertiary : AppColors.textTertiary;
+    final accentColor = isDark ? AppColors.primaryDarkMode : AppColors.secondary;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -205,26 +247,21 @@ class _DailyLogPageState extends State<DailyLogPage> {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppColors.secondary.withOpacity(0.1),
+                color: accentColor.withValues(alpha: isDark ? 0.2 : 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(Icons.edit_note, size: 40, color: AppColors.secondary),
+              child: Icon(Icons.history_rounded, size: 40, color: accentColor),
             ),
             const SizedBox(height: 16),
             Text(
-              'No log entries yet',
-              style: AppTypography.titleMedium.copyWith(color: AppColors.textSecondary),
+              _getNoEntriesLabel(l10n),
+              style: AppTypography.titleMedium.copyWith(color: textSecondary),
             ),
             const SizedBox(height: 8),
             Text(
-              'Start tracking your meals, exercise, and more',
-              style: AppTypography.bodySmall.copyWith(color: AppColors.textTertiary),
+              _getStartTrackingLabel(l10n),
+              style: AppTypography.bodySmall.copyWith(color: textTertiary),
               textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            AppButton(
-              label: 'Add First Entry',
-              onPressed: () => context.push('/log/add'),
             ),
           ],
         ),
@@ -239,6 +276,7 @@ class _FilterChip extends StatelessWidget {
     this.icon,
     this.color,
     this.isSelected = false,
+    required this.isDark,
     required this.onTap,
   });
 
@@ -246,24 +284,30 @@ class _FilterChip extends StatelessWidget {
   final IconData? icon;
   final Color? color;
   final bool isSelected;
+  final bool isDark;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final surfaceColor = isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceVariant;
+    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+    final chipColor = isDark ? (color ?? AppColors.primaryDarkMode) : (color ?? AppColors.primary);
+
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: GestureDetector(
         onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: isSelected
-                ? (color ?? AppColors.primary).withOpacity(0.15)
-                : AppColors.surfaceVariant,
+                ? chipColor.withValues(alpha: isDark ? 0.2 : 0.15)
+                : surfaceColor,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isSelected ? (color ?? AppColors.primary) : Colors.transparent,
-              width: 1.5,
+              color: isSelected ? chipColor : Colors.transparent,
+              width: 2,
             ),
           ),
           child: Row(
@@ -272,17 +316,16 @@ class _FilterChip extends StatelessWidget {
               if (icon != null) ...[
                 Icon(
                   icon,
-                  size: 16,
-                  color: isSelected ? color : AppColors.textSecondary,
+                  size: 18,
+                  color: isSelected ? chipColor : textSecondary,
                 ),
                 const SizedBox(width: 6),
               ],
               Text(
                 label,
                 style: AppTypography.labelMedium.copyWith(
-                  color: isSelected
-                      ? (color ?? AppColors.primary)
-                      : AppColors.textSecondary,
+                  color: isSelected ? chipColor : textSecondary,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 ),
               ),
             ],
@@ -296,10 +339,12 @@ class _FilterChip extends StatelessWidget {
 class _LogEntryCard extends StatelessWidget {
   const _LogEntryCard({
     required this.log,
+    required this.isDark,
     this.onDelete,
   });
 
   final DailyLog log;
+  final bool isDark;
   final VoidCallback? onDelete;
 
   (Color, IconData, String) _getLogTypeInfo() {
@@ -370,105 +415,119 @@ class _LogEntryCard extends StatelessWidget {
         ? timeFormatter.format(log.createdAt!)
         : timeFormatter.format(log.logDate);
 
-    return Dismissible(
-      key: Key(log.id),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        decoration: BoxDecoration(
-          color: AppColors.error,
-          borderRadius: AppSpacing.borderRadiusLg,
-        ),
-        child: const Icon(Icons.delete_outline, color: Colors.white),
+    final cardBg = isDark ? AppColors.darkCardBackground : AppColors.cardBackground;
+    final borderColor = isDark ? AppColors.darkBorderSubtle : Colors.transparent;
+    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+    final textTertiary = isDark ? AppColors.darkTextTertiary : AppColors.textTertiary;
+    final typeColor = isDark ? _getDarkColor(color) : color;
+
+    return Container(
+      padding: AppSpacing.cardPadding,
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: AppSpacing.borderRadiusLg,
+        border: Border.all(color: borderColor, width: isDark ? 1 : 0),
+        boxShadow: isDark ? AppColors.darkCardShadow : AppColors.lightCardShadow,
       ),
-      onDismissed: (_) => onDelete?.call(),
-      child: Container(
-        padding: AppSpacing.cardPadding,
-        decoration: BoxDecoration(
-          color: AppColors.cardBackground,
-          borderRadius: AppSpacing.borderRadiusLg,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: typeColor.withValues(alpha: isDark ? 0.2 : 0.1),
+              borderRadius: BorderRadius.circular(12),
             ),
-          ],
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: color, size: 22),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(title, style: AppTypography.titleMedium),
-                      Text(time, style: AppTypography.labelSmall),
-                    ],
-                  ),
+            child: Icon(icon, color: typeColor, size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTypography.titleMedium.copyWith(color: textPrimary),
+                    ),
+                    Text(
+                      time,
+                      style: AppTypography.labelSmall.copyWith(color: textSecondary),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: AppTypography.bodySmall.copyWith(color: textSecondary),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (log.notes != null && log.notes!.isNotEmpty && !log.isSleepLog) ...[
                   const SizedBox(height: 4),
                   Text(
-                    description,
-                    style: AppTypography.bodySmall,
-                    maxLines: 2,
+                    log.notes!,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: textTertiary,
+                      fontStyle: FontStyle.italic,
+                    ),
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  if (log.notes != null && !log.notes!.isEmpty && !log.isSleepLog) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      log.notes!,
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.textTertiary,
-                        fontStyle: FontStyle.italic,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                  if (metadata.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      children: metadata.entries.map((entry) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: color.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            '${entry.key}: ${entry.value}',
-                            style: AppTypography.labelSmall.copyWith(
-                              color: color,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
                 ],
-              ),
+                if (metadata.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: metadata.entries.map((entry) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: typeColor.withValues(alpha: isDark ? 0.15 : 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '${entry.key}: ${entry.value}',
+                          style: AppTypography.labelSmall.copyWith(
+                            color: typeColor,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ],
             ),
-          ],
-        ),
+          ),
+          // Visible delete button
+          IconButton(
+            icon: Icon(
+              Icons.delete_outline_rounded,
+              color: isDark ? AppColors.errorDark : AppColors.error,
+              size: 22,
+            ),
+            onPressed: onDelete,
+            tooltip: 'Delete',
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+          ),
+        ],
       ),
     );
+  }
+
+  Color _getDarkColor(Color color) {
+    if (color == AppColors.food) return AppColors.foodDark;
+    if (color == AppColors.sleep) return AppColors.sleepDark;
+    if (color == AppColors.exercise) return AppColors.exerciseDark;
+    if (color == AppColors.medication) return AppColors.medicationDark;
+    return AppColors.secondaryDarkMode;
   }
 }

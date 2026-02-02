@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/config/env_config.dart';
-import 'core/constants/app_strings.dart';
 import 'core/di/injection_container.dart';
+import 'core/providers/settings_provider.dart';
 import 'core/theme/theme.dart';
+import 'l10n/app_localizations.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/pages/qr_scan_page.dart';
 import 'features/auth/presentation/pages/otp_page.dart';
@@ -32,11 +35,19 @@ class GlucoPlotApp extends StatefulWidget {
 
 class _GlucoPlotAppState extends State<GlucoPlotApp> {
   late final GoRouter _router;
+  late final SettingsProvider _settingsProvider;
 
   @override
   void initState() {
     super.initState();
     _router = _createRouter();
+    _settingsProvider = SettingsProvider()..init();
+  }
+
+  @override
+  void dispose() {
+    _settingsProvider.dispose();
+    super.dispose();
   }
 
   GoRouter _createRouter() {
@@ -111,7 +122,10 @@ class _GlucoPlotAppState extends State<GlucoPlotApp> {
                 GoRoute(
                   path: 'add',
                   name: 'add-log-entry',
-                  builder: (context, state) => const AddLogEntryPage(),
+                  builder: (context, state) {
+                    final initialType = state.extra as String?;
+                    return AddLogEntryPage(initialType: initialType);
+                  },
                 ),
               ],
             ),
@@ -128,28 +142,52 @@ class _GlucoPlotAppState extends State<GlucoPlotApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create: (_) => sl<AuthBloc>()..add(const AuthCheckRequested()),
-        ),
-        BlocProvider(
-          create: (_) => sl<DashboardBloc>(),
-        ),
-        BlocProvider(
-          create: (_) => sl<MeasurementBloc>(),
-        ),
-        BlocProvider(
-          create: (_) => sl<DailyLogBloc>(),
-        ),
-      ],
-      child: MaterialApp.router(
-        title: AppStrings.appName,
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        themeMode: ThemeMode.system,
-        routerConfig: _router,
+    return ChangeNotifierProvider.value(
+      value: _settingsProvider,
+      child: Consumer<SettingsProvider>(
+        builder: (context, settings, _) {
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (_) => sl<AuthBloc>()..add(const AuthCheckRequested()),
+              ),
+              BlocProvider(
+                create: (_) => sl<DashboardBloc>(),
+              ),
+              BlocProvider(
+                create: (_) => sl<MeasurementBloc>(),
+              ),
+              BlocProvider(
+                create: (_) => sl<DailyLogBloc>(),
+              ),
+            ],
+            child: MaterialApp.router(
+              title: 'GlucoPlot',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.light,
+              darkTheme: AppTheme.dark,
+              themeMode: settings.themeMode,
+              locale: settings.locale,
+              routerConfig: _router,
+              localizationsDelegates: const [
+                AppLocalizations.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              supportedLocales: SettingsProvider.supportedLocales,
+              builder: (context, child) {
+                // Apply text scale factor from settings
+                return MediaQuery(
+                  data: MediaQuery.of(context).copyWith(
+                    textScaler: TextScaler.linear(settings.textScaleFactor),
+                  ),
+                  child: child ?? const SizedBox.shrink(),
+                );
+              },
+            ),
+          );
+        },
       ),
     );
   }

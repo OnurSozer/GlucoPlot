@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
-import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/widgets/widgets.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../widgets/log_type.dart';
 
-/// Add log entry page
+/// Add log entry page with full localization and dark mode support
+/// Enhanced with preset quick actions, simplified time picker, and voice input
 class AddLogEntryPage extends StatefulWidget {
-  const AddLogEntryPage({super.key});
+  final String? initialType;
+
+  const AddLogEntryPage({super.key, this.initialType});
 
   @override
   State<AddLogEntryPage> createState() => _AddLogEntryPageState();
@@ -18,18 +23,89 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
 
-  LogType _selectedType = LogType.food;
+  late LogType _selectedType;
   DateTime _selectedDateTime = DateTime.now();
   bool _isSubmitting = false;
+
+  // Voice input
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  bool _isListening = false;
+  TextEditingController? _activeVoiceController;
+
+  // Type-specific controllers
+  final _caloriesController = TextEditingController();
+  final _carbsController = TextEditingController();
+  final _durationController = TextEditingController();
+  final _dosageController = TextEditingController();
+  final _amountController = TextEditingController();
+  final _stressLevelController = TextEditingController();
+  final _triggersController = TextEditingController();
+
+  String? _sleepQuality;
+  String? _alcoholType;
+  String? _toiletType;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedType = LogType.fromString(widget.initialType) ?? LogType.food;
+    _initSpeech();
+  }
+
+  Future<void> _initSpeech() async {
+    await _speech.initialize();
+  }
 
   @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
+    _caloriesController.dispose();
+    _carbsController.dispose();
+    _durationController.dispose();
+    _dosageController.dispose();
+    _amountController.dispose();
+    _stressLevelController.dispose();
+    _triggersController.dispose();
+    _speech.stop();
     super.dispose();
   }
 
-  Future<void> _selectDateTime() async {
+  Future<void> _startListening(TextEditingController controller) async {
+    if (!_speech.isAvailable) return;
+
+    HapticFeedback.lightImpact();
+    setState(() {
+      _isListening = true;
+      _activeVoiceController = controller;
+    });
+
+    await _speech.listen(
+      onResult: (result) {
+        setState(() {
+          controller.text = result.recognizedWords;
+        });
+      },
+      localeId: Localizations.localeOf(context).languageCode == 'tr' ? 'tr_TR' : 'en_US',
+    );
+  }
+
+  void _stopListening() {
+    _speech.stop();
+    setState(() {
+      _isListening = false;
+      _activeVoiceController = null;
+    });
+  }
+
+  void _selectQuickTime(int minutesAgo) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _selectedDateTime = DateTime.now().subtract(Duration(minutes: minutesAgo));
+    });
+  }
+
+  Future<void> _selectCustomDateTime() async {
     final date = await showDatePicker(
       context: context,
       initialDate: _selectedDateTime,
@@ -57,24 +133,53 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
     }
   }
 
+  void _selectPreset(String title) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _titleController.text = title;
+    });
+  }
+
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context)!;
+
     if (_titleController.text.isEmpty) {
+      HapticFeedback.heavyImpact();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a title')),
+        SnackBar(
+          content: Text(l10n.pleaseEnterTitle),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 3),
+        ),
       );
       return;
     }
 
     setState(() => _isSubmitting = true);
+    HapticFeedback.mediumImpact();
 
     // TODO: Save to database via repository
     await Future.delayed(const Duration(milliseconds: 500));
 
     if (mounted) {
+      HapticFeedback.lightImpact();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(AppStrings.entrySaved),
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle_rounded, color: Colors.white),
+              const SizedBox(width: 12),
+              Text(
+                l10n.entrySaved,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
           backgroundColor: AppColors.success,
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
       context.pop();
@@ -83,19 +188,41 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final bgColor = isDark ? AppColors.darkBackground : AppColors.background;
+    final cardBg = isDark ? AppColors.darkCardBackground : AppColors.cardBackground;
+    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+    final borderColor = isDark ? AppColors.darkBorderSubtle : Colors.transparent;
+    final primaryColor = isDark ? AppColors.primaryDarkMode : AppColors.primary;
+
     return Scaffold(
+      backgroundColor: bgColor,
       appBar: AppBar(
+        backgroundColor: bgColor,
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
+          icon: Icon(Icons.close_rounded, color: textPrimary),
           onPressed: () => context.pop(),
         ),
-        title: const Text(AppStrings.addEntry),
+        title: Text(
+          l10n.addEntry,
+          style: AppTypography.titleLarge.copyWith(color: textPrimary),
+        ),
         actions: [
           TextButton(
             onPressed: _isSubmitting ? null : _submit,
             child: _isSubmitting
                 ? const AppLoadingIndicator(size: 20)
-                : const Text(AppStrings.save),
+                : Text(
+                    l10n.save,
+                    style: TextStyle(
+                      color: primaryColor,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
           ),
         ],
       ),
@@ -104,95 +231,393 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Entry type selector
-            Text(
-              'What are you logging?',
-              style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondary,
+            // Show activity header if type was pre-selected, otherwise show selector
+            if (widget.initialType != null)
+              _buildActivityHeader(l10n, isDark, cardBg, borderColor)
+            else ...[
+              Text(
+                l10n.whatAreYouLogging,
+                style: AppTypography.labelMedium.copyWith(color: textSecondary),
               ),
-            ),
-            const SizedBox(height: 12),
-            _buildTypeSelector(),
+              const SizedBox(height: 12),
+              _buildTypeSelector(l10n, isDark),
+            ],
 
             const SizedBox(height: 24),
 
-            // Title input
-            AppTextField(
+            // Quick presets for food type
+            if (_selectedType == LogType.food) ...[
+              _buildQuickPresets(l10n, isDark, primaryColor),
+              const SizedBox(height: 16),
+            ],
+
+            // Title input with voice
+            _buildTextFieldWithVoice(
               controller: _titleController,
-              label: 'Title',
-              hint: _getHintForType(_selectedType),
+              label: l10n.title,
+              hint: _getHintForType(l10n, _selectedType),
+              isDark: isDark,
             ),
 
             const SizedBox(height: 16),
 
-            // Description input
-            AppTextField(
+            // Description input with voice
+            _buildTextFieldWithVoice(
               controller: _descriptionController,
-              label: 'Description (optional)',
-              hint: 'Add more details...',
+              label: l10n.descriptionOptional,
+              hint: l10n.addMoreDetails,
               maxLines: 3,
+              isDark: isDark,
             ),
 
             const SizedBox(height: 24),
 
-            // Date/time selector
+            // Simplified time selector
             Text(
-              'When?',
-              style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondary,
-              ),
+              l10n.when,
+              style: AppTypography.labelMedium.copyWith(color: textSecondary),
             ),
             const SizedBox(height: 12),
-            _buildDateTimeSelector(),
+            _buildSimplifiedTimePicker(l10n, isDark, cardBg, borderColor, textPrimary, textSecondary, primaryColor),
 
             const SizedBox(height: 24),
 
             // Type-specific fields
-            _buildTypeSpecificFields(),
+            _buildTypeSpecificFields(l10n, isDark, textSecondary),
+
+            const SizedBox(height: 40),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTypeSelector() {
+  /// Quick preset buttons for food type
+  Widget _buildQuickPresets(AppLocalizations l10n, bool isDark, Color primaryColor) {
+    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+    final surfaceColor = isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceVariant;
+
+    final presets = [
+      (_getBreakfastLabel(l10n), Icons.wb_sunny_rounded),
+      (_getLunchLabel(l10n), Icons.wb_twilight_rounded),
+      (_getDinnerLabel(l10n), Icons.nights_stay_rounded),
+      (_getSnackLabel(l10n), Icons.cookie_rounded),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _getQuickSelectLabel(l10n),
+          style: AppTypography.labelMedium.copyWith(color: textSecondary),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: presets.map((preset) {
+            final isSelected = _titleController.text == preset.$1;
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () => _selectPreset(preset.$1),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? primaryColor.withValues(alpha: isDark ? 0.2 : 0.15)
+                          : surfaceColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected ? primaryColor : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          preset.$2,
+                          color: isSelected ? primaryColor : textSecondary,
+                          size: 22,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          preset.$1,
+                          style: AppTypography.labelSmall.copyWith(
+                            color: isSelected ? primaryColor : textSecondary,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _getOrEnterCustomLabel(l10n),
+          style: AppTypography.bodySmall.copyWith(
+            color: textSecondary,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Localization helpers for presets
+  String _getQuickSelectLabel(AppLocalizations l10n) =>
+      l10n.localeName == 'tr' ? 'Hızlı Seçim' : 'Quick Select';
+  String _getBreakfastLabel(AppLocalizations l10n) =>
+      l10n.localeName == 'tr' ? 'Kahvaltı' : 'Breakfast';
+  String _getLunchLabel(AppLocalizations l10n) =>
+      l10n.localeName == 'tr' ? 'Öğle' : 'Lunch';
+  String _getDinnerLabel(AppLocalizations l10n) =>
+      l10n.localeName == 'tr' ? 'Akşam' : 'Dinner';
+  String _getSnackLabel(AppLocalizations l10n) =>
+      l10n.localeName == 'tr' ? 'Atıştırmalık' : 'Snack';
+  String _getOrEnterCustomLabel(AppLocalizations l10n) =>
+      l10n.localeName == 'tr' ? 'Veya aşağıya özel başlık girin' : 'Or enter custom title below';
+  String _getNowLabel(AppLocalizations l10n) =>
+      l10n.localeName == 'tr' ? 'Şimdi' : 'Now';
+  String _getMinAgoLabel(AppLocalizations l10n, int min) =>
+      l10n.localeName == 'tr' ? '$min dk önce' : '$min min ago';
+  String _getHourAgoLabel(AppLocalizations l10n) =>
+      l10n.localeName == 'tr' ? '1 saat önce' : '1 hour ago';
+  String _getCustomTimeLabel(AppLocalizations l10n) =>
+      l10n.localeName == 'tr' ? 'Özel' : 'Custom';
+
+  /// Simplified time picker with quick buttons
+  Widget _buildSimplifiedTimePicker(
+    AppLocalizations l10n,
+    bool isDark,
+    Color cardBg,
+    Color borderColor,
+    Color textPrimary,
+    Color textSecondary,
+    Color primaryColor,
+  ) {
+    final surfaceColor = isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceVariant;
+    final now = DateTime.now();
+    final isNow = _selectedDateTime.difference(now).inMinutes.abs() < 2;
+    final is15MinAgo = (_selectedDateTime.difference(now).inMinutes + 15).abs() < 2;
+    final is30MinAgo = (_selectedDateTime.difference(now).inMinutes + 30).abs() < 2;
+    final is1HourAgo = (_selectedDateTime.difference(now).inMinutes + 60).abs() < 2;
+    final isCustom = !isNow && !is15MinAgo && !is30MinAgo && !is1HourAgo;
+
+    final quickOptions = [
+      (_getNowLabel(l10n), 0, isNow),
+      (_getMinAgoLabel(l10n, 15), 15, is15MinAgo),
+      (_getMinAgoLabel(l10n, 30), 30, is30MinAgo),
+      (_getHourAgoLabel(l10n), 60, is1HourAgo),
+    ];
+
+    return Column(
+      children: [
+        // Quick time buttons
+        Row(
+          children: quickOptions.map((option) {
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () => _selectQuickTime(option.$2),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: option.$3
+                          ? primaryColor.withValues(alpha: isDark ? 0.2 : 0.15)
+                          : surfaceColor,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: option.$3 ? primaryColor : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: Text(
+                      option.$1,
+                      textAlign: TextAlign.center,
+                      style: AppTypography.labelSmall.copyWith(
+                        color: option.$3 ? primaryColor : textSecondary,
+                        fontWeight: option.$3 ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+
+        const SizedBox(height: 12),
+
+        // Custom time button
+        GestureDetector(
+          onTap: _selectCustomDateTime,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isCustom
+                  ? primaryColor.withValues(alpha: isDark ? 0.15 : 0.1)
+                  : cardBg,
+              borderRadius: AppSpacing.borderRadiusMd,
+              border: Border.all(
+                color: isCustom ? primaryColor : borderColor,
+                width: isCustom ? 2 : (isDark ? 1 : 0),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.calendar_today_rounded,
+                  color: isCustom ? primaryColor : textSecondary,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _getCustomTimeLabel(l10n),
+                        style: AppTypography.labelSmall.copyWith(
+                          color: textSecondary,
+                        ),
+                      ),
+                      Text(
+                        '${_formatDate(_selectedDateTime, l10n)} - ${_formatTime(_selectedDateTime)}',
+                        style: AppTypography.bodyLarge.copyWith(
+                          color: textPrimary,
+                          fontWeight: isCustom ? FontWeight.w600 : FontWeight.normal,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: textSecondary,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Simple header showing the pre-selected activity type
+  Widget _buildActivityHeader(
+    AppLocalizations l10n,
+    bool isDark,
+    Color cardBg,
+    Color borderColor,
+  ) {
+    final typeColor = _selectedType.getThemeColor(isDark);
+    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: typeColor.withValues(alpha: isDark ? 0.15 : 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: typeColor.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: typeColor.withValues(alpha: isDark ? 0.2 : 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              _selectedType.icon,
+              color: typeColor,
+              size: 26,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Text(
+            _selectedType.getLabel(l10n),
+            style: AppTypography.titleMedium.copyWith(
+              color: textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTypeSelector(AppLocalizations l10n, bool isDark) {
+    final surfaceColor = isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceVariant;
+    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+    final textTertiary = isDark ? AppColors.darkTextTertiary : AppColors.textTertiary;
+
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 3,
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      childAspectRatio: 1.1,
+      crossAxisCount: 4,
+      mainAxisSpacing: 10,
+      crossAxisSpacing: 10,
+      childAspectRatio: 0.85,
       children: LogType.values.map((type) {
         final isSelected = type == _selectedType;
+        final typeColor = type.getThemeColor(isDark);
+
         return GestureDetector(
-          onTap: () => setState(() => _selectedType = type),
+          onTap: () {
+            HapticFeedback.selectionClick();
+            setState(() => _selectedType = type);
+          },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             decoration: BoxDecoration(
               color: isSelected
-                  ? type.color.withOpacity(0.15)
-                  : AppColors.surfaceVariant,
-              borderRadius: BorderRadius.circular(16),
+                  ? typeColor.withValues(alpha: isDark ? 0.18 : 0.15)
+                  : surfaceColor,
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isSelected ? type.color : Colors.transparent,
+                color: isSelected ? typeColor : Colors.transparent,
                 width: 2,
               ),
+              boxShadow: isDark && isSelected
+                  ? [
+                      BoxShadow(
+                        color: typeColor.withValues(alpha: 0.2),
+                        blurRadius: 8,
+                        spreadRadius: -2,
+                      ),
+                    ]
+                  : null,
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
                   type.icon,
-                  color: isSelected ? type.color : AppColors.textTertiary,
-                  size: 28,
+                  color: isSelected ? typeColor : textTertiary,
+                  size: 24,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
-                  type.label,
-                  style: AppTypography.labelMedium.copyWith(
-                    color: isSelected ? type.color : AppColors.textSecondary,
+                  type.getLabel(l10n),
+                  style: AppTypography.labelSmall.copyWith(
+                    color: isSelected ? typeColor : textSecondary,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                   ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -202,89 +627,151 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
     );
   }
 
-  Widget _buildDateTimeSelector() {
-    return GestureDetector(
-      onTap: _selectDateTime,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceVariant,
-          borderRadius: AppSpacing.borderRadiusMd,
+  Widget _buildTextFieldWithVoice({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required bool isDark,
+    int maxLines = 1,
+    TextInputType? keyboardType,
+  }) {
+    final fillColor = isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceVariant;
+    final borderColor = isDark ? AppColors.darkBorder : Colors.transparent;
+    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final textTertiary = isDark ? AppColors.darkTextTertiary : AppColors.textTertiary;
+    final primaryColor = isDark ? AppColors.primaryDarkMode : AppColors.primary;
+    final isActiveVoice = _isListening && _activeVoiceController == controller;
+
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      style: AppTypography.bodyLarge.copyWith(color: textPrimary),
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        filled: true,
+        fillColor: fillColor,
+        labelStyle: AppTypography.bodyMedium.copyWith(color: textTertiary),
+        hintStyle: AppTypography.bodyMedium.copyWith(color: textTertiary),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: borderColor),
         ),
-        child: Row(
-          children: [
-            Icon(
-              Icons.calendar_today_rounded,
-              color: AppColors.textSecondary,
-              size: 20,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _formatDate(_selectedDateTime),
-                    style: AppTypography.bodyLarge,
-                  ),
-                  Text(
-                    _formatTime(_selectedDateTime),
-                    style: AppTypography.bodySmall,
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.textTertiary,
-            ),
-          ],
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: borderColor),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: primaryColor, width: 2),
+        ),
+        suffixIcon: _speech.isAvailable
+            ? IconButton(
+                icon: Icon(
+                  isActiveVoice ? Icons.mic_rounded : Icons.mic_none_rounded,
+                  color: isActiveVoice ? AppColors.error : textTertiary,
+                ),
+                onPressed: isActiveVoice
+                    ? _stopListening
+                    : () => _startListening(controller),
+              )
+            : null,
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required bool isDark,
+    int maxLines = 1,
+    TextInputType? keyboardType,
+  }) {
+    final fillColor = isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceVariant;
+    final borderColor = isDark ? AppColors.darkBorder : Colors.transparent;
+    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final textTertiary = isDark ? AppColors.darkTextTertiary : AppColors.textTertiary;
+    final primaryColor = isDark ? AppColors.primaryDarkMode : AppColors.primary;
+
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      style: AppTypography.bodyLarge.copyWith(color: textPrimary),
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        filled: true,
+        fillColor: fillColor,
+        labelStyle: AppTypography.bodyMedium.copyWith(color: textTertiary),
+        hintStyle: AppTypography.bodyMedium.copyWith(color: textTertiary),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: borderColor),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: borderColor),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: primaryColor, width: 2),
         ),
       ),
     );
   }
 
-  Widget _buildTypeSpecificFields() {
+  Widget _buildTypeSpecificFields(AppLocalizations l10n, bool isDark, Color textSecondary) {
     switch (_selectedType) {
       case LogType.food:
-        return _buildFoodFields();
+        return _buildFoodFields(l10n, isDark, textSecondary);
       case LogType.sleep:
-        return _buildSleepFields();
+        return _buildSleepFields(l10n, isDark, textSecondary);
       case LogType.exercise:
-        return _buildExerciseFields();
+        return _buildExerciseFields(l10n, isDark, textSecondary);
       case LogType.medication:
-        return _buildMedicationFields();
-      case LogType.symptom:
-        return const SizedBox.shrink();
+        return _buildMedicationFields(l10n, isDark, textSecondary);
+      case LogType.water:
+        return _buildWaterFields(l10n, isDark, textSecondary);
+      case LogType.alcohol:
+        return _buildAlcoholFields(l10n, isDark, textSecondary);
+      case LogType.toilet:
+        return _buildToiletFields(l10n, isDark, textSecondary);
+      case LogType.stress:
+        return _buildStressFields(l10n, isDark, textSecondary);
     }
   }
 
-  Widget _buildFoodFields() {
+  Widget _buildFoodFields(AppLocalizations l10n, bool isDark, Color textSecondary) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Nutrition (optional)',
-          style: AppTypography.labelMedium.copyWith(
-            color: AppColors.textSecondary,
-          ),
+          l10n.nutritionOptional,
+          style: AppTypography.labelMedium.copyWith(color: textSecondary),
         ),
         const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
-              child: AppTextField(
-                label: 'Calories',
+              child: _buildTextField(
+                controller: _caloriesController,
+                label: l10n.calories,
                 hint: '350',
                 keyboardType: TextInputType.number,
+                isDark: isDark,
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: AppTextField(
-                label: 'Carbs (g)',
+              child: _buildTextField(
+                controller: _carbsController,
+                label: l10n.carbsG,
                 hint: '45',
                 keyboardType: TextInputType.number,
+                isDark: isDark,
               ),
             ),
           ],
@@ -293,41 +780,61 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
     );
   }
 
-  Widget _buildSleepFields() {
+  Widget _buildSleepFields(AppLocalizations l10n, bool isDark, Color textSecondary) {
+    final primaryColor = isDark ? AppColors.primaryDarkMode : AppColors.primary;
+    final surfaceColor = isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceVariant;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Sleep Details',
-          style: AppTypography.labelMedium.copyWith(
-            color: AppColors.textSecondary,
-          ),
+          l10n.sleepDetails,
+          style: AppTypography.labelMedium.copyWith(color: textSecondary),
         ),
         const SizedBox(height: 12),
-        AppTextField(
-          label: 'Duration (hours)',
+        _buildTextField(
+          controller: _durationController,
+          label: l10n.durationHours,
           hint: '7.5',
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          isDark: isDark,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Text(
-          'Quality',
-          style: AppTypography.labelMedium.copyWith(
-            color: AppColors.textSecondary,
-          ),
+          l10n.quality,
+          style: AppTypography.labelMedium.copyWith(color: textSecondary),
         ),
         const SizedBox(height: 8),
         Row(
-          children: ['Poor', 'Fair', 'Good', 'Excellent'].map((quality) {
+          children: [l10n.poor, l10n.fair, l10n.good, l10n.excellent].map((quality) {
+            final isSelected = _sleepQuality == quality;
             return Expanded(
               child: Padding(
                 padding: const EdgeInsets.only(right: 8),
-                child: OutlinedButton(
-                  onPressed: () {},
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _sleepQuality = quality);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: isSelected ? primaryColor.withValues(alpha: 0.15) : surfaceColor,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isSelected ? primaryColor : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: Text(
+                      quality,
+                      textAlign: TextAlign.center,
+                      style: AppTypography.labelSmall.copyWith(
+                        color: isSelected ? primaryColor : textSecondary,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
                   ),
-                  child: Text(quality, style: const TextStyle(fontSize: 12)),
                 ),
               ),
             );
@@ -337,32 +844,34 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
     );
   }
 
-  Widget _buildExerciseFields() {
+  Widget _buildExerciseFields(AppLocalizations l10n, bool isDark, Color textSecondary) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Exercise Details',
-          style: AppTypography.labelMedium.copyWith(
-            color: AppColors.textSecondary,
-          ),
+          l10n.exerciseDetails,
+          style: AppTypography.labelMedium.copyWith(color: textSecondary),
         ),
         const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
-              child: AppTextField(
-                label: 'Duration (min)',
+              child: _buildTextField(
+                controller: _durationController,
+                label: l10n.durationMin,
                 hint: '30',
                 keyboardType: TextInputType.number,
+                isDark: isDark,
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: AppTextField(
-                label: 'Calories burned',
+              child: _buildTextField(
+                controller: _caloriesController,
+                label: l10n.caloriesBurned,
                 hint: '150',
                 keyboardType: TextInputType.number,
+                isDark: isDark,
               ),
             ),
           ],
@@ -371,52 +880,382 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
     );
   }
 
-  Widget _buildMedicationFields() {
+  Widget _buildMedicationFields(AppLocalizations l10n, bool isDark, Color textSecondary) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Medication Details',
-          style: AppTypography.labelMedium.copyWith(
-            color: AppColors.textSecondary,
-          ),
+          l10n.medicationDetails,
+          style: AppTypography.labelMedium.copyWith(color: textSecondary),
         ),
         const SizedBox(height: 12),
-        AppTextField(
-          label: 'Dosage',
+        _buildTextField(
+          controller: _dosageController,
+          label: l10n.dosage,
           hint: '500mg',
+          isDark: isDark,
         ),
       ],
     );
   }
 
-  String _getHintForType(LogType type) {
+  Widget _buildWaterFields(AppLocalizations l10n, bool isDark, Color textSecondary) {
+    final primaryColor = isDark ? AppColors.primaryDarkMode : AppColors.primary;
+    final surfaceColor = isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceVariant;
+
+    // Smart defaults - quick glass selection
+    final glassOptions = ['1', '2', '3', '4'];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.waterDetails,
+          style: AppTypography.labelMedium.copyWith(color: textSecondary),
+        ),
+        const SizedBox(height: 12),
+        // Quick glass selector
+        Row(
+          children: glassOptions.map((glasses) {
+            final isSelected = _durationController.text == glasses;
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() {
+                      _durationController.text = glasses;
+                      _amountController.text = (int.parse(glasses) * 250).toString();
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: isSelected ? primaryColor.withValues(alpha: 0.15) : surfaceColor,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isSelected ? primaryColor : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.water_drop_rounded,
+                          color: isSelected ? primaryColor : textSecondary,
+                          size: 20,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '$glasses ${l10n.glasses}',
+                          textAlign: TextAlign.center,
+                          style: AppTypography.labelSmall.copyWith(
+                            color: isSelected ? primaryColor : textSecondary,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          controller: _amountController,
+          label: l10n.amountMl,
+          hint: '250',
+          keyboardType: TextInputType.number,
+          isDark: isDark,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAlcoholFields(AppLocalizations l10n, bool isDark, Color textSecondary) {
+    final primaryColor = isDark ? AppColors.primaryDarkMode : AppColors.primary;
+    final surfaceColor = isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceVariant;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.alcoholDetails,
+          style: AppTypography.labelMedium.copyWith(color: textSecondary),
+        ),
+        const SizedBox(height: 12),
+        _buildTextField(
+          controller: _amountController,
+          label: l10n.drinks,
+          hint: '1',
+          keyboardType: TextInputType.number,
+          isDark: isDark,
+        ),
+        const SizedBox(height: 16),
+        Text(
+          l10n.alcoholType,
+          style: AppTypography.labelMedium.copyWith(color: textSecondary),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [l10n.beer, l10n.wine, l10n.spirits, l10n.other].map((type) {
+            final isSelected = _alcoholType == type;
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _alcoholType = type);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: isSelected ? primaryColor.withValues(alpha: 0.15) : surfaceColor,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isSelected ? primaryColor : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: Text(
+                      type,
+                      textAlign: TextAlign.center,
+                      style: AppTypography.labelSmall.copyWith(
+                        color: isSelected ? primaryColor : textSecondary,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildToiletFields(AppLocalizations l10n, bool isDark, Color textSecondary) {
+    final primaryColor = isDark ? AppColors.primaryDarkMode : AppColors.primary;
+    final surfaceColor = isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceVariant;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.toiletDetails,
+          style: AppTypography.labelMedium.copyWith(color: textSecondary),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          l10n.toiletType,
+          style: AppTypography.labelMedium.copyWith(color: textSecondary),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [l10n.urination, l10n.bowelMovement, l10n.both].map((type) {
+            final isSelected = _toiletType == type;
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _toiletType = type);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+                    decoration: BoxDecoration(
+                      color: isSelected ? primaryColor.withValues(alpha: 0.15) : surfaceColor,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isSelected ? primaryColor : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: Text(
+                      type,
+                      textAlign: TextAlign.center,
+                      style: AppTypography.labelSmall.copyWith(
+                        color: isSelected ? primaryColor : textSecondary,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStressFields(AppLocalizations l10n, bool isDark, Color textSecondary) {
+    final surfaceColor = isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceVariant;
+
+    // Stress level 1-10 quick selector
+    final stressLevels = List.generate(10, (i) => (i + 1).toString());
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.stressDetails,
+          style: AppTypography.labelMedium.copyWith(color: textSecondary),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          l10n.stressLevel,
+          style: AppTypography.labelMedium.copyWith(color: textSecondary),
+        ),
+        const SizedBox(height: 8),
+        // Stress level buttons in 2 rows
+        Column(
+          children: [
+            Row(
+              children: stressLevels.sublist(0, 5).map((level) {
+                final isSelected = _stressLevelController.text == level;
+                final levelInt = int.parse(level);
+                final color = levelInt <= 3
+                    ? AppColors.success
+                    : levelInt <= 6
+                        ? AppColors.warning
+                        : AppColors.error;
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(() => _stressLevelController.text = level);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? (isDark ? color.withValues(alpha: 0.3) : color.withValues(alpha: 0.2))
+                              : surfaceColor,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isSelected ? color : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
+                        child: Text(
+                          level,
+                          textAlign: TextAlign.center,
+                          style: AppTypography.labelMedium.copyWith(
+                            color: isSelected ? color : textSecondary,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: stressLevels.sublist(5, 10).map((level) {
+                final isSelected = _stressLevelController.text == level;
+                final levelInt = int.parse(level);
+                final color = levelInt <= 3
+                    ? AppColors.success
+                    : levelInt <= 6
+                        ? AppColors.warning
+                        : AppColors.error;
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(() => _stressLevelController.text = level);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? (isDark ? color.withValues(alpha: 0.3) : color.withValues(alpha: 0.2))
+                              : surfaceColor,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isSelected ? color : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
+                        child: Text(
+                          level,
+                          textAlign: TextAlign.center,
+                          style: AppTypography.labelMedium.copyWith(
+                            color: isSelected ? color : textSecondary,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _buildTextFieldWithVoice(
+          controller: _triggersController,
+          label: l10n.triggers,
+          hint: l10n.hintStress,
+          maxLines: 2,
+          isDark: isDark,
+        ),
+      ],
+    );
+  }
+
+  String _getHintForType(AppLocalizations l10n, LogType type) {
     switch (type) {
       case LogType.food:
-        return 'e.g., Breakfast, Lunch, Snack';
+        return l10n.hintFood;
       case LogType.sleep:
-        return 'e.g., Night Sleep, Nap';
+        return l10n.hintSleep;
       case LogType.exercise:
-        return 'e.g., Morning Walk, Yoga';
+        return l10n.hintExercise;
       case LogType.medication:
-        return 'e.g., Metformin, Insulin';
-      case LogType.symptom:
-        return 'e.g., Headache, Fatigue';
+        return l10n.hintMedication;
+      case LogType.water:
+        return l10n.hintWater;
+      case LogType.alcohol:
+        return l10n.hintAlcohol;
+      case LogType.toilet:
+        return l10n.hintToilet;
+      case LogType.stress:
+        return l10n.hintStress;
     }
   }
 
-  String _formatDate(DateTime date) {
+  String _formatDate(DateTime date, AppLocalizations l10n) {
     final now = DateTime.now();
+    if (date.year == now.year && date.month == now.month && date.day == now.day) {
+      return l10n.today;
+    }
     if (date.year == now.year &&
         date.month == now.month &&
-        date.day == now.day) {
-      return 'Today';
+        date.day == now.day - 1) {
+      return l10n.yesterday;
     }
-    return '${date.month}/${date.day}/${date.year}';
+    return '${date.day}/${date.month}/${date.year}';
   }
 
   String _formatTime(DateTime date) {
-    final hour = date.hour > 12 ? date.hour - 12 : date.hour;
+    final hour = date.hour > 12 ? date.hour - 12 : (date.hour == 0 ? 12 : date.hour);
     final period = date.hour >= 12 ? 'PM' : 'AM';
     return '$hour:${date.minute.toString().padLeft(2, '0')} $period';
   }
