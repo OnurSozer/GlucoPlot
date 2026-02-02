@@ -110,7 +110,10 @@ class _GlucoPlotAppState extends State<GlucoPlotApp> {
                 GoRoute(
                   path: 'add',
                   name: 'add-measurement',
-                  builder: (context, state) => const AddMeasurementPage(),
+                  builder: (context, state) {
+                    final initialType = state.extra as String?;
+                    return AddMeasurementPage(initialType: initialType);
+                  },
                 ),
               ],
             ),

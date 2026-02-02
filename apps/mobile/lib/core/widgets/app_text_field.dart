@@ -63,6 +63,11 @@ class AppTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+    final textTertiary = isDark ? AppColors.darkTextTertiary : AppColors.textTertiary;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -70,7 +75,7 @@ class AppTextField extends StatelessWidget {
           Text(
             label!,
             style: AppTypography.labelMedium.copyWith(
-              color: AppColors.textSecondary,
+              color: textSecondary,
             ),
           ),
           const SizedBox(height: 8),
@@ -94,17 +99,19 @@ class AppTextField extends StatelessWidget {
           validator: validator,
           textCapitalization: textCapitalization,
           textAlign: textAlign,
-          style: AppTypography.bodyLarge,
+          style: AppTypography.bodyLarge.copyWith(
+            color: textPrimary,
+          ),
           decoration: InputDecoration(
             hintText: hint,
             errorText: error,
             prefix: prefix,
             suffix: suffix,
             prefixIcon: prefixIcon != null
-                ? Icon(prefixIcon, color: AppColors.textTertiary)
+                ? Icon(prefixIcon, color: textTertiary)
                 : null,
             suffixIcon: suffixIcon != null
-                ? Icon(suffixIcon, color: AppColors.textTertiary)
+                ? Icon(suffixIcon, color: textTertiary)
                 : null,
             counterText: '',
           ),
@@ -114,7 +121,7 @@ class AppTextField extends StatelessWidget {
           Text(
             helper!,
             style: AppTypography.bodySmall.copyWith(
-              color: AppColors.textTertiary,
+              color: textTertiary,
             ),
           ),
         ],
@@ -148,6 +155,12 @@ class MeasurementInputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+    final textTertiary = isDark ? AppColors.darkTextTertiary : AppColors.textTertiary;
+    final surfaceVariant = isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceVariant;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -155,7 +168,7 @@ class MeasurementInputField extends StatelessWidget {
           Text(
             label!,
             style: AppTypography.labelMedium.copyWith(
-              color: AppColors.textSecondary,
+              color: textSecondary,
             ),
           ),
           const SizedBox(height: 12),
@@ -163,7 +176,7 @@ class MeasurementInputField extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           decoration: BoxDecoration(
-            color: AppColors.surfaceVariant,
+            color: surfaceVariant,
             borderRadius: AppSpacing.borderRadiusLg,
             border: error != null
                 ? Border.all(color: AppColors.error, width: 1.5)
@@ -189,13 +202,13 @@ class MeasurementInputField extends StatelessWidget {
                   ],
                   onChanged: onChanged,
                   style: AppTypography.measurementValue.copyWith(
-                    color: AppColors.textPrimary,
+                    color: textPrimary,
                   ),
                   textAlign: TextAlign.center,
                   decoration: InputDecoration(
                     hintText: hint ?? '0',
                     hintStyle: AppTypography.measurementValue.copyWith(
-                      color: AppColors.textTertiary,
+                      color: textTertiary,
                     ),
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.zero,
@@ -206,7 +219,9 @@ class MeasurementInputField extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 unit,
-                style: AppTypography.measurementUnit,
+                style: AppTypography.measurementUnit.copyWith(
+                  color: textSecondary,
+                ),
               ),
             ],
           ),

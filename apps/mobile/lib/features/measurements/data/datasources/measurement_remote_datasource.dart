@@ -126,7 +126,45 @@ class MeasurementRemoteDataSourceImpl implements MeasurementRemoteDataSource {
         .select()
         .single();
 
+    // If this is a weight measurement, also update patient's physical data
+    if (measurement.type == MeasurementType.weight) {
+      await _updatePatientWeight(measurement.patientId, measurement.value);
+    }
+
     return MeasurementModel.fromJson(response);
+  }
+
+  /// Update patient's weight in patient_physical_data table
+  Future<void> _updatePatientWeight(String patientId, double weightKg) async {
+    try {
+      // Check if physical data exists
+      final existing = await _client
+          .from('patient_physical_data')
+          .select('id')
+          .eq('patient_id', patientId)
+          .maybeSingle();
+
+      if (existing != null) {
+        // Update existing record
+        await _client
+            .from('patient_physical_data')
+            .update({
+              'weight_kg': weightKg,
+              'updated_at': DateTime.now().toIso8601String(),
+            })
+            .eq('patient_id', patientId);
+      } else {
+        // Insert new record
+        await _client.from('patient_physical_data').insert({
+          'patient_id': patientId,
+          'weight_kg': weightKg,
+        });
+      }
+    } catch (e) {
+      // Log error but don't fail the main measurement operation
+      // ignore: avoid_print
+      print('Failed to update patient physical data: $e');
+    }
   }
 
   @override

@@ -10,7 +10,12 @@ import '../bloc/measurement_bloc.dart';
 
 /// Add measurement page
 class AddMeasurementPage extends StatefulWidget {
-  const AddMeasurementPage({super.key});
+  final String? initialType;
+
+  const AddMeasurementPage({
+    super.key,
+    this.initialType,
+  });
 
   @override
   State<AddMeasurementPage> createState() => _AddMeasurementPageState();
@@ -21,9 +26,36 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
   final _secondaryController = TextEditingController();
   final _notesController = TextEditingController();
 
-  _MeasurementTypeUI _selectedType = _MeasurementTypeUI.glucose;
+  late _MeasurementTypeUI _selectedType;
   DateTime _selectedDateTime = DateTime.now();
   bool _isSubmitting = false;
+  bool _showTypeSelector = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Set initial type based on parameter
+    if (widget.initialType != null) {
+      _selectedType = _parseInitialType(widget.initialType!);
+      _showTypeSelector = false;
+    } else {
+      _selectedType = _MeasurementTypeUI.glucose;
+    }
+  }
+
+  _MeasurementTypeUI _parseInitialType(String type) {
+    switch (type.toLowerCase()) {
+      case 'glucose':
+        return _MeasurementTypeUI.glucose;
+      case 'bloodpressure':
+      case 'blood_pressure':
+        return _MeasurementTypeUI.bloodPressure;
+      case 'weight':
+        return _MeasurementTypeUI.weight;
+      default:
+        return _MeasurementTypeUI.glucose;
+    }
+  }
 
   @override
   void dispose() {
@@ -117,6 +149,9 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -138,17 +173,18 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Measurement type selector
-            Text(
-              AppStrings.selectType,
-              style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondary,
+            // Measurement type selector (only shown when no initial type provided)
+            if (_showTypeSelector) ...[
+              Text(
+                AppStrings.selectType,
+                style: AppTypography.labelMedium.copyWith(
+                  color: textSecondary,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            _buildTypeSelector(),
-
-            const SizedBox(height: 32),
+              const SizedBox(height: 12),
+              _buildTypeSelector(),
+              const SizedBox(height: 32),
+            ],
 
             // Value input
             MeasurementInputField(
@@ -176,7 +212,7 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
             Text(
               'When was this measured?',
               style: AppTypography.labelMedium.copyWith(
-                color: AppColors.textSecondary,
+                color: textSecondary,
               ),
             ),
             const SizedBox(height: 12),
@@ -198,6 +234,11 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
   }
 
   Widget _buildTypeSelector() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+    final textTertiary = isDark ? AppColors.darkTextTertiary : AppColors.textTertiary;
+    final surfaceVariant = isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceVariant;
+
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -209,7 +250,7 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: isSelected ? type.color.withOpacity(0.15) : AppColors.surfaceVariant,
+              color: isSelected ? type.color.withOpacity(0.15) : surfaceVariant,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isSelected ? type.color : Colors.transparent,
@@ -221,14 +262,14 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
               children: [
                 Icon(
                   type.icon,
-                  color: isSelected ? type.color : AppColors.textTertiary,
+                  color: isSelected ? type.color : textTertiary,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   type.label,
                   style: AppTypography.labelMedium.copyWith(
-                    color: isSelected ? type.color : AppColors.textSecondary,
+                    color: isSelected ? type.color : textSecondary,
                   ),
                 ),
               ],
@@ -240,19 +281,25 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
   }
 
   Widget _buildDateTimeSelector() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+    final textTertiary = isDark ? AppColors.darkTextTertiary : AppColors.textTertiary;
+    final surfaceVariant = isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceVariant;
+
     return GestureDetector(
       onTap: _selectDateTime,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.surfaceVariant,
+          color: surfaceVariant,
           borderRadius: AppSpacing.borderRadiusMd,
         ),
         child: Row(
           children: [
             Icon(
               Icons.calendar_today_rounded,
-              color: AppColors.textSecondary,
+              color: textSecondary,
               size: 20,
             ),
             const SizedBox(width: 12),
@@ -262,18 +309,22 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
                 children: [
                   Text(
                     _formatDate(_selectedDateTime),
-                    style: AppTypography.bodyLarge,
+                    style: AppTypography.bodyLarge.copyWith(
+                      color: textPrimary,
+                    ),
                   ),
                   Text(
                     _formatTime(_selectedDateTime),
-                    style: AppTypography.bodySmall,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: textSecondary,
+                    ),
                   ),
                 ],
               ),
             ),
             Icon(
               Icons.chevron_right_rounded,
-              color: AppColors.textTertiary,
+              color: textTertiary,
             ),
           ],
         ),
@@ -299,6 +350,7 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
 }
 
 /// UI-specific measurement type enum with display properties
+/// Only glucose, blood pressure, and weight are supported in the mobile app
 enum _MeasurementTypeUI {
   glucose(
     label: 'Blood Glucose',
@@ -314,33 +366,12 @@ enum _MeasurementTypeUI {
     icon: Icons.monitor_heart_rounded,
     color: AppColors.bloodPressure,
   ),
-  heartRate(
-    label: 'Heart Rate',
-    unit: 'bpm',
-    hint: '72',
-    icon: Icons.favorite_rounded,
-    color: AppColors.heartRate,
-  ),
   weight(
     label: 'Weight',
     unit: 'kg',
     hint: '70',
     icon: Icons.monitor_weight_rounded,
     color: AppColors.weight,
-  ),
-  temperature(
-    label: 'Temperature',
-    unit: '°C',
-    hint: '36.5',
-    icon: Icons.thermostat_rounded,
-    color: AppColors.temperature,
-  ),
-  oxygen(
-    label: 'Oxygen (SpO2)',
-    unit: '%',
-    hint: '98',
-    icon: Icons.air_rounded,
-    color: AppColors.oxygen,
   );
 
   const _MeasurementTypeUI({
@@ -364,14 +395,8 @@ enum _MeasurementTypeUI {
         return domain.MeasurementType.glucose;
       case _MeasurementTypeUI.bloodPressure:
         return domain.MeasurementType.bloodPressure;
-      case _MeasurementTypeUI.heartRate:
-        return domain.MeasurementType.heartRate;
       case _MeasurementTypeUI.weight:
         return domain.MeasurementType.weight;
-      case _MeasurementTypeUI.temperature:
-        return domain.MeasurementType.temperature;
-      case _MeasurementTypeUI.oxygen:
-        return domain.MeasurementType.oxygenSaturation;
     }
   }
 }

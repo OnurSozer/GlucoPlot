@@ -61,7 +61,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
                       // Glucose Measurement Card
                       GlucoseCard(
-                        onTap: () => context.push('/measurements/add'),
+                        onTap: () => context.push('/measurements/add', extra: 'glucose'),
                       ),
                       const SizedBox(height: AppSpacing.lg),
 
@@ -263,7 +263,13 @@ class _DashboardPageState extends State<DashboardPage> {
         icon: Icons.favorite_rounded,
         label: l10n.bloodPressure,
         color: isDark ? AppColors.bloodPressureDark : AppColors.bloodPressure,
-        onTap: () => context.push('/measurements/add'),
+        onTap: () => context.push('/measurements/add', extra: 'bloodPressure'),
+      ),
+      ActivityTileData(
+        icon: Icons.monitor_weight_rounded,
+        label: l10n.weight,
+        color: isDark ? AppColors.weightDark : AppColors.weight,
+        onTap: () => context.push('/measurements/add', extra: 'weight'),
       ),
     ];
 

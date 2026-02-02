@@ -62,7 +62,11 @@ export function PatientProfileView({ patientId }: PatientProfileViewProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Physical Data */}
-                <PhysicalInfoCard data={data.physical} />
+                <PhysicalInfoCard
+                    data={data.physical}
+                    patientId={patientId}
+                    onUpdate={(newData) => setData(prev => prev ? { ...prev, physical: newData } : null)}
+                />
 
                 {/* Medical History & Conditions */}
                 <MedicalHistoryCard

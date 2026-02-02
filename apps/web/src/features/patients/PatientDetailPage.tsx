@@ -37,12 +37,13 @@ import type { PatientOnboardingData } from '../../types/onboarding.types';
 
 type TabType = 'measurements' | 'dailyLogs';
 
-// Only show glucose and blood pressure measurements
-const DISPLAYED_MEASUREMENTS: MeasurementType[] = ['glucose', 'blood_pressure'];
+// Show glucose, blood pressure, and weight measurements
+const DISPLAYED_MEASUREMENTS: MeasurementType[] = ['glucose', 'blood_pressure', 'weight'];
 
 const measurementIcons: Record<string, typeof Droplets> = {
     glucose: Droplets,
     blood_pressure: Heart,
+    weight: Scale,
 };
 
 export function PatientDetailPage() {
@@ -109,8 +110,8 @@ export function PatientDetailPage() {
             <div className="animate-pulse space-y-6">
                 <div className="h-8 bg-gray-200 rounded w-48" />
                 <div className="h-48 bg-gray-200 rounded-2xl" />
-                <div className="grid grid-cols-2 gap-4">
-                    {[1, 2].map(i => (
+                <div className="grid grid-cols-3 gap-4">
+                    {[1, 2, 3].map(i => (
                         <div key={i} className="h-24 bg-gray-200 rounded-2xl" />
                     ))}
                 </div>
@@ -247,10 +248,10 @@ export function PatientDetailPage() {
             {/* Tab Content */}
             {activeTab === 'measurements' ? (
                 <>
-                    {/* Latest Measurements Grid - Only Glucose and Blood Pressure */}
+                    {/* Latest Measurements Grid - Glucose, Blood Pressure, and Weight */}
                     <div>
                         <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('patients:latestMeasurements')}</h2>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-3 gap-4">
                             {DISPLAYED_MEASUREMENTS.map((type) => {
                                 const measurement = latestMeasurements[type];
                                 const Icon = measurementIcons[type];
