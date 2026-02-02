@@ -191,3 +191,55 @@ export function formatPhone(phone: string | null | undefined): string {
     if (!phone) return '-';
     return phone;
 }
+
+// ============================================================
+// Daily Log Formatting
+// ============================================================
+
+/**
+ * Get color for log type
+ */
+export function getLogTypeColor(type: string): string {
+    const colors: Record<string, string> = {
+        food: '#FF9F43',
+        sleep: '#6C5CE7',
+        exercise: '#00B894',
+        medication: '#E84393',
+        symptom: '#FD79A8',
+        note: '#636E72',
+    };
+
+    return colors[type] || '#6B7280';
+}
+
+/**
+ * Get label for log type
+ */
+export function getLogTypeLabel(type: string): string {
+    const labels: Record<string, string> = {
+        food: 'Meal',
+        sleep: 'Sleep',
+        exercise: 'Exercise',
+        medication: 'Medication',
+        symptom: 'Symptom',
+        note: 'Note',
+    };
+
+    return labels[type] || type;
+}
+
+/**
+ * Get icon name for log type (for lucide-react)
+ */
+export function getLogTypeIcon(type: string): string {
+    const icons: Record<string, string> = {
+        food: 'UtensilsCrossed',
+        sleep: 'Moon',
+        exercise: 'Dumbbell',
+        medication: 'Pill',
+        symptom: 'Stethoscope',
+        note: 'FileText',
+    };
+
+    return icons[type] || 'FileText';
+}

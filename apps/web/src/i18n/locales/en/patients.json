@@ -7,6 +7,14 @@
   "noPatientsDesc": "Add your first patient to start monitoring their health",
   "noMatchingPatients": "No matching patients",
   "noMatchingPatientsDesc": "Try adjusting your search or filters",
+  "notFound": "Patient not found",
+  "backToPatients": "Back to patients",
+  "yearsOld": "years old",
+  "medicalNotes": "Medical Notes",
+  "patientSince": "Patient since",
+  "measurements": "Measurements",
+  "latestMeasurements": "Latest Measurements",
+  "trend": "Trend",
   "patientCard": {
     "phone": "Phone",
     "viewDetails": "View Details"

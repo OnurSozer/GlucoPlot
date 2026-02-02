@@ -7,6 +7,14 @@
   "noPatientsDesc": "Sağlık izlemeye başlamak için ilk hastanızı ekleyin",
   "noMatchingPatients": "Eşleşen hasta bulunamadı",
   "noMatchingPatientsDesc": "Arama veya filtreleri ayarlamayı deneyin",
+  "notFound": "Hasta bulunamadı",
+  "backToPatients": "Hastalara dön",
+  "yearsOld": "yaşında",
+  "medicalNotes": "Tıbbi Notlar",
+  "patientSince": "Kayıt Tarihi",
+  "measurements": "Ölçümler",
+  "latestMeasurements": "Son Ölçümler",
+  "trend": "Trend",
   "patientCard": {
     "phone": "Telefon",
     "viewDetails": "Detayları Gör"

@@ -85,7 +85,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get home => 'Ana Sayfa';
 
   @override
-  String get history => 'Geçmiş';
+  String get history => 'Kayıtlar';
 
   @override
   String get settings => 'Ayarlar';

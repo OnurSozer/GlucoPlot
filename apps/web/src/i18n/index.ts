@@ -11,20 +11,24 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import enCommon from './locales/en/common.json';
 import enPatients from './locales/en/patients.json';
 import enOnboarding from './locales/en/onboarding.json';
+import enDailyLogs from './locales/en/dailyLogs.json';
 import trCommon from './locales/tr/common.json';
 import trPatients from './locales/tr/patients.json';
 import trOnboarding from './locales/tr/onboarding.json';
+import trDailyLogs from './locales/tr/dailyLogs.json';
 
 const resources = {
   en: {
     common: enCommon,
     patients: enPatients,
     onboarding: enOnboarding,
+    dailyLogs: enDailyLogs,
   },
   tr: {
     common: trCommon,
     patients: trPatients,
     onboarding: trOnboarding,
+    dailyLogs: trDailyLogs,
   },
 };
 
@@ -35,7 +39,7 @@ i18n
     resources,
     fallbackLng: 'en',
     defaultNS: 'common',
-    ns: ['common', 'patients', 'onboarding'],
+    ns: ['common', 'patients', 'onboarding', 'dailyLogs'],
 
     detection: {
       order: ['localStorage', 'navigator'],
