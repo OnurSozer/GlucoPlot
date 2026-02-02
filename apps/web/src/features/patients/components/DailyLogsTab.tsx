@@ -21,6 +21,7 @@ import {
     Brain
 } from 'lucide-react';
 import { format, subDays, addDays, isToday, parseISO } from 'date-fns';
+import { tr, enUS } from 'date-fns/locale';
 import { Card, CardContent } from '../../../components/common/Card';
 import { DailyLogCard } from './DailyLogCard';
 import { dailyLogsService } from '../../../services/daily-logs.service';
@@ -102,7 +103,24 @@ const FILTER_CONFIGS: FilterConfig[] = [
 ];
 
 export function DailyLogsTab({ patientId }: DailyLogsTabProps) {
-    const { t } = useTranslation('dailyLogs');
+    const { t, i18n } = useTranslation('dailyLogs');
+    const dateLocale = i18n.language === 'tr' ? tr : enUS;
+
+    // Get translated filter label
+    const getFilterLabel = (id: FilterType): string => {
+        // Use translation for types that have translations, fallback to existing translations
+        const translationMap: Record<FilterType, string> = {
+            food: t('types.food'),
+            sleep: t('types.sleep'),
+            exercise: t('types.exercise'),
+            medication: t('types.medication'),
+            water: t('water'),
+            alcohol: t('alcohol'),
+            toilet: t('types.toilet'),
+            stress: t('types.stress'),
+        };
+        return translationMap[id];
+    };
     const [allLogs, setAllLogs] = useState<DailyLog[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -257,7 +275,7 @@ export function DailyLogsTab({ patientId }: DailyLogsTabProps) {
                                     <p className="text-sm font-medium text-primary">{t('today')}</p>
                                 )}
                                 <p className={`text-sm ${isToday(selectedDate) ? 'text-gray-500' : 'font-medium text-gray-900'}`}>
-                                    {format(selectedDate, 'EEEE, MMMM d, yyyy')}
+                                    {format(selectedDate, 'EEEE, d MMMM yyyy', { locale: dateLocale })}
                                 </p>
                             </div>
                             <ChevronDown size={16} className="text-gray-400" />
@@ -318,7 +336,7 @@ export function DailyLogsTab({ patientId }: DailyLogsTabProps) {
                             style={isSelected ? { backgroundColor: config.color } : undefined}
                         >
                             <Icon size={12} />
-                            {config.label}
+                            {getFilterLabel(config.id)}
                         </button>
                     );
                 })}
@@ -377,7 +395,7 @@ export function DailyLogsTab({ patientId }: DailyLogsTabProps) {
                                 >
                                     <Icon size={18} style={{ color: config.color }} className="mx-auto mb-1" />
                                     <p className="text-lg font-bold text-gray-900">{count}</p>
-                                    <p className="text-xs text-gray-500">{config.label}</p>
+                                    <p className="text-xs text-gray-500">{getFilterLabel(config.id)}</p>
                                 </button>
                             );
                         })}

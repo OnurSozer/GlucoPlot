@@ -29,8 +29,7 @@ import {
     formatDate,
     calculateAge,
     formatMeasurement,
-    getMeasurementColor,
-    getMeasurementLabel
+    getMeasurementColor
 } from '../../utils/format';
 import type { Patient, Measurement, MeasurementType } from '../../types/database.types';
 import type { PatientOnboardingData } from '../../types/onboarding.types';
@@ -48,7 +47,7 @@ const measurementIcons: Record<string, typeof Droplets> = {
 
 export function PatientDetailPage() {
     const { id } = useParams<{ id: string }>();
-    const { t } = useTranslation(['patients', 'dailyLogs']);
+    const { t, i18n } = useTranslation(['patients', 'dailyLogs', 'common']);
     const [patient, setPatient] = useState<Patient | null>(null);
     const [onboardingData, setOnboardingData] = useState<PatientOnboardingData | null>(null);
     const [latestMeasurements, setLatestMeasurements] = useState<Partial<Record<MeasurementType, Measurement>>>({});
@@ -169,7 +168,7 @@ export function PatientDetailPage() {
                                     </span>
                                 )}
                                 {patient.gender && (
-                                    <span className="capitalize">{patient.gender}</span>
+                                    <span>{t(`common:common.${patient.gender}`)}</span>
                                 )}
                                 {patient.phone && (
                                     <span className="flex items-center gap-1.5">
@@ -194,7 +193,7 @@ export function PatientDetailPage() {
                             {/* Patient Since */}
                             <div className="text-gray-500">
                                 <p>{t('patients:patientSince')}</p>
-                                <p className="font-medium text-gray-700">{formatDate(patient.created_at)}</p>
+                                <p className="font-medium text-gray-700">{formatDate(patient.created_at, 'd MMM yyyy', i18n.language)}</p>
                             </div>
 
                             {/* Height & Weight */}
@@ -278,7 +277,7 @@ export function PatientDetailPage() {
                                                 <Icon size={16} style={{ color }} />
                                             </div>
                                         </div>
-                                        <p className="text-xs text-gray-500 mb-1">{getMeasurementLabel(type)}</p>
+                                        <p className="text-xs text-gray-500 mb-1">{t(`patients:measurementTypes.${type}`)}</p>
                                         <p className="text-lg font-bold text-gray-900">
                                             {measurement
                                                 ? formatMeasurement(measurement.value_primary, measurement.unit, measurement.value_secondary)
@@ -295,7 +294,7 @@ export function PatientDetailPage() {
                     <Card>
                         <CardHeader>
                             <h2 className="text-lg font-semibold text-gray-900">
-                                {getMeasurementLabel(selectedMeasurementType)} {t('patients:trend')}
+                                {t(`patients:measurementTypes.${selectedMeasurementType}`)} {t('patients:trend')}
                             </h2>
                         </CardHeader>
                         <CardContent>

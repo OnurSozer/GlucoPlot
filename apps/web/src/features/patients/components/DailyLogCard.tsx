@@ -14,7 +14,7 @@ import {
     Bath
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { formatTime, formatDate, getLogTypeColor, getLogTypeLabel } from '../../../utils/format';
+import { formatTime, formatDate, getLogTypeColor } from '../../../utils/format';
 import type { DailyLog, LogType } from '../../../types/database.types';
 
 interface DailyLogCardProps {
@@ -149,7 +149,9 @@ export function DailyLogCard({ log }: DailyLogCardProps) {
                             className="text-xs font-medium px-2 py-0.5 rounded-full"
                             style={{ backgroundColor: `${color}15`, color }}
                         >
-                            {getLogTypeLabel(log.log_type)}
+                            {log.log_type === 'note' && subType
+                                ? t(subType)
+                                : t(`types.${log.log_type === 'symptom' ? 'stress' : log.log_type}`)}
                         </span>
                     </div>
 

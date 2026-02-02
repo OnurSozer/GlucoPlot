@@ -61,7 +61,7 @@ class DailyLogModel extends DailyLog {
       'title': title,
       if (description != null) 'description': description,
       if (metadata != null && metadata!.isNotEmpty) 'metadata': metadata,
-      'logged_at': (loggedAt ?? DateTime.now()).toIso8601String(),
+      'logged_at': (loggedAt ?? DateTime.now()).toUtc().toIso8601String(),
     };
   }
 }

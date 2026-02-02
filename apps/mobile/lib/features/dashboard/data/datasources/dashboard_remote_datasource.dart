@@ -83,7 +83,7 @@ class DashboardRemoteDataSourceImpl implements DashboardRemoteDataSource {
         .from('risk_alerts')
         .update({
           'status': AlertStatus.acknowledged.value,
-          'acknowledged_at': DateTime.now().toIso8601String(),
+          'acknowledged_at': DateTime.now().toUtc().toIso8601String(),
           'acknowledged_by': userId,
         })
         .eq('id', alertId)

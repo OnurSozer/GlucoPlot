@@ -21,5 +21,13 @@
   "bathroomVisit": "Tuvalet ziyareti",
   "water": "Su",
   "alcohol": "Alkol",
-  "bathroom": "Tuvalet"
+  "bathroom": "Tuvalet",
+  "types": {
+    "food": "Yemek",
+    "sleep": "Uyku",
+    "exercise": "Egzersiz",
+    "medication": "İlaç",
+    "toilet": "Tuvalet",
+    "stress": "Stres"
+  }
 }

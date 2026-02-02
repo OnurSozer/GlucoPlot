@@ -20,7 +20,7 @@ import type { Patient, PatientStatus } from '../../types/database.types';
 import type { PatientOnboardingData } from '../../types/onboarding.types';
 
 export function PatientsPage() {
-    const { t } = useTranslation('patients');
+    const { t } = useTranslation(['patients', 'common']);
     const [patients, setPatients] = useState<Patient[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');

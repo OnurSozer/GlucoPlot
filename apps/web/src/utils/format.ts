@@ -4,6 +4,20 @@
  */
 
 import { format, formatDistanceToNow, parseISO, isValid } from 'date-fns';
+import { tr, enUS } from 'date-fns/locale';
+
+// Map of language codes to date-fns locales
+const locales: Record<string, typeof enUS> = {
+    en: enUS,
+    tr: tr,
+};
+
+/**
+ * Get the date-fns locale for the current language
+ */
+export function getDateLocale(lang: string): typeof enUS {
+    return locales[lang] || enUS;
+}
 
 // ============================================================
 // Date Formatting
@@ -12,14 +26,14 @@ import { format, formatDistanceToNow, parseISO, isValid } from 'date-fns';
 /**
  * Format a date string to a readable format
  */
-export function formatDate(date: string | Date | null | undefined, formatStr = 'MMM d, yyyy'): string {
+export function formatDate(date: string | Date | null | undefined, formatStr = 'MMM d, yyyy', lang = 'en'): string {
     if (!date) return '-';
 
     const dateObj = typeof date === 'string' ? parseISO(date) : date;
 
     if (!isValid(dateObj)) return '-';
 
-    return format(dateObj, formatStr);
+    return format(dateObj, formatStr, { locale: getDateLocale(lang) });
 }
 
 /**
@@ -30,7 +44,7 @@ export function formatDateTime(date: string | Date | null | undefined): string {
 }
 
 /**
- * Format a date to show only time
+ * Format a date to show only time (converts UTC to local timezone)
  */
 export function formatTime(date: string | Date | null | undefined): string {
     return formatDate(date, 'h:mm a');
@@ -39,14 +53,14 @@ export function formatTime(date: string | Date | null | undefined): string {
 /**
  * Format a date as relative time (e.g., "2 hours ago")
  */
-export function formatRelativeTime(date: string | Date | null | undefined): string {
+export function formatRelativeTime(date: string | Date | null | undefined, lang = 'en'): string {
     if (!date) return '-';
 
     const dateObj = typeof date === 'string' ? parseISO(date) : date;
 
     if (!isValid(dateObj)) return '-';
 
-    return formatDistanceToNow(dateObj, { addSuffix: true });
+    return formatDistanceToNow(dateObj, { addSuffix: true, locale: getDateLocale(lang) });
 }
 
 // ============================================================

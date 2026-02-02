@@ -56,7 +56,7 @@ class MeasurementModel extends Measurement {
       'value_primary': value,
       if (secondaryValue != null) 'value_secondary': secondaryValue,
       if (unit != null) 'unit': unit,
-      'measured_at': measuredAt.toIso8601String(),
+      'measured_at': measuredAt.toUtc().toIso8601String(),
       if (notes != null) 'notes': notes,
     };
   }
@@ -68,7 +68,7 @@ class MeasurementModel extends Measurement {
       'value_primary': value,
       'value_secondary': secondaryValue,
       'unit': unit,
-      'measured_at': measuredAt.toIso8601String(),
+      'measured_at': measuredAt.toUtc().toIso8601String(),
       'notes': notes,
     };
   }

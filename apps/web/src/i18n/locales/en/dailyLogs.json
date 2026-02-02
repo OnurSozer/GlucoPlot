@@ -21,5 +21,13 @@
   "bathroomVisit": "Bathroom visit",
   "water": "Water",
   "alcohol": "Alcohol",
-  "bathroom": "Bathroom"
+  "bathroom": "Bathroom",
+  "types": {
+    "food": "Meal",
+    "sleep": "Sleep",
+    "exercise": "Exercise",
+    "medication": "Medication",
+    "toilet": "Toilet",
+    "stress": "Stress"
+  }
 }

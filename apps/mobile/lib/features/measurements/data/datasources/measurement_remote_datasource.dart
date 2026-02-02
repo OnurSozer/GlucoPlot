@@ -150,7 +150,7 @@ class MeasurementRemoteDataSourceImpl implements MeasurementRemoteDataSource {
             .from('patient_physical_data')
             .update({
               'weight_kg': weightKg,
-              'updated_at': DateTime.now().toIso8601String(),
+              'updated_at': DateTime.now().toUtc().toIso8601String(),
             })
             .eq('patient_id', patientId);
       } else {
