@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Activity, Ruler, Weight, Pencil, X, Check, Loader2 } from 'lucide-react';
+import { Activity, Ruler, Weight, Pencil, X, Check, Loader2, User } from 'lucide-react';
 import { ProfileSection } from './ProfileSection';
 import { calculateBMI } from '../../../../types/onboarding.types';
 import { onboardingService } from '../../../../services/onboarding.service';
@@ -9,11 +9,12 @@ import type { PhysicalData } from '../../../../types/onboarding.types';
 interface PhysicalInfoCardProps {
     data: PhysicalData;
     patientId: string;
+    gender?: 'male' | 'female' | 'other';
     onUpdate?: (data: PhysicalData) => void;
 }
 
-export function PhysicalInfoCard({ data, patientId, onUpdate }: PhysicalInfoCardProps) {
-    const { t } = useTranslation('onboarding');
+export function PhysicalInfoCard({ data, patientId, gender, onUpdate }: PhysicalInfoCardProps) {
+    const { t } = useTranslation(['onboarding', 'common']);
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [height, setHeight] = useState(data.height_cm?.toString() || '');
@@ -33,10 +34,10 @@ export function PhysicalInfoCard({ data, patientId, onUpdate }: PhysicalInfoCard
     const bmi = isEditing ? editBmi : displayBmi;
 
     const getBMICategory = (bmi: number) => {
-        if (bmi < 18.5) return { label: 'Underweight', color: 'text-blue-600', bg: 'bg-blue-100', barBg: 'bg-blue-600', width: '25%' };
-        if (bmi < 25) return { label: 'Normal', color: 'text-green-600', bg: 'bg-green-100', barBg: 'bg-green-600', width: '50%' };
-        if (bmi < 30) return { label: 'Overweight', color: 'text-orange-600', bg: 'bg-orange-100', barBg: 'bg-orange-600', width: '75%' };
-        return { label: 'Obese', color: 'text-red-600', bg: 'bg-red-100', barBg: 'bg-red-600', width: '100%' };
+        if (bmi < 18.5) return { labelKey: 'underweight', color: 'text-blue-600', bg: 'bg-blue-100', barBg: 'bg-blue-600', width: '25%' };
+        if (bmi < 25) return { labelKey: 'normal', color: 'text-green-600', bg: 'bg-green-100', barBg: 'bg-green-600', width: '50%' };
+        if (bmi < 30) return { labelKey: 'overweight', color: 'text-orange-600', bg: 'bg-orange-100', barBg: 'bg-orange-600', width: '75%' };
+        return { labelKey: 'obese', color: 'text-red-600', bg: 'bg-red-100', barBg: 'bg-red-600', width: '100%' };
     };
 
     const bmiInfo = bmi ? getBMICategory(bmi) : null;
@@ -94,13 +95,24 @@ export function PhysicalInfoCard({ data, patientId, onUpdate }: PhysicalInfoCard
     );
 
     return (
-        <ProfileSection title={t('steps.physical')} icon={Activity} action={editButton}>
-            <div className="grid grid-cols-2 gap-4">
+        <ProfileSection title={t('onboarding:steps.physical')} icon={Activity} action={editButton}>
+            <div className="grid grid-cols-3 gap-4">
+                {/* Gender */}
+                <div className="p-4 bg-gray-50 rounded-xl space-y-1">
+                    <div className="flex items-center gap-2 text-gray-500 text-sm">
+                        <User size={14} />
+                        <span>{t('onboarding:physical.sex')}</span>
+                    </div>
+                    <p className="text-xl font-bold text-gray-900">
+                        {gender ? t(`common:common.${gender}`) : '-'}
+                    </p>
+                </div>
+
                 {/* Height */}
                 <div className="p-4 bg-gray-50 rounded-xl space-y-1">
                     <div className="flex items-center gap-2 text-gray-500 text-sm">
                         <Ruler size={14} />
-                        <span>{t('physical.height')}</span>
+                        <span>{t('onboarding:physical.height')}</span>
                     </div>
                     {isEditing ? (
                         <div className="flex items-center gap-1">
@@ -125,7 +137,7 @@ export function PhysicalInfoCard({ data, patientId, onUpdate }: PhysicalInfoCard
                 <div className="p-4 bg-gray-50 rounded-xl space-y-1">
                     <div className="flex items-center gap-2 text-gray-500 text-sm">
                         <Weight size={14} />
-                        <span>{t('physical.weight')}</span>
+                        <span>{t('onboarding:physical.weight')}</span>
                     </div>
                     {isEditing ? (
                         <div className="flex items-center gap-1">
@@ -148,20 +160,20 @@ export function PhysicalInfoCard({ data, patientId, onUpdate }: PhysicalInfoCard
 
                 {/* BMI Section - Full Width */}
                 {bmi && bmiInfo && (
-                    <div className="col-span-2 p-4 bg-gray-50 rounded-xl space-y-3">
+                    <div className="col-span-3 p-4 bg-gray-50 rounded-xl space-y-3">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 text-gray-500 text-sm">
                                 <Activity size={14} />
-                                <span>{t('physical.bmi')}</span>
+                                <span>{t('onboarding:physical.bmi')}</span>
                             </div>
                             <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${bmiInfo.bg} ${bmiInfo.color}`}>
-                                {bmiInfo.label}
+                                {t(`onboarding:physical.bmiCategories.${bmiInfo.labelKey}`)}
                             </span>
                         </div>
 
                         <div className="flex items-end gap-2">
                             <p className="text-2xl font-bold text-gray-900">{bmi}</p>
-                            <p className="text-xs text-gray-400 mb-1">{t('physical.bmiCalculated')}</p>
+                            <p className="text-xs text-gray-400 mb-1">{t('onboarding:physical.bmiCalculated')}</p>
                         </div>
 
                         {/* Visual Indicator */}

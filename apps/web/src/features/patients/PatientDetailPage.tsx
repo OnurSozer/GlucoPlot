@@ -29,7 +29,8 @@ import {
     formatDate,
     calculateAge,
     formatMeasurement,
-    getMeasurementColor
+    getMeasurementColor,
+    formatPhone
 } from '../../utils/format';
 import type { Patient, Measurement, MeasurementType } from '../../types/database.types';
 import type { PatientOnboardingData } from '../../types/onboarding.types';
@@ -173,7 +174,7 @@ export function PatientDetailPage() {
                                 {patient.phone && (
                                     <span className="flex items-center gap-1.5">
                                         <Phone size={16} />
-                                        {patient.phone}
+                                        {formatPhone(patient.phone)}
                                     </span>
                                 )}
                             </div>

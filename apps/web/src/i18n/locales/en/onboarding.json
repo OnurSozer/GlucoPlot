@@ -8,7 +8,7 @@
   "steps": {
     "basicInfo": "Basic Information",
     "notifications": "Notification Preferences",
-    "physical": "Physical Data",
+    "physical": "Demographic Data",
     "habits": "Health Habits",
     "goals": "Health Goals",
     "medicalHistory": "Medical History",
@@ -49,11 +49,18 @@
     }
   },
   "physical": {
-    "title": "Physical Data",
+    "title": "Demographic Data",
+    "sex": "Sex",
     "height": "Height (cm)",
     "weight": "Weight (kg)",
     "bmi": "BMI (kg/m²)",
-    "bmiCalculated": "Calculated automatically"
+    "bmiCalculated": "Calculated automatically",
+    "bmiCategories": {
+      "underweight": "Underweight",
+      "normal": "Normal",
+      "overweight": "Overweight",
+      "obese": "Obese"
+    }
   },
   "habits": {
     "title": "Health Habits",
@@ -145,7 +152,10 @@
       "long": "Long-acting"
     },
     "dose": "Dose (IU)",
-    "time": "Time"
+    "time": "Time",
+    "noTimeSet": "No time set",
+    "noActiveSchedule": "No active schedule",
+    "medication": "Medication"
   },
   "oralMedication": {
     "title": "Oral Medication Doses and Times",
@@ -181,9 +191,11 @@
     "hba1c": "HbA1c Value (%)",
     "hba1cPlaceholder": "e.g., 6.5",
     "testDate": "Test Date",
+    "targetGlucoseRange": "Target Glucose Range",
     "targetGlucoseMin": "Target Glucose Lower Limit (mg/dl)",
     "targetGlucoseMax": "Target Glucose Upper Limit (mg/dl)",
-    "glucoseRangeHint": "These values will be used for alerts"
+    "glucoseRangeHint": "These values will be used for alerts",
+    "targetRangePreview": "Target Range Preview"
   },
   "navigation": {
     "back": "Back",

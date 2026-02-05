@@ -24,11 +24,11 @@ export function PhysicalDataStep({ data, onChange }: PhysicalDataStepProps) {
     });
   };
 
-  const getBMICategory = (bmi: number): { label: string; color: string } => {
-    if (bmi < 18.5) return { label: 'Underweight', color: 'text-blue-600' };
-    if (bmi < 25) return { label: 'Normal', color: 'text-green-600' };
-    if (bmi < 30) return { label: 'Overweight', color: 'text-yellow-600' };
-    return { label: 'Obese', color: 'text-red-600' };
+  const getBMICategory = (bmi: number): { labelKey: string; color: string } => {
+    if (bmi < 18.5) return { labelKey: 'underweight', color: 'text-blue-600' };
+    if (bmi < 25) return { labelKey: 'normal', color: 'text-green-600' };
+    if (bmi < 30) return { labelKey: 'overweight', color: 'text-yellow-600' };
+    return { labelKey: 'obese', color: 'text-red-600' };
   };
 
   return (
@@ -72,7 +72,7 @@ export function PhysicalDataStep({ data, onChange }: PhysicalDataStepProps) {
               <>
                 <p className="text-3xl font-bold text-primary-dark">{bmi}</p>
                 <p className={`text-sm font-medium ${getBMICategory(bmi).color}`}>
-                  {getBMICategory(bmi).label}
+                  {t(`physical.bmiCategories.${getBMICategory(bmi).labelKey}`)}
                 </p>
               </>
             ) : (

@@ -6,9 +6,9 @@
     "submissionFailed": "Hasta oluşturulamadı. Lütfen tekrar deneyin."
   },
   "steps": {
-    "basicInfo": "Temel Bilgiler",
+    "basicInfo": "Demografik Bilgiler",
     "notifications": "Uyarı Tercihleri",
-    "physical": "Fiziksel Veriler",
+    "physical": "Demografik Veriler",
     "habits": "Alışkanlıklar",
     "goals": "Hedefler",
     "medicalHistory": "Hastalık Bilgileri",
@@ -18,7 +18,7 @@
     "labInfo": "Laboratuvar Bilgileri"
   },
   "basicInfo": {
-    "title": "Temel Bilgiler",
+    "title": "Demografik Bilgiler",
     "fullName": "Ad Soyad",
     "nationalId": "TC Kimlik No / Hasta No",
     "sex": "Cinsiyet",
@@ -49,11 +49,18 @@
     }
   },
   "physical": {
-    "title": "Fiziksel Veriler",
+    "title": "Demografik Veriler",
+    "sex": "Cinsiyet",
     "height": "Boy (cm)",
     "weight": "Kilo (kg)",
     "bmi": "BMI (kg/m²)",
-    "bmiCalculated": "Otomatik hesaplanır"
+    "bmiCalculated": "Otomatik hesaplanır",
+    "bmiCategories": {
+      "underweight": "Zayıf",
+      "normal": "Normal",
+      "overweight": "Fazla Kilolu",
+      "obese": "Obez"
+    }
   },
   "habits": {
     "title": "Alışkanlıklar",
@@ -145,7 +152,10 @@
       "long": "Uzun etkili"
     },
     "dose": "Doz (IU)",
-    "time": "Saat"
+    "time": "Saat",
+    "noTimeSet": "Saat belirlenmedi",
+    "noActiveSchedule": "Aktif program yok",
+    "medication": "İlaç"
   },
   "oralMedication": {
     "title": "İlaç Dozu ve Saatleri",
@@ -181,9 +191,11 @@
     "hba1c": "Hb A1C Değeri (%)",
     "hba1cPlaceholder": "örn. 6,5",
     "testDate": "Test Tarihi",
+    "targetGlucoseRange": "Hedef Glukoz Aralığı",
     "targetGlucoseMin": "Hedef Glukoz Alt Değeri (mg/dl)",
     "targetGlucoseMax": "Hedef Glukoz Üst Değeri (mg/dl)",
-    "glucoseRangeHint": "Bu değerler uyarılar için kullanılacak"
+    "glucoseRangeHint": "Bu değerler uyarılar için kullanılacak",
+    "targetRangePreview": "Hedef Aralık Önizlemesi"
   },
   "navigation": {
     "back": "Geri",

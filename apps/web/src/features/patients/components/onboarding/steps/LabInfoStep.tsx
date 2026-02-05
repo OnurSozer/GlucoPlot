@@ -58,7 +58,7 @@ export function LabInfoStep({ data, onChange }: LabInfoStepProps) {
       <div className="p-4 bg-green-50/50 rounded-xl border border-green-100 space-y-4">
         <div className="flex items-center gap-2 mb-2">
           <Target size={18} className="text-green-600" />
-          <span className="font-medium text-gray-900">Target Glucose Range</span>
+          <span className="font-medium text-gray-900">{t('labInfo.targetGlucoseRange')}</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -86,7 +86,7 @@ export function LabInfoStep({ data, onChange }: LabInfoStepProps) {
       {/* Visual Range Preview */}
       {(data.target_glucose_min || data.target_glucose_max) && (
         <div className="p-4 bg-white rounded-xl border border-gray-200">
-          <p className="text-sm font-medium text-gray-700 mb-3">Target Range Preview</p>
+          <p className="text-sm font-medium text-gray-700 mb-3">{t('labInfo.targetRangePreview')}</p>
           <div className="relative h-8 bg-gray-100 rounded-full overflow-hidden">
             {/* Low zone (red) */}
             <div

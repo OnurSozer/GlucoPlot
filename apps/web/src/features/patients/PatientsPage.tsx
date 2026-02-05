@@ -26,8 +26,7 @@ export function PatientsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<PatientStatus | 'all'>('all');
     const [showOnboardingModal, setShowOnboardingModal] = useState(false);
-    const [viewQrPatient, setViewQrPatient] = useState<Patient | null>(null);
-    const [_newPatientQr, setNewPatientQr] = useState<{ id: string; name: string; qr: string } | null>(null);
+    const [viewQrPatient, setViewQrPatient] = useState<{ id: string; full_name: string } | null>(null);
 
     const statusFilters: { value: PatientStatus | 'all'; labelKey: string }[] = [
         { value: 'all', labelKey: 'common:common.all' },
@@ -75,10 +74,10 @@ export function PatientsPage() {
     const handlePatientCreated = async (data: PatientOnboardingData) => {
         const result = await onboardingService.createPatientWithOnboarding(data);
         if (result.data) {
-            setNewPatientQr({
+            // Show QR modal directly after creation
+            setViewQrPatient({
                 id: result.data.patient_id,
-                name: data.basicInfo.full_name,
-                qr: result.data.qr_data,
+                full_name: data.basicInfo.full_name,
             });
         }
         loadPatients();

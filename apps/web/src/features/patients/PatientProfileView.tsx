@@ -4,7 +4,8 @@ import type { PatientOnboardingData } from '../../types/onboarding.types';
 import { PhysicalInfoCard } from './components/profile/PhysicalInfoCard';
 import { MedicalHistoryCard } from './components/profile/MedicalHistoryCard';
 import { MedicationCard } from './components/profile/MedicationCard';
-import { LifestyleCard } from './components/profile/LifestyleCard';
+import { HabitsCard } from './components/profile/HabitsCard';
+import { GoalsCard } from './components/profile/GoalsCard';
 
 interface PatientProfileViewProps {
     patientId: string;
@@ -46,10 +47,17 @@ export function PatientProfileView({ patientId }: PatientProfileViewProps) {
 
     if (isLoading) {
         return (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-pulse">
-                {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="h-64 bg-gray-100 rounded-2xl" />
-                ))}
+            <div className="space-y-6 animate-pulse">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="h-64 bg-gray-100 rounded-2xl" />
+                    ))}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {[4, 5].map((i) => (
+                        <div key={i} className="h-64 bg-gray-100 rounded-2xl" />
+                    ))}
+                </div>
             </div>
         );
     }
@@ -60,32 +68,31 @@ export function PatientProfileView({ patientId }: PatientProfileViewProps) {
         <div className="space-y-6">
             <h2 className="text-lg font-semibold text-gray-900">Patient Profile</h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Physical Data */}
+            {/* Top row: Physical Data, Medical History, Medication Schedule */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <PhysicalInfoCard
                     data={data.physical}
                     patientId={patientId}
+                    gender={data.basicInfo.gender}
                     onUpdate={(newData) => setData(prev => prev ? { ...prev, physical: newData } : null)}
                 />
 
-                {/* Medical History & Conditions */}
                 <MedicalHistoryCard
                     history={data.medicalHistory}
                     diseases={data.chronicDiseases}
                 />
 
-                {/* Medication Schedule */}
                 <MedicationCard
                     type={data.medicalHistory.medication_type}
                     insulin={data.insulinSchedule}
                     oral={data.oralMedicationSchedule}
                 />
+            </div>
 
-                {/* Lifestyle & Goals */}
-                <LifestyleCard
-                    habits={data.habits}
-                    goals={data.goals}
-                />
+            {/* Bottom row: Health Habits & Health Goals (half-half) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <HabitsCard data={data.habits} />
+                <GoalsCard data={data.goals} />
             </div>
         </div>
     );

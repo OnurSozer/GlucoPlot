@@ -106,10 +106,6 @@ export function ViewQRModal({ isOpen, onClose, patientId, patientName }: ViewQRM
                             </div>
                         </div>
 
-                        <p className="text-sm text-gray-400 mb-6">
-                            Token: <code className="bg-gray-100 px-2 py-1 rounded">{token.slice(0, 20)}...</code>
-                        </p>
-
                         {expiresAt && inviteStatus === 'pending' && !isExpired && (
                             <p className="text-sm text-gray-400 mb-4">
                                 Expires: {new Date(expiresAt).toLocaleDateString()}

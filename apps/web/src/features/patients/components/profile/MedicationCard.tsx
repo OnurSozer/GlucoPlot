@@ -43,7 +43,7 @@ export function MedicationCard({ insulin, oral, type }: MedicationCardProps) {
         <ProfileSection title={title} icon={Icon}>
             <div className="space-y-3">
                 {sortedItems.length === 0 ? (
-                    <p className="text-gray-400 text-sm italic">No active schedule</p>
+                    <p className="text-gray-400 text-sm italic">{t('insulinSchedule.noActiveSchedule')}</p>
                 ) : (
                     sortedItems.map((item, index) => (
                         <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
@@ -57,7 +57,7 @@ export function MedicationCard({ insulin, oral, type }: MedicationCardProps) {
                                         {t(`insulinSchedule.timePeriods.${item.time_period}`)}
                                     </p>
                                     <p className="text-xs text-gray-500">
-                                        {item.scheduled_time || 'No time set'}
+                                        {item.scheduled_time || t('insulinSchedule.noTimeSet')}
                                     </p>
                                 </div>
                             </div>
@@ -69,7 +69,7 @@ export function MedicationCard({ insulin, oral, type }: MedicationCardProps) {
                                 <p className="text-xs text-gray-500 dark:text-gray-400">
                                     {type === 'insulin'
                                         ? t(`insulinSchedule.insulinTypes.${item.insulin_type}`)
-                                        : item.medication_name || 'Medication'}
+                                        : item.medication_name || t('insulinSchedule.medication')}
                                 </p>
                             </div>
                         </div>

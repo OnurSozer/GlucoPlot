@@ -199,10 +199,27 @@ export function truncate(text: string, maxLength: number): string {
 }
 
 /**
- * Format phone number for display
+ * Format phone number for display (Turkish format: +90 505 540 80 09)
  */
 export function formatPhone(phone: string | null | undefined): string {
     if (!phone) return '-';
+
+    // Remove all non-digit characters except +
+    const cleaned = phone.replace(/[^\d+]/g, '');
+
+    // Handle Turkish numbers: +905055408009 or 905055408009 or 5055408009
+    if (cleaned.startsWith('+90') && cleaned.length === 13) {
+        // +905055408009 -> +90 505 540 80 09
+        return `+90 ${cleaned.slice(3, 6)} ${cleaned.slice(6, 9)} ${cleaned.slice(9, 11)} ${cleaned.slice(11)}`;
+    } else if (cleaned.startsWith('90') && cleaned.length === 12) {
+        // 905055408009 -> +90 505 540 80 09
+        return `+90 ${cleaned.slice(2, 5)} ${cleaned.slice(5, 8)} ${cleaned.slice(8, 10)} ${cleaned.slice(10)}`;
+    } else if (cleaned.length === 10 && cleaned.startsWith('5')) {
+        // 5055408009 -> +90 505 540 80 09
+        return `+90 ${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6, 8)} ${cleaned.slice(8)}`;
+    }
+
+    // Return original if doesn't match Turkish format
     return phone;
 }
 
