@@ -31,11 +31,12 @@ interface ChartDataPoint {
 }
 
 interface GlucoseChartDataPoint {
-    date: string;
+    timestamp: number; // Unix timestamp for sorting
+    date: string; // Formatted for x-axis (e.g., "Jan 15 08:30")
     fasting?: number;
     post_meal?: number;
     other?: number;
-    fullDate: string;
+    fullDate: string; // Full date for tooltip
 }
 
 // Meal timing display configuration
@@ -73,26 +74,27 @@ export function MeasurementChart({ patientId, type, days = 14 }: MeasurementChar
                     if (abortController.signal.aborted) return;
 
                     if (result.data && result.data.length > 0) {
-                        // Group measurements by date and meal timing
-                        const groupedByDate = new Map<string, GlucoseChartDataPoint>();
-
-                        for (const m of result.data) {
-                            const dateKey = formatDate(m.measured_at, 'MMM d');
+                        // Create individual data points for each measurement (no grouping)
+                        const chartPoints: GlucoseChartDataPoint[] = result.data.map((m) => {
                             const timing = m.meal_timing || 'other';
+                            const timestamp = new Date(m.measured_at).getTime();
 
-                            if (!groupedByDate.has(dateKey)) {
-                                groupedByDate.set(dateKey, {
-                                    date: dateKey,
-                                    fullDate: formatDate(m.measured_at, 'MMM d, yyyy'),
-                                });
-                            }
+                            const point: GlucoseChartDataPoint = {
+                                timestamp,
+                                date: formatDate(m.measured_at, 'MMM d HH:mm'),
+                                fullDate: formatDate(m.measured_at, 'MMM d, yyyy h:mm a'),
+                            };
 
-                            const point = groupedByDate.get(dateKey)!;
-                            // If multiple readings on same day for same timing, use the latest
+                            // Set only the value for this measurement's timing
                             point[timing] = m.value_primary;
-                        }
 
-                        setGlucoseData(Array.from(groupedByDate.values()));
+                            return point;
+                        });
+
+                        // Sort by timestamp to ensure correct line connections
+                        chartPoints.sort((a, b) => a.timestamp - b.timestamp);
+
+                        setGlucoseData(chartPoints);
                         setGlucoseStats(result.stats);
                     } else {
                         setGlucoseData([]);
@@ -256,7 +258,7 @@ export function MeasurementChart({ patientId, type, days = 14 }: MeasurementChar
             )}
 
             {/* Chart */}
-            <div className="h-64">
+            <div className={isGlucoseChart ? "h-80" : "h-64"}>
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                         <defs>
@@ -285,9 +287,15 @@ export function MeasurementChart({ patientId, type, days = 14 }: MeasurementChar
                         <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
                         <XAxis
                             dataKey="date"
-                            tick={{ fontSize: 12, fill: '#6B7280' }}
+                            tick={{ fontSize: isGlucoseChart ? 11 : 12, fill: '#6B7280' }}
                             tickLine={false}
                             axisLine={{ stroke: '#E5E7EB' }}
+                            {...(isGlucoseChart ? {
+                                interval: 'preserveStartEnd',
+                                angle: -45,
+                                textAnchor: 'end',
+                                height: 60,
+                            } : {})}
                         />
                         <YAxis
                             tick={{ fontSize: 12, fill: '#6B7280' }}
