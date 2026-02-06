@@ -497,7 +497,7 @@ class _GlucoseMeasurementPageState extends State<GlucoseMeasurementPage> {
                 l10n.localeName == 'tr'
                     ? 'Test stripini cihaza yerleştirin'
                     : 'Insert test strip into device',
-                false,
+                state.isDeviceReady || state.isMeasuring,
                 isDark,
               ),
               const SizedBox(height: 12),
@@ -506,7 +506,7 @@ class _GlucoseMeasurementPageState extends State<GlucoseMeasurementPage> {
                 l10n.localeName == 'tr'
                     ? 'Kan örneğini stripe uygulayın'
                     : 'Apply blood sample to strip',
-                false,
+                state.isMeasuring,
                 isDark,
               ),
             ],
