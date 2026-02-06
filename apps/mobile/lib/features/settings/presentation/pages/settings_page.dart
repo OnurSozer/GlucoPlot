@@ -300,9 +300,9 @@ class SettingsPage extends StatelessWidget {
     final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
 
     final fontSizeOptions = [
-      (FontSizeScale.small, _getFontSizeSmallLabel(l10n), 'Aa', 14.0),
-      (FontSizeScale.medium, _getFontSizeMediumLabel(l10n), 'Aa', 18.0),
-      (FontSizeScale.large, _getFontSizeLargeLabel(l10n), 'Aa', 24.0),
+      (FontSizeScale.small, _getFontSizeSmallLabel(l10n), 'Aa', 18.0),
+      (FontSizeScale.medium, _getFontSizeMediumLabel(l10n), 'Aa', 24.0),
+      (FontSizeScale.large, _getFontSizeLargeLabel(l10n), 'Aa', 32.0),
     ];
 
     showDialog(
@@ -361,26 +361,9 @@ class SettingsPage extends StatelessWidget {
     final emergencyColor = isDark ? AppColors.errorDark : AppColors.error;
 
     // TODO: Get doctor phone from patient data - for now using settings
-    final doctorPhone = settings.doctorPhone ?? '+90 555 123 4567'; // Demo phone
+    final doctorPhone = settings.doctorPhone ?? '+90 505 540 80 09';
 
-    return GestureDetector(
-      onTap: () async {
-        HapticFeedback.mediumImpact();
-        final uri = Uri(scheme: 'tel', path: doctorPhone.replaceAll(' ', ''));
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri);
-        } else {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(_getNoDoctorPhoneLabel(l10n)),
-                backgroundColor: AppColors.error,
-              ),
-            );
-          }
-        }
-      },
-      child: Container(
+    return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: cardBg,
@@ -420,24 +403,11 @@ class SettingsPage extends StatelessWidget {
                     doctorPhone,
                     style: AppTypography.bodyMedium.copyWith(color: textSecondary),
                   ),
-                  Text(
-                    _getTapToCallLabel(l10n),
-                    style: AppTypography.bodySmall.copyWith(
-                      color: emergencyColor,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
                 ],
               ),
             ),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              color: emergencyColor,
-              size: 20,
-            ),
           ],
         ),
-      ),
     );
   }
 
@@ -474,19 +444,9 @@ class SettingsPage extends StatelessWidget {
           ),
           const SizedBox(width: 16),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  patientName,
-                  style: AppTypography.titleLarge.copyWith(color: textPrimary),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'ID: ${patientId.length > 8 ? patientId.substring(0, 8) : patientId}...',
-                  style: AppTypography.bodySmall.copyWith(color: textSecondary),
-                ),
-              ],
+            child: Text(
+              patientName,
+              style: AppTypography.titleLarge.copyWith(color: textPrimary),
             ),
           ),
           IconButton(

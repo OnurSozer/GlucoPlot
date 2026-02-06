@@ -60,11 +60,11 @@ class ActivityTile extends StatelessWidget {
           children: [
             // Icon container with subtle glow in dark mode
             Container(
-              width: 44,
-              height: 44,
+              width: 80,
+              height: 80,
               decoration: BoxDecoration(
                 color: color.withValues(alpha: iconBgAlpha),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(20),
                 boxShadow: isDark
                     ? [
                         BoxShadow(
@@ -78,18 +78,18 @@ class ActivityTile extends StatelessWidget {
               child: Icon(
                 icon,
                 color: color,
-                size: 24,
+                size: 60,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             // Label
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 2),
               child: Text(
                 label,
-                style: AppTypography.labelSmall.copyWith(
+                style: AppTypography.bodyMedium.copyWith(
                   color: textColor,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 2,

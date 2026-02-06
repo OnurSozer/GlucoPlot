@@ -28,9 +28,7 @@ class GlucoseMeasurementPage extends StatefulWidget {
   State<GlucoseMeasurementPage> createState() => _GlucoseMeasurementPageState();
 }
 
-class _GlucoseMeasurementPageState extends State<GlucoseMeasurementPage>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _pulseController;
+class _GlucoseMeasurementPageState extends State<GlucoseMeasurementPage> {
   MealTiming? _selectedMealTiming;
   GlucoseReading? _capturedReading;
   bool _isSaving = false;
@@ -38,21 +36,10 @@ class _GlucoseMeasurementPageState extends State<GlucoseMeasurementPage>
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
-
     // Clear any previous reading when entering this page for a fresh session
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<UsbDeviceBloc>().add(const UsbClearLatestReadingRequested());
     });
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
   }
 
   String _getMealTimingLabel(MealTiming timing, AppLocalizations l10n) {
@@ -210,59 +197,38 @@ class _GlucoseMeasurementPageState extends State<GlucoseMeasurementPage>
       children: [
         const Spacer(flex: 1),
 
-        // Main icon with pulse animation
-        AnimatedBuilder(
-          animation: _pulseController,
-          builder: (context, child) {
-            final scale = 1.0 + (_pulseController.value * 0.1);
-            final opacity = 0.3 + (_pulseController.value * 0.4);
-
-            return Stack(
-              alignment: Alignment.center,
-              children: [
-                // Outer glow
-                Container(
-                  width: 160 * scale,
-                  height: 160 * scale,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: glucoseColor.withValues(alpha: opacity * 0.3),
-                  ),
-                ),
-                // Inner circle
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: glucoseColor.withValues(alpha: isDark ? 0.2 : 0.15),
-                    border: Border.all(
-                      color: glucoseColor.withValues(alpha: 0.5),
-                      width: 3,
+        // Main icon
+        Container(
+          width: 120,
+          height: 120,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: glucoseColor.withValues(alpha: isDark ? 0.2 : 0.15),
+            border: Border.all(
+              color: glucoseColor.withValues(alpha: 0.5),
+              width: 3,
+            ),
+          ),
+          child: Center(
+            child: state.isMeasuring
+                ? SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 4,
+                      color: glucoseColor,
                     ),
+                  )
+                : Icon(
+                    state.isConnected
+                        ? (state.isDeviceReady
+                            ? Icons.water_drop_rounded
+                            : Icons.bloodtype_rounded)
+                        : Icons.usb_rounded,
+                    size: 56,
+                    color: state.isDeviceReady ? AppColors.success : glucoseColor,
                   ),
-                  child: state.isMeasuring
-                      ? SizedBox(
-                          width: 48,
-                          height: 48,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 4,
-                            color: glucoseColor,
-                          ),
-                        )
-                      : Icon(
-                          state.isConnected
-                              ? (state.isDeviceReady
-                                  ? Icons.water_drop_rounded
-                                  : Icons.bloodtype_rounded)
-                              : Icons.usb_rounded,
-                          size: 56,
-                          color: state.isDeviceReady ? AppColors.success : glucoseColor,
-                        ),
-                ),
-              ],
-            );
-          },
+          ),
         ),
 
         const SizedBox(height: 32),
@@ -741,9 +707,9 @@ class _GlucoseMeasurementPageState extends State<GlucoseMeasurementPage>
                         const SizedBox(height: 8),
                         Text(
                           _getMealTimingLabel(timing, l10n),
-                          style: AppTypography.labelMedium.copyWith(
+                          style: AppTypography.bodyMedium.copyWith(
                             color: isSelected ? Colors.white : textPrimary,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                           ),
                         ),
                       ],
