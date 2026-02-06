@@ -33,16 +33,28 @@ export function ViewQRModal({ isOpen, onClose, patientId, patientName }: ViewQRM
         const ctx = canvas.getContext('2d');
         const img = new Image();
 
-        // Set canvas size with padding for better quality
-        const size = 256;
-        canvas.width = size;
-        canvas.height = size;
+        // Set canvas size with padding for QR code and name below
+        const qrSize = 256;
+        const padding = 24;
+        const textHeight = 40;
+        canvas.width = qrSize + padding * 2;
+        canvas.height = qrSize + padding * 2 + textHeight;
 
         img.onload = () => {
             if (ctx) {
+                // White background
                 ctx.fillStyle = 'white';
-                ctx.fillRect(0, 0, size, size);
-                ctx.drawImage(img, 0, 0, size, size);
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Draw QR code centered with padding
+                ctx.drawImage(img, padding, padding, qrSize, qrSize);
+
+                // Draw patient name below QR code
+                ctx.fillStyle = '#1f2937'; // gray-800
+                ctx.font = 'bold 18px Arial, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(patientName, canvas.width / 2, qrSize + padding * 2 + textHeight / 2);
 
                 const pngUrl = canvas.toDataURL('image/png');
                 const downloadLink = document.createElement('a');
