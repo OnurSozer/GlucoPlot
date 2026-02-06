@@ -56,8 +56,8 @@ class MeasurementModel extends Measurement {
     return {
       'patient_id': patientId,
       'type': type.value,
-      'value_primary': value,
-      if (secondaryValue != null) 'value_secondary': secondaryValue,
+      'value_primary': value.round(),
+      if (secondaryValue != null) 'value_secondary': secondaryValue!.round(),
       if (unit != null) 'unit': unit,
       'measured_at': measuredAt.toUtc().toIso8601String(),
       if (mealTiming != null) 'meal_timing': mealTiming!.value,
@@ -69,8 +69,8 @@ class MeasurementModel extends Measurement {
   Map<String, dynamic> toUpdateJson() {
     return {
       'type': type.value,
-      'value_primary': value,
-      'value_secondary': secondaryValue,
+      'value_primary': value.round(),
+      'value_secondary': secondaryValue?.round(),
       'unit': unit,
       'measured_at': measuredAt.toUtc().toIso8601String(),
       'meal_timing': mealTiming?.value,
