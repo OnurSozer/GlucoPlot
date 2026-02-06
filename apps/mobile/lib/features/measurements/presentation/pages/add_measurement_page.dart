@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/widgets/widgets.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/measurement.dart' as domain;
 import '../bloc/measurement_bloc.dart';
 
@@ -94,9 +94,11 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context)!;
+
     if (_valueController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a value')),
+        SnackBar(content: Text(l10n.pleaseEnterValue)),
       );
       return;
     }
@@ -104,7 +106,7 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
     final value = double.tryParse(_valueController.text);
     if (value == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid number')),
+        SnackBar(content: Text(l10n.pleaseEnterValidNumber)),
       );
       return;
     }
@@ -114,7 +116,7 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
       secondaryValue = double.tryParse(_secondaryController.text);
       if (secondaryValue == null && _secondaryController.text.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter a valid diastolic value')),
+          SnackBar(content: Text(l10n.pleaseEnterValidDiastolic)),
         );
         return;
       }
@@ -138,8 +140,8 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
     if (mounted) {
       setState(() => _isSubmitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(AppStrings.measurementSaved),
+        SnackBar(
+          content: Text(l10n.measurementSaved),
           backgroundColor: AppColors.success,
         ),
       );
@@ -149,6 +151,7 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
 
@@ -158,13 +161,13 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
           icon: const Icon(Icons.close_rounded),
           onPressed: () => context.pop(),
         ),
-        title: const Text(AppStrings.addMeasurement),
+        title: Text(l10n.addMeasurement),
         actions: [
           TextButton(
             onPressed: _isSubmitting ? null : _submit,
             child: _isSubmitting
                 ? const AppLoadingIndicator(size: 20)
-                : const Text(AppStrings.save),
+                : Text(l10n.save),
           ),
         ],
       ),
@@ -176,20 +179,20 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
             // Measurement type selector (only shown when no initial type provided)
             if (_showTypeSelector) ...[
               Text(
-                AppStrings.selectType,
+                l10n.selectType,
                 style: AppTypography.labelMedium.copyWith(
                   color: textSecondary,
                 ),
               ),
               const SizedBox(height: 12),
-              _buildTypeSelector(),
+              _buildTypeSelector(l10n),
               const SizedBox(height: 32),
             ],
 
             // Value input
             MeasurementInputField(
               controller: _valueController,
-              label: _selectedType.label,
+              label: _getTypeLabel(l10n, _selectedType),
               unit: _selectedType.unit,
               hint: _selectedType.hint,
               autofocus: true,
@@ -200,7 +203,7 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
               const SizedBox(height: 16),
               MeasurementInputField(
                 controller: _secondaryController,
-                label: 'Diastolic',
+                label: l10n.diastolic,
                 unit: 'mmHg',
                 hint: '80',
               ),
@@ -210,21 +213,21 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
 
             // Date/time selector
             Text(
-              'When was this measured?',
+              l10n.whenMeasured,
               style: AppTypography.labelMedium.copyWith(
                 color: textSecondary,
               ),
             ),
             const SizedBox(height: 12),
-            _buildDateTimeSelector(),
+            _buildDateTimeSelector(l10n),
 
             const SizedBox(height: 24),
 
             // Notes
             AppTextField(
               controller: _notesController,
-              label: AppStrings.notes,
-              hint: 'Add any notes about this measurement...',
+              label: l10n.notes,
+              hint: l10n.notesHint,
               maxLines: 3,
             ),
           ],
@@ -233,7 +236,18 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
     );
   }
 
-  Widget _buildTypeSelector() {
+  String _getTypeLabel(AppLocalizations l10n, _MeasurementTypeUI type) {
+    switch (type) {
+      case _MeasurementTypeUI.glucose:
+        return l10n.bloodGlucose;
+      case _MeasurementTypeUI.bloodPressure:
+        return l10n.systolic;
+      case _MeasurementTypeUI.weight:
+        return l10n.weight;
+    }
+  }
+
+  Widget _buildTypeSelector(AppLocalizations l10n) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
     final textTertiary = isDark ? AppColors.darkTextTertiary : AppColors.textTertiary;
@@ -244,6 +258,7 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
       runSpacing: 8,
       children: _MeasurementTypeUI.values.map((type) {
         final isSelected = type == _selectedType;
+        final label = _getTypeSelectorLabel(l10n, type);
         return GestureDetector(
           onTap: () => setState(() => _selectedType = type),
           child: AnimatedContainer(
@@ -267,7 +282,7 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  type.label,
+                  label,
                   style: AppTypography.labelMedium.copyWith(
                     color: isSelected ? type.color : textSecondary,
                   ),
@@ -280,7 +295,18 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
     );
   }
 
-  Widget _buildDateTimeSelector() {
+  String _getTypeSelectorLabel(AppLocalizations l10n, _MeasurementTypeUI type) {
+    switch (type) {
+      case _MeasurementTypeUI.glucose:
+        return l10n.glucose;
+      case _MeasurementTypeUI.bloodPressure:
+        return l10n.bloodPressure;
+      case _MeasurementTypeUI.weight:
+        return l10n.weight;
+    }
+  }
+
+  Widget _buildDateTimeSelector(AppLocalizations l10n) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
     final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
@@ -308,13 +334,13 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _formatDate(_selectedDateTime),
+                    _formatDate(_selectedDateTime, l10n),
                     style: AppTypography.bodyLarge.copyWith(
                       color: textPrimary,
                     ),
                   ),
                   Text(
-                    _formatTime(_selectedDateTime),
+                    _formatTime(_selectedDateTime, l10n),
                     style: AppTypography.bodySmall.copyWith(
                       color: textSecondary,
                     ),
@@ -332,18 +358,28 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
     );
   }
 
-  String _formatDate(DateTime date) {
+  String _formatDate(DateTime date, AppLocalizations l10n) {
     final now = DateTime.now();
     if (date.year == now.year &&
         date.month == now.month &&
         date.day == now.day) {
-      return 'Today';
+      return l10n.today;
+    }
+    // Use locale-aware date format
+    final locale = l10n.localeName;
+    if (locale == 'tr') {
+      return '${date.day}.${date.month}.${date.year}';
     }
     return '${date.month}/${date.day}/${date.year}';
   }
 
-  String _formatTime(DateTime date) {
-    final hour = date.hour > 12 ? date.hour - 12 : date.hour;
+  String _formatTime(DateTime date, AppLocalizations l10n) {
+    // Use 24-hour format for Turkish locale
+    final locale = l10n.localeName;
+    if (locale == 'tr') {
+      return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    }
+    final hour = date.hour > 12 ? date.hour - 12 : (date.hour == 0 ? 12 : date.hour);
     final period = date.hour >= 12 ? 'PM' : 'AM';
     return '$hour:${date.minute.toString().padLeft(2, '0')} $period';
   }

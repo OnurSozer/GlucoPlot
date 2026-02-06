@@ -11,8 +11,8 @@ class SettingsProvider extends ChangeNotifier {
   static const String _fontSizeKey = 'font_size';
   static const String _doctorPhoneKey = 'doctor_phone';
 
-  ThemeMode _themeMode = ThemeMode.system;
-  Locale _locale = const Locale('en');
+  ThemeMode _themeMode = ThemeMode.dark;
+  Locale _locale = const Locale('tr');
   FontSizeScale _fontSizeScale = FontSizeScale.medium;
   String? _doctorPhone;
 

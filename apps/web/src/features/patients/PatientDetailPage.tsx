@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
     ArrowLeft,
@@ -15,9 +15,13 @@ import {
     BarChart3,
     ClipboardList,
     Ruler,
-    Scale
+    Scale,
+    Trash2,
+    AlertTriangle,
+    X
 } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '../../components/common/Card';
+import { Button } from '../../components/common/Button';
 import { StatusBadge } from '../../components/common/Badge';
 import { MeasurementChart } from './MeasurementChart';
 import { PatientProfileView } from './PatientProfileView';
@@ -48,6 +52,7 @@ const measurementIcons: Record<string, typeof Droplets> = {
 
 export function PatientDetailPage() {
     const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
     const { t, i18n } = useTranslation(['patients', 'dailyLogs', 'common']);
     const [patient, setPatient] = useState<Patient | null>(null);
     const [onboardingData, setOnboardingData] = useState<PatientOnboardingData | null>(null);
@@ -55,6 +60,29 @@ export function PatientDetailPage() {
     const [selectedMeasurementType, setSelectedMeasurementType] = useState<MeasurementType>('glucose');
     const [activeTab, setActiveTab] = useState<TabType>('measurements');
     const [isLoading, setIsLoading] = useState(true);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleDeletePatient = async () => {
+        if (!id) return;
+
+        setIsDeleting(true);
+        try {
+            const result = await patientsService.deletePatient(id);
+            if (result.success) {
+                navigate('/patients', { replace: true });
+            } else {
+                console.error('Failed to delete patient:', result.error);
+                alert(t('patients:deleteModal.failed'));
+            }
+        } catch (error) {
+            console.error('Error deleting patient:', error);
+            alert(t('patients:deleteModal.failed'));
+        } finally {
+            setIsDeleting(false);
+            setShowDeleteModal(false);
+        }
+    };
 
     useEffect(() => {
         if (!id) return;
@@ -214,6 +242,15 @@ export function PatientDetailPage() {
                                     )}
                                 </div>
                             )}
+
+                            {/* Delete Button */}
+                            <button
+                                onClick={() => setShowDeleteModal(true)}
+                                className="flex items-center gap-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors ml-auto"
+                            >
+                                <Trash2 size={14} />
+                                <span>{t('patients:deleteModal.title')}</span>
+                            </button>
                         </div>
                     </div>
                 </CardContent>
@@ -296,6 +333,9 @@ export function PatientDetailPage() {
                         <CardHeader>
                             <h2 className="text-lg font-semibold text-gray-900">
                                 {t(`patients:measurementTypes.${selectedMeasurementType}`)} {t('patients:trend')}
+                                <span className="text-sm font-normal text-gray-500 ml-2">
+                                    ({selectedMeasurementType === 'glucose' ? 'mg/dL' : selectedMeasurementType === 'blood_pressure' ? 'mmHg' : 'kg'})
+                                </span>
                             </h2>
                         </CardHeader>
                         <CardContent>
@@ -311,6 +351,68 @@ export function PatientDetailPage() {
                 </>
             ) : (
                 <DailyLogsTab patientId={patient.id} />
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
+                    <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                                    <AlertTriangle className="text-red-600" size={20} />
+                                </div>
+                                <h3 className="text-lg font-semibold text-gray-900">
+                                    {t('patients:deleteModal.title')}
+                                </h3>
+                            </div>
+                            <button
+                                onClick={() => setShowDeleteModal(false)}
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <p className="text-gray-600 mb-4">
+                            {t('patients:deleteModal.message')}
+                        </p>
+
+                        <ul className="space-y-2 mb-6 ml-4">
+                            <li className="text-sm text-gray-500 flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 bg-red-400 rounded-full" />
+                                {t('patients:deleteModal.dataList.measurements')}
+                            </li>
+                            <li className="text-sm text-gray-500 flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 bg-red-400 rounded-full" />
+                                {t('patients:deleteModal.dataList.logs')}
+                            </li>
+                            <li className="text-sm text-gray-500 flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 bg-red-400 rounded-full" />
+                                {t('patients:deleteModal.dataList.profile')}
+                            </li>
+                        </ul>
+
+                        <div className="flex gap-3">
+                            <Button
+                                variant="secondary"
+                                onClick={() => setShowDeleteModal(false)}
+                                className="flex-1"
+                                disabled={isDeleting}
+                            >
+                                {t('patients:deleteModal.cancelButton')}
+                            </Button>
+                            <Button
+                                variant="danger"
+                                onClick={handleDeletePatient}
+                                className="flex-1"
+                                isLoading={isDeleting}
+                            >
+                                {t('patients:deleteModal.confirmButton')}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

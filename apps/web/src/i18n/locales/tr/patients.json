@@ -69,5 +69,19 @@
     "alreadyActivated": "Hasta Zaten Aktif",
     "alreadyActivatedDesc": "Bu hasta QR kodu tarayıp hesabını aktif etmiş.",
     "loadingFailed": "QR kodu yüklenemedi"
+  },
+  "deleteModal": {
+    "title": "Hasta Sil",
+    "message": "Bu hastayı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz ve aşağıdaki tüm hasta verileri kalıcı olarak silinecektir:",
+    "dataList": {
+      "measurements": "Tüm ölçümler ve sağlık kayıtları",
+      "logs": "Günlük aktivite kayıtları",
+      "profile": "Hasta profili ve tıbbi geçmişi"
+    },
+    "confirmButton": "Hastayı Sil",
+    "cancelButton": "İptal",
+    "deleting": "Siliniyor...",
+    "success": "Hasta başarıyla silindi",
+    "failed": "Hasta silinemedi"
   }
 }

@@ -1147,6 +1147,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Manage your preferences'**
   String get managePreferences;
+
+  /// No description provided for @pleaseEnterValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a value'**
+  String get pleaseEnterValue;
+
+  /// No description provided for @pleaseEnterValidNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid number'**
+  String get pleaseEnterValidNumber;
+
+  /// No description provided for @pleaseEnterValidDiastolic.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid diastolic value'**
+  String get pleaseEnterValidDiastolic;
+
+  /// No description provided for @diastolic.
+  ///
+  /// In en, this message translates to:
+  /// **'Diastolic'**
+  String get diastolic;
+
+  /// No description provided for @systolic.
+  ///
+  /// In en, this message translates to:
+  /// **'Systolic'**
+  String get systolic;
+
+  /// No description provided for @whenMeasured.
+  ///
+  /// In en, this message translates to:
+  /// **'When was this measured?'**
+  String get whenMeasured;
+
+  /// No description provided for @notesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add any notes about this measurement...'**
+  String get notesHint;
+
+  /// No description provided for @bloodGlucose.
+  ///
+  /// In en, this message translates to:
+  /// **'Blood Glucose'**
+  String get bloodGlucose;
 }
 
 class _AppLocalizationsDelegate

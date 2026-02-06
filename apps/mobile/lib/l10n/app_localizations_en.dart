@@ -539,4 +539,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get managePreferences => 'Manage your preferences';
+
+  @override
+  String get pleaseEnterValue => 'Please enter a value';
+
+  @override
+  String get pleaseEnterValidNumber => 'Please enter a valid number';
+
+  @override
+  String get pleaseEnterValidDiastolic =>
+      'Please enter a valid diastolic value';
+
+  @override
+  String get diastolic => 'Diastolic';
+
+  @override
+  String get systolic => 'Systolic';
+
+  @override
+  String get whenMeasured => 'When was this measured?';
+
+  @override
+  String get notesHint => 'Add any notes about this measurement...';
+
+  @override
+  String get bloodGlucose => 'Blood Glucose';
 }

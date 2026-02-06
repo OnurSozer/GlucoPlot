@@ -205,5 +205,14 @@
   "privacyPolicy": "Privacy Policy",
   "termsOfService": "Terms of Service",
   "selectLanguage": "Select Language",
-  "managePreferences": "Manage your preferences"
+  "managePreferences": "Manage your preferences",
+
+  "pleaseEnterValue": "Please enter a value",
+  "pleaseEnterValidNumber": "Please enter a valid number",
+  "pleaseEnterValidDiastolic": "Please enter a valid diastolic value",
+  "diastolic": "Diastolic",
+  "systolic": "Systolic",
+  "whenMeasured": "When was this measured?",
+  "notesHint": "Add any notes about this measurement...",
+  "bloodGlucose": "Blood Glucose"
 }

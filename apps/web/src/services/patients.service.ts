@@ -169,6 +169,31 @@ export const patientsService = {
     },
 
     /**
+     * Delete a patient and all related data
+     */
+    async deletePatient(patientId: string) {
+        try {
+            // Delete related records first (invites, measurements, logs, etc.)
+            // Due to RLS and cascading, we can just delete the patient
+            const { error } = await supabase
+                .from('patients')
+                .delete()
+                .eq('id', patientId);
+
+            if (error) {
+                return { success: false, error: new Error(error.message) };
+            }
+
+            return { success: true, error: null };
+        } catch (err) {
+            return {
+                success: false,
+                error: err instanceof Error ? err : new Error('Unknown error'),
+            };
+        }
+    },
+
+    /**
      * Get patient count by status
      */
     async getPatientCounts() {

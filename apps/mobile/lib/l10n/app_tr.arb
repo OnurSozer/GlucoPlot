@@ -205,5 +205,14 @@
   "privacyPolicy": "Gizlilik Politikası",
   "termsOfService": "Kullanım Koşulları",
   "selectLanguage": "Dil Seçin",
-  "managePreferences": "Tercihlerinizi yönetin"
+  "managePreferences": "Tercihlerinizi yönetin",
+
+  "pleaseEnterValue": "Lütfen bir değer girin",
+  "pleaseEnterValidNumber": "Lütfen geçerli bir sayı girin",
+  "pleaseEnterValidDiastolic": "Lütfen geçerli bir diastolik değer girin",
+  "diastolic": "Diastolik",
+  "systolic": "Sistolik",
+  "whenMeasured": "Bu ölçüm ne zaman yapıldı?",
+  "notesHint": "Bu ölçüm hakkında notlar ekleyin...",
+  "bloodGlucose": "Kan Şekeri"
 }

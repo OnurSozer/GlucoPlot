@@ -540,4 +540,29 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get managePreferences => 'Tercihlerinizi yönetin';
+
+  @override
+  String get pleaseEnterValue => 'Lütfen bir değer girin';
+
+  @override
+  String get pleaseEnterValidNumber => 'Lütfen geçerli bir sayı girin';
+
+  @override
+  String get pleaseEnterValidDiastolic =>
+      'Lütfen geçerli bir diastolik değer girin';
+
+  @override
+  String get diastolic => 'Diastolik';
+
+  @override
+  String get systolic => 'Sistolik';
+
+  @override
+  String get whenMeasured => 'Bu ölçüm ne zaman yapıldı?';
+
+  @override
+  String get notesHint => 'Bu ölçüm hakkında notlar ekleyin...';
+
+  @override
+  String get bloodGlucose => 'Kan Şekeri';
 }
