@@ -39,6 +39,7 @@ abstract class MeasurementRepository {
     double? secondaryValue,
     String? unit,
     required DateTime measuredAt,
+    MealTiming? mealTiming,
     String? notes,
   });
 

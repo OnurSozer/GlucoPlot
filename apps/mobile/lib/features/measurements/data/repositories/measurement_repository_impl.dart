@@ -7,16 +7,40 @@ import '../models/measurement_model.dart';
 
 /// Implementation of MeasurementRepository
 class MeasurementRepositoryImpl implements MeasurementRepository {
-  const MeasurementRepositoryImpl(this._remoteDataSource);
+  MeasurementRepositoryImpl(this._remoteDataSource);
 
   final MeasurementRemoteDataSource _remoteDataSource;
 
-  String? get _currentPatientId {
+  // Cache the patient ID to avoid repeated lookups
+  String? _cachedPatientId;
+
+  Future<String?> _getCurrentPatientId() async {
+    // Return cached value if available
+    if (_cachedPatientId != null) return _cachedPatientId;
+
     final session = Supabase.instance.client.auth.currentSession;
     if (session == null) return null;
-    // Patient ID is stored in user metadata, not the auth user ID
+
+    // Try to get from user metadata first
     final metadata = session.user.userMetadata;
-    return metadata?['patient_id'] as String?;
+    var patientId = metadata?['patient_id'] as String?;
+
+    // If not in metadata, look up from patients table by auth_user_id
+    if (patientId == null) {
+      final authUserId = session.user.id;
+      final result = await Supabase.instance.client
+          .from('patients')
+          .select('id')
+          .eq('auth_user_id', authUserId)
+          .maybeSingle();
+
+      if (result != null) {
+        patientId = result['id'] as String?;
+      }
+    }
+
+    _cachedPatientId = patientId;
+    return patientId;
   }
 
   @override
@@ -28,7 +52,7 @@ class MeasurementRepositoryImpl implements MeasurementRepository {
     int? offset,
   }) async {
     try {
-      final patientId = _currentPatientId;
+      final patientId = await _getCurrentPatientId();
       if (patientId == null) {
         return const MeasurementFailure('Not authenticated');
       }
@@ -64,7 +88,7 @@ class MeasurementRepositoryImpl implements MeasurementRepository {
   @override
   Future<MeasurementResult<Map<MeasurementType, Measurement>>> getLatestMeasurements() async {
     try {
-      final patientId = _currentPatientId;
+      final patientId = await _getCurrentPatientId();
       if (patientId == null) {
         return const MeasurementFailure('Not authenticated');
       }
@@ -83,10 +107,11 @@ class MeasurementRepositoryImpl implements MeasurementRepository {
     double? secondaryValue,
     String? unit,
     required DateTime measuredAt,
+    MealTiming? mealTiming,
     String? notes,
   }) async {
     try {
-      final patientId = _currentPatientId;
+      final patientId = await _getCurrentPatientId();
       if (patientId == null) {
         return const MeasurementFailure('Not authenticated');
       }
@@ -99,6 +124,7 @@ class MeasurementRepositoryImpl implements MeasurementRepository {
         secondaryValue: secondaryValue,
         unit: unit,
         measuredAt: measuredAt,
+        mealTiming: mealTiming,
         notes: notes,
       );
 
@@ -137,7 +163,7 @@ class MeasurementRepositoryImpl implements MeasurementRepository {
     required DateTime endDate,
   }) async {
     try {
-      final patientId = _currentPatientId;
+      final patientId = await _getCurrentPatientId();
       if (patientId == null) {
         return const MeasurementFailure('Not authenticated');
       }

@@ -1,5 +1,5 @@
 /**
- * DailyLogsTab - Tab content for viewing patient daily logs
+ * DailyLogsTab - Tab content for viewing patient daily logs and measurements
  */
 
 import { useState, useEffect, useRef, useMemo } from 'react';
@@ -18,89 +18,215 @@ import {
     Droplets,
     Wine,
     Bath,
-    Brain
+    Brain,
+    Activity,
+    Heart
 } from 'lucide-react';
 import { format, subDays, addDays, isToday, parseISO } from 'date-fns';
 import { tr, enUS } from 'date-fns/locale';
 import { Card, CardContent } from '../../../components/common/Card';
 import { DailyLogCard } from './DailyLogCard';
 import { dailyLogsService } from '../../../services/daily-logs.service';
-import type { DailyLog } from '../../../types/database.types';
+import { measurementsService } from '../../../services/measurements.service';
+import type { DailyLog, Measurement, MealTiming } from '../../../types/database.types';
 
 interface DailyLogsTabProps {
     patientId: string;
 }
 
-// Filter types including subtypes
-type FilterType = 'food' | 'sleep' | 'exercise' | 'medication' | 'water' | 'alcohol' | 'toilet' | 'stress';
+// Filter types including subtypes and measurements
+type FilterType = 'glucose' | 'blood_pressure' | 'food' | 'sleep' | 'exercise' | 'medication' | 'water' | 'alcohol' | 'toilet' | 'stress';
+
+// Unified item type for both logs and measurements
+interface UnifiedItem {
+    id: string;
+    type: 'log' | 'measurement';
+    timestamp: Date;
+    data: DailyLog | Measurement;
+}
 
 interface FilterConfig {
     id: FilterType;
     label: string;
     icon: typeof FileText;
     color: string;
+    // Type of item this filter applies to
+    itemType: 'log' | 'measurement' | 'both';
     // How to match this filter
-    matcher: (log: DailyLog) => boolean;
+    matcher: (item: UnifiedItem) => boolean;
 }
 
+// Meal timing display configuration
+const MEAL_TIMING_CONFIG: Record<MealTiming, { color: string; label: string; labelTr: string }> = {
+    fasting: { color: '#3B82F6', label: 'Fasting', labelTr: 'Açlık' },
+    post_meal: { color: '#F97316', label: 'After Meal', labelTr: 'Tokluk' },
+    other: { color: '#6B7280', label: 'Other', labelTr: 'Diğer' },
+};
+
 const FILTER_CONFIGS: FilterConfig[] = [
+    {
+        id: 'glucose',
+        label: 'Glucose',
+        icon: Activity,
+        color: '#EF4444',
+        itemType: 'measurement',
+        matcher: (item) => item.type === 'measurement' && (item.data as Measurement).type === 'glucose',
+    },
+    {
+        id: 'blood_pressure',
+        label: 'Blood Pressure',
+        icon: Heart,
+        color: '#EC4899',
+        itemType: 'measurement',
+        matcher: (item) => item.type === 'measurement' && (item.data as Measurement).type === 'blood_pressure',
+    },
     {
         id: 'food',
         label: 'Meal',
         icon: UtensilsCrossed,
         color: '#FF9F43',
-        matcher: (log) => log.log_type === 'food',
+        itemType: 'log',
+        matcher: (item) => item.type === 'log' && (item.data as DailyLog).log_type === 'food',
     },
     {
         id: 'sleep',
         label: 'Sleep',
         icon: Moon,
         color: '#6C5CE7',
-        matcher: (log) => log.log_type === 'sleep',
+        itemType: 'log',
+        matcher: (item) => item.type === 'log' && (item.data as DailyLog).log_type === 'sleep',
     },
     {
         id: 'exercise',
         label: 'Exercise',
         icon: Dumbbell,
         color: '#00B894',
-        matcher: (log) => log.log_type === 'exercise',
+        itemType: 'log',
+        matcher: (item) => item.type === 'log' && (item.data as DailyLog).log_type === 'exercise',
     },
     {
         id: 'medication',
         label: 'Medication',
         icon: Pill,
         color: '#E84393',
-        matcher: (log) => log.log_type === 'medication',
+        itemType: 'log',
+        matcher: (item) => item.type === 'log' && (item.data as DailyLog).log_type === 'medication',
     },
     {
         id: 'water',
         label: 'Water',
         icon: Droplets,
         color: '#0984E3',
-        matcher: (log) => log.log_type === 'note' && (log.metadata?.type === 'water' || log.metadata?.sub_type === 'water'),
+        itemType: 'log',
+        matcher: (item) => {
+            if (item.type !== 'log') return false;
+            const log = item.data as DailyLog;
+            return log.log_type === 'note' && (log.metadata?.type === 'water' || log.metadata?.sub_type === 'water');
+        },
     },
     {
         id: 'alcohol',
         label: 'Alcohol',
         icon: Wine,
         color: '#D63031',
-        matcher: (log) => log.log_type === 'note' && (log.metadata?.type === 'alcohol' || log.metadata?.sub_type === 'alcohol'),
+        itemType: 'log',
+        matcher: (item) => {
+            if (item.type !== 'log') return false;
+            const log = item.data as DailyLog;
+            return log.log_type === 'note' && (log.metadata?.type === 'alcohol' || log.metadata?.sub_type === 'alcohol');
+        },
     },
     {
         id: 'toilet',
         label: 'Toilet',
         icon: Bath,
         color: '#636E72',
-        matcher: (log) => log.log_type === 'note' && (log.metadata?.type === 'toilet' || log.metadata?.sub_type === 'toilet'),
+        itemType: 'log',
+        matcher: (item) => {
+            if (item.type !== 'log') return false;
+            const log = item.data as DailyLog;
+            return log.log_type === 'note' && (log.metadata?.type === 'toilet' || log.metadata?.sub_type === 'toilet');
+        },
     },
     {
         id: 'stress',
         label: 'Stress',
         icon: Brain,
         color: '#FD79A8',
-        matcher: (log) => log.log_type === 'symptom',
+        itemType: 'log',
+        matcher: (item) => item.type === 'log' && (item.data as DailyLog).log_type === 'symptom',
     },
 ];
+
+// Component to render a measurement card
+function MeasurementCard({ measurement, locale }: { measurement: Measurement; locale: string }) {
+    const isGlucose = measurement.type === 'glucose';
+    const isBloodPressure = measurement.type === 'blood_pressure';
+
+    const config = FILTER_CONFIGS.find(c =>
+        (isGlucose && c.id === 'glucose') || (isBloodPressure && c.id === 'blood_pressure')
+    );
+
+    const Icon = config?.icon || Activity;
+    const color = config?.color || '#6B7280';
+
+    const time = format(parseISO(measurement.measured_at), 'HH:mm');
+
+    // Format value
+    let valueDisplay: string;
+    if (isBloodPressure && measurement.value_secondary) {
+        valueDisplay = `${measurement.value_primary}/${measurement.value_secondary}`;
+    } else {
+        valueDisplay = `${measurement.value_primary}`;
+    }
+
+    // Unit display
+    const unit = measurement.unit || (isGlucose ? 'mg/dL' : 'mmHg');
+
+    // Meal timing badge for glucose
+    const mealTiming = measurement.meal_timing;
+    const mealTimingConfig = mealTiming ? MEAL_TIMING_CONFIG[mealTiming] : null;
+
+    return (
+        <Card className="overflow-hidden">
+            <CardContent className="py-3">
+                <div className="flex items-center gap-3">
+                    <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: `${color}15` }}
+                    >
+                        <Icon size={20} style={{ color }} />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                            <h4 className="font-medium text-gray-900">
+                                {isGlucose
+                                    ? (locale === 'tr' ? 'Kan Şekeri' : 'Blood Glucose')
+                                    : (locale === 'tr' ? 'Tansiyon' : 'Blood Pressure')
+                                }
+                            </h4>
+                            {mealTimingConfig && (
+                                <span
+                                    className="text-xs px-2 py-0.5 rounded-full text-white"
+                                    style={{ backgroundColor: mealTimingConfig.color }}
+                                >
+                                    {locale === 'tr' ? mealTimingConfig.labelTr : mealTimingConfig.label}
+                                </span>
+                            )}
+                        </div>
+                        <p className="text-sm text-gray-500">{time}</p>
+                    </div>
+
+                    <div className="text-right">
+                        <p className="text-lg font-bold text-gray-900">{valueDisplay}</p>
+                        <p className="text-xs text-gray-500">{unit}</p>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
 
 export function DailyLogsTab({ patientId }: DailyLogsTabProps) {
     const { t, i18n } = useTranslation('dailyLogs');
@@ -110,6 +236,8 @@ export function DailyLogsTab({ patientId }: DailyLogsTabProps) {
     const getFilterLabel = (id: FilterType): string => {
         // Use translation for types that have translations, fallback to existing translations
         const translationMap: Record<FilterType, string> = {
+            glucose: i18n.language === 'tr' ? 'Şeker' : 'Glucose',
+            blood_pressure: i18n.language === 'tr' ? 'Tansiyon' : 'Blood Pressure',
             food: t('types.food'),
             sleep: t('types.sleep'),
             exercise: t('types.exercise'),
@@ -122,6 +250,7 @@ export function DailyLogsTab({ patientId }: DailyLogsTabProps) {
         return translationMap[id];
     };
     const [allLogs, setAllLogs] = useState<DailyLog[]>([]);
+    const [allMeasurements, setAllMeasurements] = useState<Measurement[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
     const [selectedFilter, setSelectedFilter] = useState<FilterType | null>(null);
@@ -131,31 +260,49 @@ export function DailyLogsTab({ patientId }: DailyLogsTabProps) {
     useEffect(() => {
         const abortController = new AbortController();
 
-        const loadLogs = async () => {
+        const loadData = async () => {
             try {
                 setIsLoading(true);
                 setError(null);
 
                 const dateStr = format(selectedDate, 'yyyy-MM-dd');
+                const startOfDay = `${dateStr}T00:00:00`;
+                const endOfDay = `${dateStr}T23:59:59`;
 
-                // Load all logs for the date (no type filter at API level)
-                const { data, error: fetchError } = await dailyLogsService.getDailyLogs({
-                    patientId,
-                    startDate: dateStr,
-                    endDate: dateStr,
-                    limit: 100,
-                });
+                // Load logs and measurements in parallel
+                const [logsResult, measurementsResult] = await Promise.all([
+                    dailyLogsService.getDailyLogs({
+                        patientId,
+                        startDate: dateStr,
+                        endDate: dateStr,
+                        limit: 100,
+                    }),
+                    measurementsService.getMeasurements({
+                        patientId,
+                        startDate: startOfDay,
+                        endDate: endOfDay,
+                        limit: 100,
+                    }),
+                ]);
 
                 if (abortController.signal.aborted) return;
 
-                if (fetchError) {
-                    setError(fetchError.message);
+                if (logsResult.error) {
+                    setError(logsResult.error.message);
                 } else {
-                    setAllLogs(data || []);
+                    setAllLogs(logsResult.data || []);
+                }
+
+                if (!measurementsResult.error) {
+                    // Filter to only glucose and blood_pressure
+                    const filtered = (measurementsResult.data || []).filter(
+                        m => m.type === 'glucose' || m.type === 'blood_pressure'
+                    );
+                    setAllMeasurements(filtered);
                 }
             } catch (err) {
                 if (abortController.signal.aborted) return;
-                setError('Failed to load logs');
+                setError('Failed to load data');
                 console.error('Error loading daily logs:', err);
             } finally {
                 if (!abortController.signal.aborted) {
@@ -164,26 +311,49 @@ export function DailyLogsTab({ patientId }: DailyLogsTabProps) {
             }
         };
 
-        loadLogs();
+        loadData();
 
         return () => {
             abortController.abort();
         };
     }, [patientId, selectedDate]);
 
-    // Filter logs client-side based on selected filter
-    const filteredLogs = useMemo(() => {
-        if (!selectedFilter) return allLogs;
+    // Create unified items from logs and measurements
+    const allItems = useMemo((): UnifiedItem[] => {
+        const logItems: UnifiedItem[] = allLogs.map(log => ({
+            id: log.id,
+            type: 'log' as const,
+            timestamp: new Date(log.logged_at),
+            data: log,
+        }));
+
+        const measurementItems: UnifiedItem[] = allMeasurements.map(m => ({
+            id: m.id,
+            type: 'measurement' as const,
+            timestamp: new Date(m.measured_at),
+            data: m,
+        }));
+
+        return [...logItems, ...measurementItems].sort(
+            (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
+        );
+    }, [allLogs, allMeasurements]);
+
+    // Filter items client-side based on selected filter
+    const filteredItems = useMemo(() => {
+        if (!selectedFilter) return allItems;
 
         const config = FILTER_CONFIGS.find(c => c.id === selectedFilter);
-        if (!config) return allLogs;
+        if (!config) return allItems;
 
-        return allLogs.filter(config.matcher);
-    }, [allLogs, selectedFilter]);
+        return allItems.filter(config.matcher);
+    }, [allItems, selectedFilter]);
 
-    // Count logs for each filter type
+    // Count items for each filter type
     const filterCounts = useMemo(() => {
         const counts: Record<FilterType, number> = {
+            glucose: 0,
+            blood_pressure: 0,
             food: 0,
             sleep: 0,
             exercise: 0,
@@ -194,17 +364,17 @@ export function DailyLogsTab({ patientId }: DailyLogsTabProps) {
             stress: 0,
         };
 
-        for (const log of allLogs) {
+        for (const item of allItems) {
             for (const config of FILTER_CONFIGS) {
-                if (config.matcher(log)) {
+                if (config.matcher(item)) {
                     counts[config.id]++;
-                    break; // Each log only counts once
+                    break; // Each item only counts once
                 }
             }
         }
 
         return counts;
-    }, [allLogs]);
+    }, [allItems]);
 
     const handlePrevDay = () => {
         setSelectedDate(prev => subDays(prev, 1));
@@ -233,18 +403,18 @@ export function DailyLogsTab({ patientId }: DailyLogsTabProps) {
         }
     };
 
-    // Group logs by time of day
-    const groupedLogs = filteredLogs.reduce((acc, log) => {
-        const hour = new Date(log.logged_at).getHours();
+    // Group items by time of day
+    const groupedItems = filteredItems.reduce((acc, item) => {
+        const hour = item.timestamp.getHours();
         let period: string;
         if (hour < 12) period = 'morning';
         else if (hour < 17) period = 'afternoon';
         else period = 'evening';
 
         if (!acc[period]) acc[period] = [];
-        acc[period].push(log);
+        acc[period].push(item);
         return acc;
-    }, {} as Record<string, DailyLog[]>);
+    }, {} as Record<string, UnifiedItem[]>);
 
     const periodLabels: Record<string, string> = {
         morning: t('morning'),
@@ -361,7 +531,7 @@ export function DailyLogsTab({ patientId }: DailyLogsTabProps) {
                         </button>
                     </CardContent>
                 </Card>
-            ) : filteredLogs.length === 0 ? (
+            ) : filteredItems.length === 0 ? (
                 <Card>
                     <CardContent className="py-12 text-center">
                         <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
@@ -378,7 +548,7 @@ export function DailyLogsTab({ patientId }: DailyLogsTabProps) {
             ) : (
                 <div className="space-y-6">
                     {/* Summary stats */}
-                    <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
+                    <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
                         {FILTER_CONFIGS.map(config => {
                             const Icon = config.icon;
                             const count = filterCounts[config.id];
@@ -395,25 +565,33 @@ export function DailyLogsTab({ patientId }: DailyLogsTabProps) {
                                 >
                                     <Icon size={18} style={{ color: config.color }} className="mx-auto mb-1" />
                                     <p className="text-lg font-bold text-gray-900">{count}</p>
-                                    <p className="text-xs text-gray-500">{getFilterLabel(config.id)}</p>
+                                    <p className="text-xs text-gray-500 truncate">{getFilterLabel(config.id)}</p>
                                 </button>
                             );
                         })}
                     </div>
 
-                    {/* Grouped logs */}
+                    {/* Grouped items */}
                     {['morning', 'afternoon', 'evening'].map(period => {
-                        const periodLogs = groupedLogs[period];
-                        if (!periodLogs || periodLogs.length === 0) return null;
+                        const periodItems = groupedItems[period];
+                        if (!periodItems || periodItems.length === 0) return null;
 
                         return (
                             <div key={period}>
                                 <h3 className="text-sm font-medium text-gray-500 mb-3 uppercase tracking-wide">
-                                    {periodLabels[period]} ({periodLogs.length})
+                                    {periodLabels[period]} ({periodItems.length})
                                 </h3>
                                 <div className="space-y-2">
-                                    {periodLogs.map(log => (
-                                        <DailyLogCard key={log.id} log={log} />
+                                    {periodItems.map(item => (
+                                        item.type === 'log' ? (
+                                            <DailyLogCard key={item.id} log={item.data as DailyLog} />
+                                        ) : (
+                                            <MeasurementCard
+                                                key={item.id}
+                                                measurement={item.data as Measurement}
+                                                locale={i18n.language}
+                                            />
+                                        )
                                     ))}
                                 </div>
                             </div>

@@ -11,6 +11,7 @@ export type PatientStatus = 'pending' | 'active' | 'inactive';
 export type InviteStatus = 'pending' | 'redeemed' | 'expired';
 export type MeasurementType = 'glucose' | 'blood_pressure' | 'heart_rate' | 'weight' | 'temperature' | 'spo2';
 export type MeasurementSource = 'device' | 'manual';
+export type MealTiming = 'fasting' | 'post_meal' | 'other';
 export type LogType = 'food' | 'sleep' | 'exercise' | 'medication' | 'symptom' | 'note';
 export type AlertSeverity = 'low' | 'medium' | 'high' | 'critical';
 export type AlertStatus = 'new' | 'acknowledged' | 'resolved';
@@ -66,6 +67,7 @@ export interface Measurement {
     unit: string;
     measured_at: string;
     source: MeasurementSource;
+    meal_timing: MealTiming | null;
     notes: string | null;
     created_at: string;
 }
@@ -179,6 +181,7 @@ export interface Database {
             invite_status: InviteStatus;
             measurement_type: MeasurementType;
             measurement_source: MeasurementSource;
+            meal_timing: MealTiming;
             log_type: LogType;
             alert_severity: AlertSeverity;
             alert_status: AlertStatus;

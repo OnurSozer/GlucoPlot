@@ -28,10 +28,10 @@ class DailyLogModel extends DailyLog {
           ? Map<String, dynamic>.from(json['metadata'] as Map)
           : null,
       loggedAt: json['logged_at'] != null
-          ? DateTime.parse(json['logged_at'] as String)
+          ? DateTime.parse(json['logged_at'] as String).toLocal()
           : null,
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
+          ? DateTime.parse(json['created_at'] as String).toLocal()
           : null,
     );
   }

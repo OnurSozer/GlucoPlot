@@ -71,3 +71,27 @@ class DailyLogDeleteRequested extends DailyLogEvent {
   @override
   List<Object?> get props => [id];
 }
+
+/// Event to update a log
+class DailyLogUpdated extends DailyLogEvent {
+  const DailyLogUpdated({
+    required this.id,
+    required this.logDate,
+    required this.logType,
+    required this.title,
+    this.description,
+    this.metadata,
+    this.loggedAt,
+  });
+
+  final String id;
+  final DateTime logDate;
+  final LogType logType;
+  final String title;
+  final String? description;
+  final Map<String, dynamic>? metadata;
+  final DateTime? loggedAt;
+
+  @override
+  List<Object?> get props => [id, logDate, logType, title, description, metadata, loggedAt];
+}

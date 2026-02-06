@@ -10,6 +10,7 @@ class MeasurementModel extends Measurement {
     super.secondaryValue,
     super.unit,
     required super.measuredAt,
+    super.mealTiming,
     super.notes,
     super.createdAt,
   });
@@ -25,10 +26,11 @@ class MeasurementModel extends Measurement {
           ? (json['value_secondary'] as num).toDouble()
           : null,
       unit: json['unit'] as String?,
-      measuredAt: DateTime.parse(json['measured_at'] as String),
+      measuredAt: DateTime.parse(json['measured_at'] as String).toLocal(),
+      mealTiming: MealTiming.fromString(json['meal_timing'] as String?),
       notes: json['notes'] as String?,
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
+          ? DateTime.parse(json['created_at'] as String).toLocal()
           : null,
     );
   }
@@ -43,6 +45,7 @@ class MeasurementModel extends Measurement {
       secondaryValue: measurement.secondaryValue,
       unit: measurement.unit,
       measuredAt: measurement.measuredAt,
+      mealTiming: measurement.mealTiming,
       notes: measurement.notes,
       createdAt: measurement.createdAt,
     );
@@ -57,6 +60,7 @@ class MeasurementModel extends Measurement {
       if (secondaryValue != null) 'value_secondary': secondaryValue,
       if (unit != null) 'unit': unit,
       'measured_at': measuredAt.toUtc().toIso8601String(),
+      if (mealTiming != null) 'meal_timing': mealTiming!.value,
       if (notes != null) 'notes': notes,
     };
   }
@@ -69,6 +73,7 @@ class MeasurementModel extends Measurement {
       'value_secondary': secondaryValue,
       'unit': unit,
       'measured_at': measuredAt.toUtc().toIso8601String(),
+      'meal_timing': mealTiming?.value,
       'notes': notes,
     };
   }

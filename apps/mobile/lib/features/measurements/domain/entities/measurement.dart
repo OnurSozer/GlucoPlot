@@ -1,5 +1,34 @@
 import 'package:equatable/equatable.dart';
 
+/// Meal timing enum for glucose measurements
+enum MealTiming {
+  fasting('fasting'),
+  postMeal('post_meal'),
+  other('other');
+
+  const MealTiming(this.value);
+  final String value;
+
+  static MealTiming? fromString(String? value) {
+    if (value == null) return null;
+    return MealTiming.values.firstWhere(
+      (e) => e.value == value,
+      orElse: () => MealTiming.other,
+    );
+  }
+
+  String get displayName {
+    switch (this) {
+      case MealTiming.fasting:
+        return 'Fasting';
+      case MealTiming.postMeal:
+        return 'After Meal';
+      case MealTiming.other:
+        return 'Other';
+    }
+  }
+}
+
 /// Measurement type enum
 enum MeasurementType {
   glucose('glucose'),
@@ -81,6 +110,7 @@ class Measurement extends Equatable {
     this.secondaryValue,
     this.unit,
     required this.measuredAt,
+    this.mealTiming,
     this.notes,
     this.createdAt,
   });
@@ -92,6 +122,7 @@ class Measurement extends Equatable {
   final double? secondaryValue; // For blood pressure (diastolic)
   final String? unit;
   final DateTime measuredAt;
+  final MealTiming? mealTiming; // For glucose measurements
   final String? notes;
   final DateTime? createdAt;
 
@@ -104,6 +135,7 @@ class Measurement extends Equatable {
         secondaryValue,
         unit,
         measuredAt,
+        mealTiming,
         notes,
         createdAt,
       ];
@@ -130,6 +162,7 @@ class Measurement extends Equatable {
     double? secondaryValue,
     String? unit,
     DateTime? measuredAt,
+    MealTiming? mealTiming,
     String? notes,
     DateTime? createdAt,
   }) {
@@ -141,6 +174,7 @@ class Measurement extends Equatable {
       secondaryValue: secondaryValue ?? this.secondaryValue,
       unit: unit ?? this.unit,
       measuredAt: measuredAt ?? this.measuredAt,
+      mealTiming: mealTiming ?? this.mealTiming,
       notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
     );

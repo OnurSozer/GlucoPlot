@@ -3,11 +3,12 @@
  */
 
 import { supabase } from '../lib/supabase';
-import type { Measurement, MeasurementType } from '../types/database.types';
+import type { Measurement, MeasurementType, MealTiming } from '../types/database.types';
 
 export interface MeasurementFilters {
     patientId: string;
     type?: MeasurementType;
+    mealTiming?: MealTiming | MealTiming[];
     startDate?: string;
     endDate?: string;
     limit?: number;
@@ -26,6 +27,14 @@ export const measurementsService = {
 
         if (filters.type) {
             query = query.eq('type', filters.type);
+        }
+
+        if (filters.mealTiming) {
+            if (Array.isArray(filters.mealTiming)) {
+                query = query.in('meal_timing', filters.mealTiming);
+            } else {
+                query = query.eq('meal_timing', filters.mealTiming);
+            }
         }
 
         if (filters.startDate) {
@@ -130,5 +139,63 @@ export const measurementsService = {
             .limit(limit);
 
         return result;
+    },
+
+    /**
+     * Get glucose measurements with meal timing for charting
+     * Returns measurements grouped by date with values for each meal timing
+     */
+    async getGlucoseChartData(patientId: string, days = 14) {
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - days);
+
+        const { data, error } = await supabase
+            .from('measurements')
+            .select('*')
+            .eq('patient_id', patientId)
+            .eq('type', 'glucose')
+            .gte('measured_at', startDate.toISOString())
+            .order('measured_at', { ascending: true });
+
+        if (error || !data) {
+            return { data: null, error };
+        }
+
+        const measurements = data as Measurement[];
+
+        // Calculate stats per meal timing
+        const mealTimingStats: Record<MealTiming, { values: number[]; measurements: Measurement[] }> = {
+            fasting: { values: [], measurements: [] },
+            post_meal: { values: [], measurements: [] },
+            other: { values: [], measurements: [] },
+        };
+
+        for (const m of measurements) {
+            const timing = m.meal_timing || 'other';
+            mealTimingStats[timing].values.push(m.value_primary);
+            mealTimingStats[timing].measurements.push(m);
+        }
+
+        const calculateStats = (values: number[]) => {
+            if (values.length === 0) return null;
+            return {
+                min: Math.min(...values),
+                max: Math.max(...values),
+                avg: values.reduce((a, b) => a + b, 0) / values.length,
+                count: values.length,
+            };
+        };
+
+        return {
+            data: measurements,
+            error: null,
+            stats: {
+                fasting: calculateStats(mealTimingStats.fasting.values),
+                post_meal: calculateStats(mealTimingStats.post_meal.values),
+                other: calculateStats(mealTimingStats.other.values),
+                all: calculateStats(measurements.map(m => m.value_primary)),
+            },
+            byTiming: mealTimingStats,
+        };
     },
 };

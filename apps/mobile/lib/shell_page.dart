@@ -17,7 +17,7 @@ class ShellPage extends StatelessWidget {
   int _calculateSelectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/dashboard')) return 0;
-    if (location.startsWith('/measurements') || location.startsWith('/log')) return 1;
+    if (location.startsWith('/log')) return 1;
     if (location.startsWith('/settings')) return 2;
     return 0;
   }

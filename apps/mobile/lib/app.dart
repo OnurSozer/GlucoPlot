@@ -17,7 +17,6 @@ import 'features/auth/presentation/pages/welcome_page.dart';
 import 'features/dashboard/presentation/bloc/dashboard_bloc.dart';
 import 'features/dashboard/presentation/pages/dashboard_page.dart';
 import 'features/measurements/presentation/bloc/measurement_bloc.dart';
-import 'features/measurements/presentation/pages/measurements_page.dart';
 import 'features/measurements/presentation/pages/add_measurement_page.dart';
 import 'features/logging/presentation/bloc/daily_log_bloc.dart';
 import 'features/logging/presentation/pages/daily_log_page.dart';
@@ -112,19 +111,12 @@ class _GlucoPlotAppState extends State<GlucoPlotApp> {
               builder: (context, state) => const DashboardPage(),
             ),
             GoRoute(
-              path: '/measurements',
-              name: 'measurements',
-              builder: (context, state) => const MeasurementsPage(),
-              routes: [
-                GoRoute(
-                  path: 'add',
-                  name: 'add-measurement',
-                  builder: (context, state) {
-                    final initialType = state.extra as String?;
-                    return AddMeasurementPage(initialType: initialType);
-                  },
-                ),
-              ],
+              path: '/measurements/add',
+              name: 'add-measurement',
+              builder: (context, state) {
+                final initialType = state.extra as String?;
+                return AddMeasurementPage(initialType: initialType);
+              },
             ),
             GoRoute(
               path: '/log',

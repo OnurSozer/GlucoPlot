@@ -151,11 +151,19 @@ Deno.serve(async (req) => {
       }
 
       // Update patient password to a temporary one for this session
+      // Also ensure user_metadata has patient_id (for older accounts that may not have it)
       const patientEmail = `patient_${patient.id}@glucoplot.local`; // Re-declare patientEmail for scope
       const tempPassword = crypto.randomUUID();
       const { error: passwordError } = await supabase.auth.admin.updateUserById(
         authUserId,
-        { password: tempPassword }
+        {
+          password: tempPassword,
+          user_metadata: {
+            full_name: patient.full_name,
+            role: "patient",
+            patient_id: patient.id,
+          },
+        }
       );
 
       if (passwordError) {

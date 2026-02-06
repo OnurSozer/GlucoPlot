@@ -2,12 +2,12 @@
  * View QR Code Modal - Display QR code for existing patients
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Modal } from '../../components/common/Modal';
 import { Button } from '../../components/common/Button';
 import { patientsService } from '../../services/patients.service';
-import { AlertCircle, RefreshCw, CheckCircle } from 'lucide-react';
+import { AlertCircle, RefreshCw, CheckCircle, Download } from 'lucide-react';
 
 interface ViewQRModalProps {
     isOpen: boolean;
@@ -22,6 +22,40 @@ export function ViewQRModal({ isOpen, onClose, patientId, patientName }: ViewQRM
     const [inviteStatus, setInviteStatus] = useState<string | null>(null);
     const [expiresAt, setExpiresAt] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const qrRef = useRef<HTMLDivElement>(null);
+
+    const exportAsPng = () => {
+        const svgElement = qrRef.current?.querySelector('svg');
+        if (!svgElement) return;
+
+        const svgData = new XMLSerializer().serializeToString(svgElement);
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+
+        // Set canvas size with padding for better quality
+        const size = 256;
+        canvas.width = size;
+        canvas.height = size;
+
+        img.onload = () => {
+            if (ctx) {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, size, size);
+                ctx.drawImage(img, 0, 0, size, size);
+
+                const pngUrl = canvas.toDataURL('image/png');
+                const downloadLink = document.createElement('a');
+                downloadLink.href = pngUrl;
+                downloadLink.download = `${patientName.replace(/\s+/g, '_')}_qr.png`;
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+            }
+        };
+
+        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+    };
 
     useEffect(() => {
         if (isOpen && patientId) {
@@ -95,8 +129,8 @@ export function ViewQRModal({ isOpen, onClose, patientId, patientName }: ViewQRM
                         </p>
 
                         {/* QR Code Display */}
-                        <div className="bg-white p-6 rounded-2xl border border-gray-200 inline-block mb-6">
-                            <div className="w-48 h-48 bg-white rounded-xl flex items-center justify-center p-2">
+                        <div className="bg-white p-6 rounded-2xl border border-gray-200 inline-block mb-4">
+                            <div ref={qrRef} className="w-48 h-48 bg-white rounded-xl flex items-center justify-center p-2">
                                 <QRCodeSVG
                                     value={token}
                                     size={176}
@@ -104,6 +138,17 @@ export function ViewQRModal({ isOpen, onClose, patientId, patientName }: ViewQRM
                                     includeMargin={false}
                                 />
                             </div>
+                        </div>
+
+                        {/* Export Button */}
+                        <div className="mb-6">
+                            <button
+                                onClick={exportAsPng}
+                                className="inline-flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                            >
+                                <Download size={16} />
+                                Export as PNG
+                            </button>
                         </div>
 
                         {expiresAt && inviteStatus === 'pending' && !isExpired && (

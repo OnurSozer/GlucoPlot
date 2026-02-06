@@ -3,11 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../measurements/domain/entities/measurement.dart';
+import '../../../measurements/domain/repositories/measurement_repository.dart';
 import '../../domain/entities/daily_log.dart';
 import '../bloc/daily_log_bloc.dart';
+import 'add_log_entry_page.dart';
 
 /// Daily log page - shows activity logs with undo delete and full localization
 class DailyLogPage extends StatefulWidget {
@@ -19,19 +23,71 @@ class DailyLogPage extends StatefulWidget {
 
 class _DailyLogPageState extends State<DailyLogPage> {
   late DateTime _selectedDate;
+  List<Measurement> _measurements = [];
+  bool _isLoadingMeasurements = false;
 
   @override
   void initState() {
     super.initState();
     _selectedDate = DateTime.now();
-    // Load logs for today
+    // Load logs and measurements for today
     context.read<DailyLogBloc>().add(DailyLogLoadRequested(date: _selectedDate));
+    _loadMeasurements(_selectedDate);
+  }
+
+  Future<void> _loadMeasurements(DateTime date) async {
+    setState(() => _isLoadingMeasurements = true);
+
+    final repository = sl<MeasurementRepository>();
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
+
+    final result = await repository.getMeasurements(
+      startDate: startOfDay,
+      endDate: endOfDay,
+    );
+
+    if (mounted) {
+      setState(() {
+        _isLoadingMeasurements = false;
+        if (result is MeasurementSuccess<List<Measurement>>) {
+          // Filter to only glucose and blood_pressure
+          _measurements = result.data
+              .where((m) => m.type == MeasurementType.glucose || m.type == MeasurementType.bloodPressure)
+              .toList();
+        } else {
+          _measurements = [];
+        }
+      });
+    }
+  }
+
+  /// Build a sorted list of unified items (logs + measurements) by time, newest first
+  List<_UnifiedItem> _buildSortedItems(List<DailyLog> logs) {
+    final items = <_UnifiedItem>[];
+
+    // Add measurements
+    for (final m in _measurements) {
+      items.add(_UnifiedItem.measurement(m, m.measuredAt));
+    }
+
+    // Add logs
+    for (final log in logs) {
+      final time = log.loggedAt ?? log.createdAt ?? log.logDate;
+      items.add(_UnifiedItem.log(log, time));
+    }
+
+    // Sort by time, newest first
+    items.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+    return items;
   }
 
   void _onDateChanged(DateTime date) {
     HapticFeedback.selectionClick();
     setState(() => _selectedDate = date);
     context.read<DailyLogBloc>().add(DailyLogDateChanged(date));
+    _loadMeasurements(date);
   }
 
   Future<void> _showDatePicker() async {
@@ -87,6 +143,76 @@ class _DailyLogPageState extends State<DailyLogPage> {
     );
   }
 
+  Future<void> _deleteMeasurement(Measurement measurement) async {
+    final l10n = AppLocalizations.of(context)!;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          l10n.localeName == 'tr' ? 'Kaydı Sil' : 'Delete Record',
+        ),
+        content: Text(
+          l10n.localeName == 'tr'
+              ? 'Bu ölçümü silmek istediğinizden emin misiniz?'
+              : 'Are you sure you want to delete this measurement?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: isDark ? AppColors.errorDark : AppColors.error,
+            ),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    // Delete from repository
+    final repository = sl<MeasurementRepository>();
+    final result = await repository.deleteMeasurement(measurement.id);
+
+    if (!mounted) return;
+
+    if (result is MeasurementSuccess) {
+      // Reload measurements
+      _loadMeasurements(_selectedDate);
+
+      HapticFeedback.mediumImpact();
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.delete_outline_rounded, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  l10n.localeName == 'tr' ? 'Ölçüm silindi' : 'Measurement deleted',
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: isDark ? AppColors.darkSurfaceHighest : AppColors.textSecondary,
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
+  }
+
   String _getDeletedLabel(AppLocalizations l10n) =>
       l10n.localeName == 'tr' ? 'Kayıt silindi' : 'Entry deleted';
   String _getUndoLabel(AppLocalizations l10n) =>
@@ -107,6 +233,15 @@ class _DailyLogPageState extends State<DailyLogPage> {
       return l10n.localeName == 'tr' ? 'Ana sayfadan aktivite ekleyebilirsiniz' : 'Add activities from the home page';
     }
     return l10n.localeName == 'tr' ? 'Başka bir tarih seçin' : 'Select a different date';
+  }
+
+  void _editLog(DailyLog log) {
+    HapticFeedback.selectionClick();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => AddLogEntryPage(existingLog: log),
+      ),
+    );
   }
 
   @override
@@ -153,7 +288,7 @@ class _DailyLogPageState extends State<DailyLogPage> {
                 ),
 
                 // Content based on state
-                if (state is DailyLogLoading)
+                if (state is DailyLogLoading && _isLoadingMeasurements)
                   const SliverFillRemaining(
                     child: Center(child: AppLoadingIndicator()),
                   )
@@ -162,24 +297,37 @@ class _DailyLogPageState extends State<DailyLogPage> {
                     child: _buildErrorView(l10n, isDark, state.message),
                   )
                 else if (state is DailyLogLoaded)
-                  if (state.logs.isEmpty)
+                  if (state.logs.isEmpty && _measurements.isEmpty)
                     SliverFillRemaining(
                       child: _buildEmptyView(l10n, isDark),
                     )
                   else
+                    // Combined list sorted by time (newest first)
                     SliverPadding(
                       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                       sliver: SliverList(
                         delegate: SliverChildBuilderDelegate(
-                          (context, index) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _LogEntryCard(
-                              log: state.logs[index],
-                              isDark: isDark,
-                              onDelete: () => _deleteLog(state.logs[index]),
-                            ),
-                          ),
-                          childCount: state.logs.length,
+                          (context, index) {
+                            final items = _buildSortedItems(state.logs);
+                            final item = items[index];
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: item.isMeasurement
+                                  ? _MeasurementCard(
+                                      measurement: item.measurement!,
+                                      isDark: isDark,
+                                      locale: l10n.localeName,
+                                      onDelete: () => _deleteMeasurement(item.measurement!),
+                                    )
+                                  : _LogEntryCard(
+                                      log: item.log!,
+                                      isDark: isDark,
+                                      onEdit: () => _editLog(item.log!),
+                                      onDelete: () => _deleteLog(item.log!),
+                                    ),
+                            );
+                          },
+                          childCount: _buildSortedItems(state.logs).length,
                         ),
                       ),
                     ),
@@ -361,11 +509,13 @@ class _LogEntryCard extends StatelessWidget {
   const _LogEntryCard({
     required this.log,
     required this.isDark,
+    this.onEdit,
     this.onDelete,
   });
 
   final DailyLog log;
   final bool isDark;
+  final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
   (Color, IconData, String) _getLogTypeInfo() {
@@ -463,10 +613,12 @@ class _LogEntryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final (color, icon, title) = _getLogTypeInfo();
     final description = _getDescription();
-    final timeFormatter = DateFormat('h:mm a');
-    final time = log.createdAt != null
-        ? timeFormatter.format(log.createdAt!)
-        : timeFormatter.format(log.logDate);
+    final timeFormatter = DateFormat('HH:mm');
+    final time = log.loggedAt != null
+        ? timeFormatter.format(log.loggedAt!)
+        : (log.createdAt != null
+            ? timeFormatter.format(log.createdAt!)
+            : timeFormatter.format(log.logDate));
 
     final cardBg = isDark ? AppColors.darkCardBackground : AppColors.cardBackground;
     final borderColor = isDark ? AppColors.darkBorderSubtle : Colors.transparent;
@@ -499,22 +651,13 @@ class _LogEntryCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      title,
-                      style: AppTypography.titleMedium.copyWith(color: textPrimary),
-                    ),
-                    Text(
-                      time,
-                      style: AppTypography.labelSmall.copyWith(color: textSecondary),
-                    ),
-                  ],
+                Text(
+                  title,
+                  style: AppTypography.titleMedium.copyWith(color: textPrimary),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  description,
+                  '$description · $time',
                   style: AppTypography.bodySmall.copyWith(color: textSecondary),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -522,7 +665,155 @@ class _LogEntryCard extends StatelessWidget {
               ],
             ),
           ),
-          // Visible delete button
+          // Action buttons row (horizontal)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Edit button
+              if (onEdit != null)
+                IconButton(
+                  icon: Icon(
+                    Icons.edit_outlined,
+                    color: isDark ? AppColors.primaryDarkMode : AppColors.primary,
+                    size: 20,
+                  ),
+                  onPressed: onEdit,
+                  tooltip: 'Edit',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                ),
+              // Delete button
+              IconButton(
+                icon: Icon(
+                  Icons.delete_outline_rounded,
+                  color: isDark ? AppColors.errorDark : AppColors.error,
+                  size: 20,
+                ),
+                onPressed: onDelete,
+                tooltip: 'Delete',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getDarkColor(Color color) {
+    if (color == AppColors.food) return AppColors.foodDark;
+    if (color == AppColors.sleep) return AppColors.sleepDark;
+    if (color == AppColors.exercise) return AppColors.exerciseDark;
+    if (color == AppColors.medication) return AppColors.medicationDark;
+    return AppColors.secondaryDarkMode;
+  }
+}
+
+/// Card to display a measurement (glucose or blood pressure)
+/// Styled to match _LogEntryCard for consistency
+class _MeasurementCard extends StatelessWidget {
+  const _MeasurementCard({
+    required this.measurement,
+    required this.isDark,
+    required this.locale,
+    required this.onDelete,
+  });
+
+  final Measurement measurement;
+  final bool isDark;
+  final String locale;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final isGlucose = measurement.type == MeasurementType.glucose;
+    final isBloodPressure = measurement.type == MeasurementType.bloodPressure;
+
+    // Colors
+    final color = isGlucose
+        ? (isDark ? AppColors.glucoseDark : AppColors.glucose)
+        : (isDark ? AppColors.bloodPressureDark : AppColors.bloodPressure);
+
+    // Icon
+    final icon = isGlucose ? Icons.bloodtype_rounded : Icons.monitor_heart_rounded;
+
+    // Title
+    final title = isGlucose
+        ? (locale == 'tr' ? 'Kan Şekeri' : 'Blood Glucose')
+        : (locale == 'tr' ? 'Tansiyon' : 'Blood Pressure');
+
+    // Value display
+    String valueDisplay;
+    if (isBloodPressure && measurement.secondaryValue != null) {
+      valueDisplay = '${measurement.value.toInt()}/${measurement.secondaryValue!.toInt()}';
+    } else {
+      valueDisplay = '${measurement.value.toInt()}';
+    }
+
+    // Unit
+    final unit = measurement.displayUnit;
+
+    // Time - use 24-hour format for clarity
+    final timeFormatter = DateFormat('HH:mm');
+    final time = timeFormatter.format(measurement.measuredAt);
+
+    // Meal timing for glucose
+    final mealTiming = measurement.mealTiming;
+
+    // Build description like log cards
+    final descriptionParts = <String>[];
+    descriptionParts.add('$valueDisplay $unit');
+    if (mealTiming != null) {
+      descriptionParts.add(_getMealTimingLabel(mealTiming));
+    }
+    final description = descriptionParts.join(' · ');
+
+    final cardBg = isDark ? AppColors.darkCardBackground : AppColors.cardBackground;
+    final borderColor = isDark ? AppColors.darkBorderSubtle : Colors.transparent;
+    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+
+    return Container(
+      padding: AppSpacing.cardPadding,
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: AppSpacing.borderRadiusLg,
+        border: Border.all(color: borderColor, width: isDark ? 1 : 0),
+        boxShadow: isDark ? AppColors.darkCardShadow : AppColors.lightCardShadow,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: isDark ? 0.2 : 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTypography.titleMedium.copyWith(color: textPrimary),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '$description · $time',
+                  style: AppTypography.bodySmall.copyWith(color: textSecondary),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          // Delete button
           IconButton(
             icon: Icon(
               Icons.delete_outline_rounded,
@@ -539,11 +830,38 @@ class _LogEntryCard extends StatelessWidget {
     );
   }
 
-  Color _getDarkColor(Color color) {
-    if (color == AppColors.food) return AppColors.foodDark;
-    if (color == AppColors.sleep) return AppColors.sleepDark;
-    if (color == AppColors.exercise) return AppColors.exerciseDark;
-    if (color == AppColors.medication) return AppColors.medicationDark;
-    return AppColors.secondaryDarkMode;
+  String _getMealTimingLabel(MealTiming timing) {
+    switch (timing) {
+      case MealTiming.fasting:
+        return locale == 'tr' ? 'Açlık' : 'Fasting';
+      case MealTiming.postMeal:
+        return locale == 'tr' ? 'Tokluk' : 'After Meal';
+      case MealTiming.other:
+        return locale == 'tr' ? 'Diğer' : 'Other';
+    }
   }
+}
+
+/// Unified item for combining logs and measurements in a single sorted list
+class _UnifiedItem {
+  final DailyLog? log;
+  final Measurement? measurement;
+  final DateTime timestamp;
+
+  const _UnifiedItem._({
+    this.log,
+    this.measurement,
+    required this.timestamp,
+  });
+
+  factory _UnifiedItem.log(DailyLog log, DateTime timestamp) {
+    return _UnifiedItem._(log: log, timestamp: timestamp);
+  }
+
+  factory _UnifiedItem.measurement(Measurement measurement, DateTime timestamp) {
+    return _UnifiedItem._(measurement: measurement, timestamp: timestamp);
+  }
+
+  bool get isMeasurement => measurement != null;
+  bool get isLog => log != null;
 }

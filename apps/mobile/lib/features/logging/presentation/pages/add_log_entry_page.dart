@@ -15,8 +15,11 @@ import '../widgets/log_type.dart';
 /// Enhanced with preset quick actions, simplified time picker, and voice input
 class AddLogEntryPage extends StatefulWidget {
   final String? initialType;
+  final domain.DailyLog? existingLog;
 
-  const AddLogEntryPage({super.key, this.initialType});
+  const AddLogEntryPage({super.key, this.initialType, this.existingLog});
+
+  bool get isEditing => existingLog != null;
 
   @override
   State<AddLogEntryPage> createState() => _AddLogEntryPageState();
@@ -51,8 +54,86 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
   @override
   void initState() {
     super.initState();
-    _selectedType = LogType.fromString(widget.initialType) ?? LogType.food;
+    if (widget.existingLog != null) {
+      _initFromExistingLog(widget.existingLog!);
+    } else {
+      _selectedType = LogType.fromString(widget.initialType) ?? LogType.food;
+    }
     _initSpeech();
+  }
+
+  void _initFromExistingLog(domain.DailyLog log) {
+    // Map domain LogType to presentation LogType
+    _selectedType = _mapDomainToPresentation(log.logType, log.metadata);
+    _titleController.text = log.title;
+    _descriptionController.text = log.description ?? '';
+    _selectedDateTime = log.loggedAt ?? log.logDate;
+
+    // Type-specific fields from metadata
+    final metadata = log.metadata ?? {};
+
+    switch (_selectedType) {
+      case LogType.food:
+        if (metadata['calories'] != null) {
+          _caloriesController.text = metadata['calories'].toString();
+        }
+        if (metadata['carbs_grams'] != null) {
+          _carbsController.text = metadata['carbs_grams'].toString();
+        }
+      case LogType.exercise:
+        if (metadata['duration_minutes'] != null) {
+          _durationController.text = metadata['duration_minutes'].toString();
+        }
+        if (metadata['calories_burned'] != null) {
+          _caloriesController.text = metadata['calories_burned'].toString();
+        }
+      case LogType.sleep:
+        if (metadata['hours'] != null) {
+          _durationController.text = metadata['hours'].toString();
+        }
+        _sleepQuality = metadata['quality'] as String?;
+      case LogType.medication:
+        _dosageController.text = metadata['dosage'] as String? ?? '';
+      case LogType.stress:
+        if (metadata['stress_level'] != null) {
+          _stressLevelController.text = metadata['stress_level'].toString();
+        }
+        _triggersController.text = metadata['triggers'] as String? ?? '';
+      case LogType.water:
+        if (metadata['amount_ml'] != null) {
+          _amountController.text = metadata['amount_ml'].toString();
+        }
+      case LogType.alcohol:
+        if (metadata['amount_ml'] != null) {
+          _amountController.text = metadata['amount_ml'].toString();
+        }
+        _alcoholType = metadata['alcohol_type'] as String?;
+      case LogType.toilet:
+        _toiletType = metadata['toilet_type'] as String?;
+    }
+  }
+
+  /// Map domain LogType to presentation LogType
+  LogType _mapDomainToPresentation(domain.LogType domainType, Map<String, dynamic>? metadata) {
+    switch (domainType) {
+      case domain.LogType.food:
+        return LogType.food;
+      case domain.LogType.sleep:
+        return LogType.sleep;
+      case domain.LogType.exercise:
+        return LogType.exercise;
+      case domain.LogType.medication:
+        return LogType.medication;
+      case domain.LogType.symptom:
+        return LogType.stress;
+      case domain.LogType.note:
+        // Check metadata to determine specific subtype
+        final subType = metadata?['type'] as String?;
+        if (subType == 'water') return LogType.water;
+        if (subType == 'alcohol') return LogType.alcohol;
+        if (subType == 'toilet') return LogType.toilet;
+        return LogType.stress; // Default fallback
+    }
   }
 
   Future<void> _initSpeech() async {
@@ -257,17 +338,32 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
     HapticFeedback.mediumImpact();
 
     try {
-      // Dispatch DailyLogAdded event to BLoC
-      context.read<DailyLogBloc>().add(DailyLogAdded(
-        logDate: _selectedDateTime,
-        logType: _mapToDomainLogType(),
-        title: _titleController.text,
-        description: _descriptionController.text.isNotEmpty
-            ? _descriptionController.text
-            : null,
-        metadata: _buildMetadata(),
-        loggedAt: _selectedDateTime,
-      ));
+      if (widget.isEditing) {
+        // Dispatch DailyLogUpdated event to BLoC
+        context.read<DailyLogBloc>().add(DailyLogUpdated(
+          id: widget.existingLog!.id,
+          logDate: _selectedDateTime,
+          logType: _mapToDomainLogType(),
+          title: _titleController.text,
+          description: _descriptionController.text.isNotEmpty
+              ? _descriptionController.text
+              : null,
+          metadata: _buildMetadata(),
+          loggedAt: _selectedDateTime,
+        ));
+      } else {
+        // Dispatch DailyLogAdded event to BLoC
+        context.read<DailyLogBloc>().add(DailyLogAdded(
+          logDate: _selectedDateTime,
+          logType: _mapToDomainLogType(),
+          title: _titleController.text,
+          description: _descriptionController.text.isNotEmpty
+              ? _descriptionController.text
+              : null,
+          metadata: _buildMetadata(),
+          loggedAt: _selectedDateTime,
+        ));
+      }
 
       if (mounted) {
         HapticFeedback.lightImpact();
@@ -328,7 +424,9 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
           onPressed: () => context.pop(),
         ),
         title: Text(
-          l10n.addEntry,
+          widget.isEditing
+              ? (l10n.localeName == 'tr' ? 'Kaydı Düzenle' : 'Edit Entry')
+              : l10n.addEntry,
           style: AppTypography.titleLarge.copyWith(color: textPrimary),
         ),
         actions: [
@@ -352,8 +450,8 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Show activity header if type was pre-selected, otherwise show selector
-            if (widget.initialType != null)
+            // Show activity header if type was pre-selected or editing, otherwise show selector
+            if (widget.initialType != null || widget.isEditing)
               _buildActivityHeader(l10n, isDark, cardBg, borderColor)
             else ...[
               Text(

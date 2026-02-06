@@ -3,19 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../measurements/domain/entities/measurement.dart';
+import '../../../measurements/domain/repositories/measurement_repository.dart';
 import '../../domain/entities/glucose_reading.dart';
 import '../bloc/usb_device_bloc.dart';
 import '../bloc/usb_device_event.dart';
 import '../bloc/usb_device_state.dart';
-
-/// Meal timing options for glucose measurement
-enum MealTiming {
-  fasting,    // Açlık
-  postMeal,   // Tokluk
-  other,      // Diğer
-}
 
 /// Premium glucose measurement page with USB device integration
 /// Step 1: Connect device with instructions
@@ -111,25 +107,64 @@ class _GlucoseMeasurementPageState extends State<GlucoseMeasurementPage> {
     setState(() => _isSaving = true);
     HapticFeedback.mediumImpact();
 
-    // TODO: Save reading to database with meal timing
-    // For now, just simulate a delay
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      final repository = sl<MeasurementRepository>();
+      final result = await repository.addMeasurement(
+        type: MeasurementType.glucose,
+        value: _capturedReading!.concentration,
+        unit: 'mg/dL',
+        measuredAt: _capturedReading!.timestamp,
+        mealTiming: _selectedMealTiming,
+      );
 
-    if (mounted) {
-      // Show success and go back
+      if (!mounted) return;
+
+      final l10n = AppLocalizations.of(context)!;
+
+      switch (result) {
+        case MeasurementSuccess():
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                l10n.localeName == 'tr'
+                    ? 'Ölçüm kaydedildi'
+                    : 'Measurement saved',
+              ),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          context.pop();
+        case MeasurementFailure(:final message):
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                l10n.localeName == 'tr'
+                    ? 'Kayıt başarısız: $message'
+                    : 'Failed to save: $message',
+              ),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          setState(() => _isSaving = false);
+      }
+    } catch (e) {
+      if (!mounted) return;
+
       final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             l10n.localeName == 'tr'
-                ? 'Ölçüm kaydedildi'
-                : 'Measurement saved',
+                ? 'Kayıt başarısız: $e'
+                : 'Failed to save: $e',
           ),
-          backgroundColor: AppColors.success,
+          backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
       );
-      context.pop();
+      setState(() => _isSaving = false);
     }
   }
 

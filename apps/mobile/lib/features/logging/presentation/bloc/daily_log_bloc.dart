@@ -17,6 +17,7 @@ class DailyLogBloc extends Bloc<DailyLogEvent, DailyLogState> {
     on<DailyLogDateChanged>(_onDateChanged);
     on<DailyLogCategoryFilterChanged>(_onCategoryFilterChanged);
     on<DailyLogAdded>(_onLogAdded);
+    on<DailyLogUpdated>(_onLogUpdated);
     on<DailyLogDeleteRequested>(_onDeleteRequested);
   }
 
@@ -189,6 +190,50 @@ class DailyLogBloc extends Bloc<DailyLogEvent, DailyLogState> {
         final updated = [data, ...currentState.logs];
         emit(currentState.copyWith(
           logs: updated,
+          isSubmitting: false,
+          submitSuccess: true,
+        ));
+      case DailyLogFailure(:final message):
+        emit(currentState.copyWith(isSubmitting: false, error: message));
+    }
+  }
+
+  Future<void> _onLogUpdated(
+    DailyLogUpdated event,
+    Emitter<DailyLogState> emit,
+  ) async {
+    final currentState = state;
+
+    // Build updated log entity
+    final updatedLog = DailyLog(
+      id: event.id,
+      patientId: '', // Will be ignored in update
+      logDate: event.logDate,
+      logType: event.logType,
+      title: event.title,
+      description: event.description,
+      metadata: event.metadata,
+      loggedAt: event.loggedAt,
+    );
+
+    // If not in loaded state, just update the log without updating UI list
+    if (currentState is! DailyLogLoaded) {
+      await _repository.updateLog(updatedLog);
+      return;
+    }
+
+    emit(currentState.copyWith(isSubmitting: true));
+
+    final result = await _repository.updateLog(updatedLog);
+
+    switch (result) {
+      case DailyLogSuccess(:final data):
+        // Replace the log in the list with the updated version
+        final updatedLogs = currentState.logs.map((log) {
+          return log.id == event.id ? data : log;
+        }).toList();
+        emit(currentState.copyWith(
+          logs: updatedLogs,
           isSubmitting: false,
           submitSuccess: true,
         ));
