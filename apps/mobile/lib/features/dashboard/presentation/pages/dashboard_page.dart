@@ -61,7 +61,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
                       // Glucose Measurement Card
                       GlucoseCard(
-                        onTap: () => context.push('/measurements/add', extra: 'glucose'),
+                        onTap: () => context.push('/glucose-measurement'),
                       ),
                       const SizedBox(height: AppSpacing.lg),
 

@@ -30,6 +30,14 @@ import '../../features/logging/domain/usecases/get_daily_logs.dart';
 import '../../features/logging/domain/usecases/add_log_entry.dart';
 import '../../features/logging/presentation/bloc/daily_log_bloc.dart';
 
+// USB Device
+import '../../features/usb_device/data/datasources/usb_device_datasource.dart';
+import '../../features/usb_device/data/protocol/message_generator.dart';
+import '../../features/usb_device/data/protocol/message_response_handler.dart';
+import '../../features/usb_device/data/repositories/usb_device_repository_impl.dart';
+import '../../features/usb_device/domain/repositories/usb_device_repository.dart';
+import '../../features/usb_device/presentation/bloc/usb_device_bloc.dart';
+
 /// Service locator instance
 final sl = GetIt.instance;
 
@@ -109,6 +117,33 @@ Future<void> initDependencies() async {
 
   // BLoC
   sl.registerFactory(() => DailyLogBloc(repository: sl()));
+
+  // ===== USB DEVICE =====
+  // Data sources
+  sl.registerLazySingleton<UsbDeviceDataSource>(
+    () => UsbDeviceDataSource(),
+  );
+
+  // Protocol
+  sl.registerLazySingleton<MessageGenerator>(
+    () => const MessageGenerator(),
+  );
+
+  sl.registerLazySingleton<MessageResponseHandler>(
+    () => MessageResponseHandler(),
+  );
+
+  // Repositories - Singleton to maintain EventChannel subscription
+  sl.registerLazySingleton<UsbDeviceRepository>(
+    () => UsbDeviceRepositoryImpl(
+      dataSource: sl(),
+      messageGenerator: sl(),
+      responseHandler: sl(),
+    ),
+  );
+
+  // BLoC - Singleton to maintain connection state across pages
+  sl.registerLazySingleton(() => UsbDeviceBloc(repository: sl()));
 }
 
 /// Reset all dependencies (useful for testing)

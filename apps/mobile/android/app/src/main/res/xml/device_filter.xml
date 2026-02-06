@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- STM32 Virtual COM Port (CDC ACM) -->
+    <usb-device vendor-id="1155" product-id="22336" />
+    <!-- 0x0483 = 1155 (STMicroelectronics) -->
+    <!-- 0x5740 = 22336 (Virtual COM Port) -->
+</resources>

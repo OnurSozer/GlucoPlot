@@ -23,6 +23,8 @@ import 'features/logging/presentation/bloc/daily_log_bloc.dart';
 import 'features/logging/presentation/pages/daily_log_page.dart';
 import 'features/logging/presentation/pages/add_log_entry_page.dart';
 import 'features/settings/presentation/pages/settings_page.dart';
+import 'features/usb_device/presentation/bloc/usb_device_bloc.dart';
+import 'features/usb_device/presentation/pages/glucose_measurement_page.dart';
 import 'shell_page.dart';
 
 /// Root application widget
@@ -91,6 +93,13 @@ class _GlucoPlotAppState extends State<GlucoPlotApp> {
             final token = state.extra as String? ?? '';
             return OtpPage(token: token);
           },
+        ),
+
+        // Glucose measurement (full screen, no bottom nav)
+        GoRoute(
+          path: '/glucose-measurement',
+          name: 'glucose-measurement',
+          builder: (context, state) => const GlucoseMeasurementPage(),
         ),
 
         // Main app shell with bottom navigation
@@ -162,6 +171,10 @@ class _GlucoPlotAppState extends State<GlucoPlotApp> {
               ),
               BlocProvider(
                 create: (_) => sl<DailyLogBloc>(),
+              ),
+              // USB Device - singleton that handles device attach/detach globally
+              BlocProvider(
+                create: (_) => sl<UsbDeviceBloc>(),
               ),
             ],
             child: MaterialApp.router(
