@@ -32,35 +32,40 @@ class MessageResponseHandler {
         _buffer.removeAt(0);
       }
 
-      // Need at least minimum packet size
-      if (_buffer.length < ProtocolConstants.minPacketSize) {
+      // Need at least 3 bytes to read method ID (start + 2 method bytes)
+      if (_buffer.length < 3) {
         return;
       }
 
-      // Find stop byte
-      final stopIndex = _findStopByte();
-      if (stopIndex < 3) {
-        // No valid stop byte found or packet too short
+      // Parse method ID to determine expected packet size
+      final methodId = _buffer[1] | (_buffer[2] << 8);
+      final expectedPacketSize = ProtocolConstants.getPacketSizeForMethod(methodId);
+
+      if (expectedPacketSize < 0) {
+        // Unknown method ID - discard start byte and try again
+        print('[MessageHandler] Unknown method ID: $methodId, discarding start byte');
+        _buffer.removeAt(0);
+        continue;
+      }
+
+      // Wait until we have the full packet
+      if (_buffer.length < expectedPacketSize) {
         return;
       }
 
       // Extract packet
-      final packet = _buffer.sublist(0, stopIndex + 1);
-      _buffer = _buffer.sublist(stopIndex + 1);
+      final packet = _buffer.sublist(0, expectedPacketSize);
+      _buffer = _buffer.sublist(expectedPacketSize);
+
+      // Verify stop byte
+      if (packet.last != ProtocolConstants.stopByte) {
+        print('[MessageHandler] Invalid stop byte: ${packet.last}, expected ${ProtocolConstants.stopByte}');
+        continue;
+      }
 
       // Parse and route the packet
       _parsePacket(packet);
     }
-  }
-
-  /// Finds the index of the stop byte in the buffer
-  int _findStopByte() {
-    for (int i = 3; i < _buffer.length; i++) {
-      if (_buffer[i] == ProtocolConstants.stopByte) {
-        return i;
-      }
-    }
-    return -1;
   }
 
   /// Parses a complete packet and routes it to the appropriate handler

@@ -43,4 +43,30 @@ class ProtocolConstants {
 
   /// Device ID response data size: 10 bytes
   static const int deviceIdDataSize = 10;
+
+  /// Returns the expected data size for a given method ID
+  /// Returns -1 if method ID is unknown
+  static int getDataSizeForMethod(int methodId) {
+    switch (methodId) {
+      case methodDeviceIdResponse:
+        return deviceIdDataSize; // 10 bytes
+      case methodDeviceReady:
+        return 0; // No payload
+      case methodMeasurementStarted:
+        return 0; // No payload
+      case methodGlucoseReading:
+        return glucoseReadingDataSize; // 12 bytes
+      default:
+        return -1; // Unknown method
+    }
+  }
+
+  /// Returns the total packet size for a given method ID
+  /// Packet = START(1) + METHOD(2) + DATA(n) + STOP(1)
+  /// Returns -1 if method ID is unknown
+  static int getPacketSizeForMethod(int methodId) {
+    final dataSize = getDataSizeForMethod(methodId);
+    if (dataSize < 0) return -1;
+    return 1 + 2 + dataSize + 1; // start + method + data + stop
+  }
 }
