@@ -1,6 +1,6 @@
 {
-    "name": "glucoplot",
-    "short_name": "glucoplot",
+    "name": "GlucoPlot",
+    "short_name": "GlucoPlot",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

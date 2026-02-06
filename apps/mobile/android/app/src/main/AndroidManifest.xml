@@ -3,7 +3,7 @@
     <uses-feature android:name="android.hardware.usb.host" android:required="false" />
 
     <application
-        android:label="glucoplot"
+        android:label="GlucoPlot"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
