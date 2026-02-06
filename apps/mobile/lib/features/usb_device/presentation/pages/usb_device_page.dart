@@ -6,7 +6,7 @@ import '../bloc/usb_device_event.dart';
 import '../bloc/usb_device_state.dart';
 import '../widgets/device_info_card.dart';
 import '../widgets/device_status_card.dart';
-import '../widgets/live_reading_display.dart';
+import '../widgets/measurement_result_display.dart';
 import '../widgets/reading_history_list.dart';
 
 /// Main page for USB glucose meter functionality
@@ -59,8 +59,8 @@ class UsbDevicePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  // Live Reading Display
-                  LiveReadingDisplay(
+                  // Measurement Result Display
+                  MeasurementResultDisplay(
                     reading: state.latestReading,
                     isConnected: state.isConnected,
                   ),

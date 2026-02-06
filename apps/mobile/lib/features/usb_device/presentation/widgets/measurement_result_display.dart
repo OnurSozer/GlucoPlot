@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../domain/entities/glucose_reading.dart';
 
-/// Widget displaying the latest glucose reading prominently
-class LiveReadingDisplay extends StatelessWidget {
+/// Widget displaying the measurement result prominently
+class MeasurementResultDisplay extends StatelessWidget {
   final GlucoseReading? reading;
   final bool isConnected;
 
-  const LiveReadingDisplay({
+  const MeasurementResultDisplay({
     super.key,
     this.reading,
     this.isConnected = false,
