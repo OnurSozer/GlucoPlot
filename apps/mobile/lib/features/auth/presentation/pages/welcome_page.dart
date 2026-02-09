@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/widgets/widgets.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Welcome/onboarding page - first screen users see
 class WelcomePage extends StatelessWidget {
@@ -11,6 +11,8 @@ class WelcomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: GradientBackground(
         child: SafeArea(
@@ -42,13 +44,13 @@ class WelcomePage extends StatelessWidget {
                   child: Column(
                     children: [
                       Text(
-                        'Welcome to ${AppStrings.appName}',
+                        '${l10n.welcome}',
                         style: AppTypography.headlineLarge,
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Track your health measurements, log daily activities, and stay connected with your healthcare provider.',
+                        l10n.welcomeDescription,
                         style: AppTypography.bodyMedium.copyWith(
                           color: AppColors.textSecondary,
                         ),
@@ -56,7 +58,7 @@ class WelcomePage extends StatelessWidget {
                       ),
                       const SizedBox(height: 32),
                       AppButton(
-                        label: 'Get Started',
+                        label: l10n.getStarted,
                         onPressed: () => context.push('/auth/scan'),
                         icon: Icons.qr_code_scanner_rounded,
                       ),
@@ -68,7 +70,7 @@ class WelcomePage extends StatelessWidget {
 
                 // Footer
                 Text(
-                  'Scan the QR code from your doctor to activate',
+                  l10n.scanQrDescription,
                   style: AppTypography.bodySmall.copyWith(
                     color: AppColors.textOnPrimary.withOpacity(0.8),
                   ),

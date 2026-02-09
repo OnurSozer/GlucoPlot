@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
-import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/widgets/widgets.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../bloc/auth_bloc.dart';
 
 /// QR code scanning page for patient activation
@@ -46,6 +46,8 @@ class _QrScanPageState extends State<QrScanPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAwaitingOtp) {
@@ -55,7 +57,7 @@ class _QrScanPageState extends State<QrScanPage> {
           // Show error and close camera as requested
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('${state.message} - Closing camera'),
+              content: Text(state.message),
               backgroundColor: AppColors.error,
               duration: const Duration(seconds: 3),
             ),
@@ -133,13 +135,13 @@ class _QrScanPageState extends State<QrScanPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      AppStrings.scanQrCode,
+                      l10n.scanQrCode,
                       style: AppTypography.headlineSmall,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      AppStrings.scanQrDescription,
+                      l10n.scanQrDescription,
                       style: AppTypography.bodyMedium.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -147,12 +149,12 @@ class _QrScanPageState extends State<QrScanPage> {
                     ),
                     const SizedBox(height: 24),
                     if (_isProcessing)
-                      const Row(
+                      Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          AppLoadingIndicator(size: 20),
-                          SizedBox(width: 12),
-                          Text('Processing...'),
+                          const AppLoadingIndicator(size: 20),
+                          const SizedBox(width: 12),
+                          Text(l10n.loading),
                         ],
                       ),
                   ],

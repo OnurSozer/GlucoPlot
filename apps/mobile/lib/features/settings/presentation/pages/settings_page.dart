@@ -138,6 +138,13 @@ class SettingsPage extends StatelessWidget {
                       isDark: isDark,
                       onTap: () => _showLanguageDialog(context, settings, l10n, isDark),
                     ),
+                    _SettingsTile(
+                      icon: Icons.bedtime_rounded,
+                      title: l10n.usualSleepTime,
+                      subtitle: _formatSleepTime(settings.usualSleepTime, l10n),
+                      isDark: isDark,
+                      onTap: () => _showSleepTimeDialog(context, settings, l10n, isDark),
+                    ),
                   ]),
 
                   const SizedBox(height: 24),
@@ -243,6 +250,53 @@ class SettingsPage extends StatelessWidget {
       l10n.localeName == 'tr' ? 'Doktor telefon numarası mevcut değil' : 'No doctor phone number available';
   String _getTapToCallLabel(AppLocalizations l10n) =>
       l10n.localeName == 'tr' ? 'Aramak için dokunun' : 'Tap to call';
+
+  String _formatSleepTime(TimeOfDay time, AppLocalizations l10n) {
+    // Use 24-hour format for Turkish locale
+    if (l10n.localeName == 'tr') {
+      return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+    }
+    final hour = time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
+    final period = time.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:${time.minute.toString().padLeft(2, '0')} $period';
+  }
+
+  Future<void> _showSleepTimeDialog(
+    BuildContext context,
+    SettingsProvider settings,
+    AppLocalizations l10n,
+    bool isDark,
+  ) async {
+    final TimeOfDay? selectedTime = await showTimePicker(
+      context: context,
+      initialTime: settings.usualSleepTime,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: isDark ? AppColors.primaryDarkMode : AppColors.primary,
+              brightness: isDark ? Brightness.dark : Brightness.light,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (selectedTime != null && context.mounted) {
+      settings.setUsualSleepTime(selectedTime);
+      HapticFeedback.selectionClick();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.sleepTimeUpdated),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
+  }
 
   void _showLanguageDialog(
     BuildContext context,

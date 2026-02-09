@@ -188,6 +188,18 @@ abstract class AppLocalizations {
   /// **'Welcome Back'**
   String get welcomeBack;
 
+  /// No description provided for @welcomeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Track your health measurements, log daily activities, and stay connected with your healthcare provider.'**
+  String get welcomeDescription;
+
+  /// No description provided for @getStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started'**
+  String get getStarted;
+
   /// No description provided for @scanQrCode.
   ///
   /// In en, this message translates to:
@@ -704,6 +716,12 @@ abstract class AppLocalizations {
   /// **'Please enter a title'**
   String get pleaseEnterTitle;
 
+  /// No description provided for @foodDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'I ate'**
+  String get foodDetails;
+
   /// No description provided for @nutritionOptional.
   ///
   /// In en, this message translates to:
@@ -725,7 +743,7 @@ abstract class AppLocalizations {
   /// No description provided for @sleepDetails.
   ///
   /// In en, this message translates to:
-  /// **'Sleep Details'**
+  /// **'I woke up'**
   String get sleepDetails;
 
   /// No description provided for @durationHours.
@@ -733,6 +751,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Duration (hours)'**
   String get durationHours;
+
+  /// No description provided for @sleepDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep duration'**
+  String get sleepDuration;
+
+  /// No description provided for @sleepDuration2to5.
+  ///
+  /// In en, this message translates to:
+  /// **'2-5 hrs'**
+  String get sleepDuration2to5;
+
+  /// No description provided for @sleepDuration5to7.
+  ///
+  /// In en, this message translates to:
+  /// **'5-7 hrs'**
+  String get sleepDuration5to7;
+
+  /// No description provided for @sleepDuration7to9.
+  ///
+  /// In en, this message translates to:
+  /// **'7-9 hrs'**
+  String get sleepDuration7to9;
+
+  /// No description provided for @sleepDuration9plus.
+  ///
+  /// In en, this message translates to:
+  /// **'9+ hrs'**
+  String get sleepDuration9plus;
 
   /// No description provided for @quality.
   ///
@@ -764,10 +812,28 @@ abstract class AppLocalizations {
   /// **'Excellent'**
   String get excellent;
 
+  /// No description provided for @usualSleepTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Usual sleep time'**
+  String get usualSleepTime;
+
+  /// No description provided for @usualSleepTimeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Used for notifications and calculations'**
+  String get usualSleepTimeHint;
+
+  /// No description provided for @sleepTimeUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep time updated'**
+  String get sleepTimeUpdated;
+
   /// No description provided for @exerciseDetails.
   ///
   /// In en, this message translates to:
-  /// **'Exercise Details'**
+  /// **'I exercised'**
   String get exerciseDetails;
 
   /// No description provided for @durationMin.
@@ -782,10 +848,34 @@ abstract class AppLocalizations {
   /// **'Calories burned'**
   String get caloriesBurned;
 
+  /// No description provided for @exerciseDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Exercise duration'**
+  String get exerciseDuration;
+
+  /// No description provided for @duration30min.
+  ///
+  /// In en, this message translates to:
+  /// **'30 min'**
+  String get duration30min;
+
+  /// No description provided for @duration1hour.
+  ///
+  /// In en, this message translates to:
+  /// **'1 hour'**
+  String get duration1hour;
+
+  /// No description provided for @duration2hours.
+  ///
+  /// In en, this message translates to:
+  /// **'2 hours'**
+  String get duration2hours;
+
   /// No description provided for @medicationDetails.
   ///
   /// In en, this message translates to:
-  /// **'Medication Details'**
+  /// **'I took medicine'**
   String get medicationDetails;
 
   /// No description provided for @dosage.
@@ -797,7 +887,7 @@ abstract class AppLocalizations {
   /// No description provided for @waterDetails.
   ///
   /// In en, this message translates to:
-  /// **'Water Intake'**
+  /// **'I drank water'**
   String get waterDetails;
 
   /// No description provided for @amountMl.
@@ -815,7 +905,7 @@ abstract class AppLocalizations {
   /// No description provided for @alcoholDetails.
   ///
   /// In en, this message translates to:
-  /// **'Alcohol Consumption'**
+  /// **'I drank alcohol'**
   String get alcoholDetails;
 
   /// No description provided for @drinks.
@@ -854,6 +944,30 @@ abstract class AppLocalizations {
   /// **'Other'**
   String get other;
 
+  /// No description provided for @alcoholAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get alcoholAmount;
+
+  /// No description provided for @single.
+  ///
+  /// In en, this message translates to:
+  /// **'Single'**
+  String get single;
+
+  /// No description provided for @double.
+  ///
+  /// In en, this message translates to:
+  /// **'Double'**
+  String get double;
+
+  /// No description provided for @triple.
+  ///
+  /// In en, this message translates to:
+  /// **'3'**
+  String get triple;
+
   /// No description provided for @toiletDetails.
   ///
   /// In en, this message translates to:
@@ -863,31 +977,31 @@ abstract class AppLocalizations {
   /// No description provided for @toiletType.
   ///
   /// In en, this message translates to:
-  /// **'Type'**
+  /// **'Urine Amount'**
   String get toiletType;
 
   /// No description provided for @urination.
   ///
   /// In en, this message translates to:
-  /// **'Urination'**
+  /// **'Little'**
   String get urination;
 
   /// No description provided for @bowelMovement.
   ///
   /// In en, this message translates to:
-  /// **'Bowel Movement'**
+  /// **'Medium'**
   String get bowelMovement;
 
   /// No description provided for @both.
   ///
   /// In en, this message translates to:
-  /// **'Both'**
+  /// **'A lot'**
   String get both;
 
   /// No description provided for @stressDetails.
   ///
   /// In en, this message translates to:
-  /// **'Stress Level'**
+  /// **'I felt stressed'**
   String get stressDetails;
 
   /// No description provided for @stressLevel.

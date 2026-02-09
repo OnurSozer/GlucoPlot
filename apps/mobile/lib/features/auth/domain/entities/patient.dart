@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 
 /// Patient entity representing a patient in the domain layer
 class Patient extends Equatable {
@@ -11,6 +12,7 @@ class Patient extends Equatable {
     this.email,
     this.notes,
     this.isActive = true,
+    this.usualSleepTime,
     this.createdAt,
     this.updatedAt,
   });
@@ -23,6 +25,7 @@ class Patient extends Equatable {
   final String? email;
   final String? notes;
   final bool isActive;
+  final TimeOfDay? usualSleepTime;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -36,6 +39,7 @@ class Patient extends Equatable {
         email,
         notes,
         isActive,
+        usualSleepTime,
         createdAt,
         updatedAt,
       ];
@@ -49,6 +53,7 @@ class Patient extends Equatable {
     String? email,
     String? notes,
     bool? isActive,
+    TimeOfDay? usualSleepTime,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -61,6 +66,7 @@ class Patient extends Equatable {
       email: email ?? this.email,
       notes: notes ?? this.notes,
       isActive: isActive ?? this.isActive,
+      usualSleepTime: usualSleepTime ?? this.usualSleepTime,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

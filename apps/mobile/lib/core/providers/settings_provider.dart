@@ -10,16 +10,19 @@ class SettingsProvider extends ChangeNotifier {
   static const String _localeKey = 'locale';
   static const String _fontSizeKey = 'font_size';
   static const String _doctorPhoneKey = 'doctor_phone';
+  static const String _usualSleepTimeKey = 'usual_sleep_time';
 
   ThemeMode _themeMode = ThemeMode.dark;
   Locale _locale = const Locale('tr');
   FontSizeScale _fontSizeScale = FontSizeScale.medium;
   String? _doctorPhone;
+  TimeOfDay _usualSleepTime = const TimeOfDay(hour: 23, minute: 0); // Default 11 PM
 
   ThemeMode get themeMode => _themeMode;
   Locale get locale => _locale;
   FontSizeScale get fontSizeScale => _fontSizeScale;
   String? get doctorPhone => _doctorPhone;
+  TimeOfDay get usualSleepTime => _usualSleepTime;
 
   bool get isDarkMode => _themeMode == ThemeMode.dark;
 
@@ -71,6 +74,18 @@ class SettingsProvider extends ChangeNotifier {
 
     // Load doctor phone
     _doctorPhone = prefs.getString(_doctorPhoneKey);
+
+    // Load usual sleep time
+    final sleepTimeString = prefs.getString(_usualSleepTimeKey);
+    if (sleepTimeString != null) {
+      final parts = sleepTimeString.split(':');
+      if (parts.length >= 2) {
+        _usualSleepTime = TimeOfDay(
+          hour: int.tryParse(parts[0]) ?? 23,
+          minute: int.tryParse(parts[1]) ?? 0,
+        );
+      }
+    }
 
     notifyListeners();
   }
@@ -142,5 +157,19 @@ class SettingsProvider extends ChangeNotifier {
       case FontSizeScale.large:
         return large;
     }
+  }
+
+  /// Set usual sleep time
+  Future<void> setUsualSleepTime(TimeOfDay time) async {
+    if (_usualSleepTime == time) return;
+
+    _usualSleepTime = time;
+    notifyListeners();
+
+    final prefs = await SharedPreferences.getInstance();
+    final timeString = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+    await prefs.setString(_usualSleepTimeKey, timeString);
+
+    // TODO: Also sync to Supabase patient profile when online
   }
 }

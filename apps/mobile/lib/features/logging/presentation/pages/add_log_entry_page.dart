@@ -48,8 +48,11 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
   final _triggersController = TextEditingController();
 
   String? _sleepQuality;
+  String? _sleepDuration;
   String? _alcoholType;
+  String? _alcoholAmount;
   String? _toiletType;
+  String? _exerciseDuration;
 
   @override
   void initState() {
@@ -81,16 +84,12 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
           _carbsController.text = metadata['carbs_grams'].toString();
         }
       case LogType.exercise:
-        if (metadata['duration_minutes'] != null) {
-          _durationController.text = metadata['duration_minutes'].toString();
-        }
-        if (metadata['calories_burned'] != null) {
-          _caloriesController.text = metadata['calories_burned'].toString();
+        _exerciseDuration = metadata['exercise_duration'] as String?;
+        if (metadata['exercise_duration_custom'] != null) {
+          _durationController.text = metadata['exercise_duration_custom'].toString();
         }
       case LogType.sleep:
-        if (metadata['hours'] != null) {
-          _durationController.text = metadata['hours'].toString();
-        }
+        _sleepDuration = metadata['sleep_duration'] as String?;
         _sleepQuality = metadata['quality'] as String?;
       case LogType.medication:
         _dosageController.text = metadata['dosage'] as String? ?? '';
@@ -104,10 +103,11 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
           _amountController.text = metadata['amount_ml'].toString();
         }
       case LogType.alcohol:
-        if (metadata['amount_ml'] != null) {
-          _amountController.text = metadata['amount_ml'].toString();
-        }
         _alcoholType = metadata['alcohol_type'] as String?;
+        _alcoholAmount = metadata['alcohol_amount'] as String?;
+        if (metadata['alcohol_amount_custom'] != null) {
+          _amountController.text = metadata['alcohol_amount_custom'].toString();
+        }
       case LogType.toilet:
         _toiletType = metadata['toilet_type'] as String?;
     }
@@ -259,8 +259,8 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
         break;
 
       case LogType.sleep:
-        if (_durationController.text.isNotEmpty) {
-          metadata['hours'] = double.tryParse(_durationController.text);
+        if (_sleepDuration != null) {
+          metadata['sleep_duration'] = _sleepDuration;
         }
         if (_sleepQuality != null) {
           metadata['quality'] = _sleepQuality;
@@ -268,11 +268,12 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
         break;
 
       case LogType.exercise:
-        if (_durationController.text.isNotEmpty) {
-          metadata['duration_minutes'] = int.tryParse(_durationController.text);
+        if (_exerciseDuration != null) {
+          metadata['exercise_duration'] = _exerciseDuration;
         }
-        if (_caloriesController.text.isNotEmpty) {
-          metadata['calories_burned'] = int.tryParse(_caloriesController.text);
+        // Store custom duration if "other" is selected
+        if (_exerciseDuration == 'other' && _durationController.text.isNotEmpty) {
+          metadata['exercise_duration_custom'] = _durationController.text;
         }
         break;
 
@@ -291,11 +292,15 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
 
       case LogType.alcohol:
         metadata['type'] = 'alcohol';
-        if (_amountController.text.isNotEmpty) {
-          metadata['amount_ml'] = int.tryParse(_amountController.text);
-        }
         if (_alcoholType != null) {
           metadata['alcohol_type'] = _alcoholType;
+        }
+        if (_alcoholAmount != null) {
+          metadata['alcohol_amount'] = _alcoholAmount;
+        }
+        // Store custom amount if "other" is selected
+        if (_alcoholAmount == 'other' && _amountController.text.isNotEmpty) {
+          metadata['alcohol_amount_custom'] = _amountController.text;
         }
         break;
 
@@ -762,7 +767,7 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
           ),
           const SizedBox(width: 16),
           Text(
-            _selectedType.getLabel(l10n),
+            _getDetailLabel(l10n),
             style: AppTypography.titleMedium.copyWith(
               color: textPrimary,
               fontWeight: FontWeight.w600,
@@ -999,22 +1004,60 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
     final primaryColor = isDark ? AppColors.primaryDarkMode : AppColors.primary;
     final surfaceColor = isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceVariant;
 
+    // Duration options: 2-5, 5-7, 7-9, 9+
+    final durationOptions = [
+      ('2to5', l10n.sleepDuration2to5),
+      ('5to7', l10n.sleepDuration5to7),
+      ('7to9', l10n.sleepDuration7to9),
+      ('9plus', l10n.sleepDuration9plus),
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Duration selection
         Text(
-          l10n.sleepDetails,
+          l10n.sleepDuration,
           style: AppTypography.labelMedium.copyWith(color: textSecondary),
         ),
-        const SizedBox(height: 12),
-        _buildTextField(
-          controller: _durationController,
-          label: l10n.durationHours,
-          hint: '7.5',
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          isDark: isDark,
+        const SizedBox(height: 8),
+        Row(
+          children: durationOptions.map((option) {
+            final isSelected = _sleepDuration == option.$1;
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _sleepDuration = option.$1);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: isSelected ? primaryColor.withValues(alpha: 0.15) : surfaceColor,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isSelected ? primaryColor : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: Text(
+                      option.$2,
+                      textAlign: TextAlign.center,
+                      style: AppTypography.labelSmall.copyWith(
+                        color: isSelected ? primaryColor : textSecondary,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
         ),
         const SizedBox(height: 16),
+        // Quality selection
         Text(
           l10n.quality,
           style: AppTypography.labelMedium.copyWith(color: textSecondary),
@@ -1060,37 +1103,72 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
   }
 
   Widget _buildExerciseFields(AppLocalizations l10n, bool isDark, Color textSecondary) {
+    final primaryColor = isDark ? AppColors.primaryDarkMode : AppColors.primary;
+    final surfaceColor = isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceVariant;
+
+    // Duration options: 30min, 1hour, 2hours, other
+    final durationOptions = [
+      ('30min', l10n.duration30min),
+      ('1hour', l10n.duration1hour),
+      ('2hours', l10n.duration2hours),
+      ('other', l10n.other),
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Duration selection
         Text(
-          l10n.exerciseDetails,
+          l10n.exerciseDuration,
           style: AppTypography.labelMedium.copyWith(color: textSecondary),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Row(
-          children: [
-            Expanded(
-              child: _buildTextField(
-                controller: _durationController,
-                label: l10n.durationMin,
-                hint: '30',
-                keyboardType: TextInputType.number,
-                isDark: isDark,
+          children: durationOptions.map((option) {
+            final isSelected = _exerciseDuration == option.$1;
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _exerciseDuration = option.$1);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: isSelected ? primaryColor.withValues(alpha: 0.15) : surfaceColor,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isSelected ? primaryColor : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: Text(
+                      option.$2,
+                      textAlign: TextAlign.center,
+                      style: AppTypography.labelSmall.copyWith(
+                        color: isSelected ? primaryColor : textSecondary,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildTextField(
-                controller: _caloriesController,
-                label: l10n.caloriesBurned,
-                hint: '150',
-                keyboardType: TextInputType.number,
-                isDark: isDark,
-              ),
-            ),
-          ],
+            );
+          }).toList(),
         ),
+        // Custom input when "other" is selected
+        if (_exerciseDuration == 'other') ...[
+          const SizedBox(height: 12),
+          _buildTextField(
+            controller: _durationController,
+            label: l10n.durationMin,
+            hint: '45',
+            keyboardType: TextInputType.number,
+            isDark: isDark,
+          ),
+        ],
       ],
     );
   }
@@ -1194,22 +1272,18 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
     final primaryColor = isDark ? AppColors.primaryDarkMode : AppColors.primary;
     final surfaceColor = isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceVariant;
 
+    // Amount options: single, double, triple, other
+    final amountOptions = [
+      ('single', l10n.single),
+      ('double', l10n.double),
+      ('triple', l10n.triple),
+      ('other', l10n.other),
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l10n.alcoholDetails,
-          style: AppTypography.labelMedium.copyWith(color: textSecondary),
-        ),
-        const SizedBox(height: 12),
-        _buildTextField(
-          controller: _amountController,
-          label: l10n.drinks,
-          hint: '1',
-          keyboardType: TextInputType.number,
-          isDark: isDark,
-        ),
-        const SizedBox(height: 16),
+        // Type selection (Beer, Wine, Spirits, Other)
         Text(
           l10n.alcoholType,
           style: AppTypography.labelMedium.copyWith(color: textSecondary),
@@ -1250,6 +1324,59 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
             );
           }).toList(),
         ),
+        const SizedBox(height: 16),
+        // Amount selection (Tek, Duble, 3, Diğer)
+        Text(
+          l10n.alcoholAmount,
+          style: AppTypography.labelMedium.copyWith(color: textSecondary),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: amountOptions.map((option) {
+            final isSelected = _alcoholAmount == option.$1;
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _alcoholAmount = option.$1);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: isSelected ? primaryColor.withValues(alpha: 0.15) : surfaceColor,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isSelected ? primaryColor : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: Text(
+                      option.$2,
+                      textAlign: TextAlign.center,
+                      style: AppTypography.labelSmall.copyWith(
+                        color: isSelected ? primaryColor : textSecondary,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        // Custom input when "other" is selected
+        if (_alcoholAmount == 'other') ...[
+          const SizedBox(height: 12),
+          _buildTextField(
+            controller: _amountController,
+            label: l10n.alcoholAmount,
+            hint: '4',
+            keyboardType: TextInputType.number,
+            isDark: isDark,
+          ),
+        ],
       ],
     );
   }
@@ -1433,6 +1560,28 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
         ),
       ],
     );
+  }
+
+  /// Get detail label for activity header (e.g., "Yemek yedim" instead of "Yemek")
+  String _getDetailLabel(AppLocalizations l10n) {
+    switch (_selectedType) {
+      case LogType.food:
+        return l10n.foodDetails;
+      case LogType.sleep:
+        return l10n.sleepDetails;
+      case LogType.exercise:
+        return l10n.exerciseDetails;
+      case LogType.medication:
+        return l10n.medicationDetails;
+      case LogType.water:
+        return l10n.waterDetails;
+      case LogType.alcohol:
+        return l10n.alcoholDetails;
+      case LogType.toilet:
+        return l10n.toiletDetails;
+      case LogType.stress:
+        return l10n.stressDetails;
+    }
   }
 
   String _getHintForType(AppLocalizations l10n, LogType type) {

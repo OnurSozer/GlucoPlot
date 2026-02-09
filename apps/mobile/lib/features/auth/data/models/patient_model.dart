@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 import '../../domain/entities/patient.dart';
 
 /// Patient model for data layer with JSON serialization
@@ -11,6 +13,7 @@ class PatientModel extends Patient {
     super.email,
     super.notes,
     super.isActive = true,
+    super.usualSleepTime,
     super.createdAt,
     super.updatedAt,
   });
@@ -28,6 +31,7 @@ class PatientModel extends Patient {
       email: json['email'] as String?,
       notes: json['notes'] as String?,
       isActive: json['is_active'] as bool? ?? true,
+      usualSleepTime: _parseTimeOfDay(json['usual_sleep_time'] as String?),
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : null,
@@ -35,6 +39,19 @@ class PatientModel extends Patient {
           ? DateTime.parse(json['updated_at'] as String)
           : null,
     );
+  }
+
+  /// Parse time string (HH:MM:SS) to TimeOfDay
+  static TimeOfDay? _parseTimeOfDay(String? timeString) {
+    if (timeString == null) return null;
+    final parts = timeString.split(':');
+    if (parts.length >= 2) {
+      return TimeOfDay(
+        hour: int.tryParse(parts[0]) ?? 23,
+        minute: int.tryParse(parts[1]) ?? 0,
+      );
+    }
+    return const TimeOfDay(hour: 23, minute: 0); // Default 11 PM
   }
 
   /// Create from entity
@@ -48,6 +65,7 @@ class PatientModel extends Patient {
       email: patient.email,
       notes: patient.notes,
       isActive: patient.isActive,
+      usualSleepTime: patient.usualSleepTime,
       createdAt: patient.createdAt,
       updatedAt: patient.updatedAt,
     );
@@ -64,6 +82,12 @@ class PatientModel extends Patient {
       if (email != null) 'email': email,
       if (notes != null) 'notes': notes,
       'is_active': isActive,
+      if (usualSleepTime != null) 'usual_sleep_time': _formatTimeOfDay(usualSleepTime!),
     };
+  }
+
+  /// Format TimeOfDay to HH:MM:SS string
+  static String _formatTimeOfDay(TimeOfDay time) {
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}:00';
   }
 }

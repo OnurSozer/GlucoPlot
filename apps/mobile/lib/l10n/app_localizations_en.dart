@@ -54,6 +54,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcomeBack => 'Welcome Back';
 
   @override
+  String get welcomeDescription =>
+      'Track your health measurements, log daily activities, and stay connected with your healthcare provider.';
+
+  @override
+  String get getStarted => 'Get Started';
+
+  @override
   String get scanQrCode => 'Scan QR Code';
 
   @override
@@ -315,6 +322,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pleaseEnterTitle => 'Please enter a title';
 
   @override
+  String get foodDetails => 'I ate';
+
+  @override
   String get nutritionOptional => 'Nutrition (optional)';
 
   @override
@@ -324,10 +334,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get carbsG => 'Carbs (g)';
 
   @override
-  String get sleepDetails => 'Sleep Details';
+  String get sleepDetails => 'I woke up';
 
   @override
   String get durationHours => 'Duration (hours)';
+
+  @override
+  String get sleepDuration => 'Sleep duration';
+
+  @override
+  String get sleepDuration2to5 => '2-5 hrs';
+
+  @override
+  String get sleepDuration5to7 => '5-7 hrs';
+
+  @override
+  String get sleepDuration7to9 => '7-9 hrs';
+
+  @override
+  String get sleepDuration9plus => '9+ hrs';
 
   @override
   String get quality => 'Quality';
@@ -345,7 +370,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get excellent => 'Excellent';
 
   @override
-  String get exerciseDetails => 'Exercise Details';
+  String get usualSleepTime => 'Usual sleep time';
+
+  @override
+  String get usualSleepTimeHint => 'Used for notifications and calculations';
+
+  @override
+  String get sleepTimeUpdated => 'Sleep time updated';
+
+  @override
+  String get exerciseDetails => 'I exercised';
 
   @override
   String get durationMin => 'Duration (min)';
@@ -354,13 +388,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get caloriesBurned => 'Calories burned';
 
   @override
-  String get medicationDetails => 'Medication Details';
+  String get exerciseDuration => 'Exercise duration';
+
+  @override
+  String get duration30min => '30 min';
+
+  @override
+  String get duration1hour => '1 hour';
+
+  @override
+  String get duration2hours => '2 hours';
+
+  @override
+  String get medicationDetails => 'I took medicine';
 
   @override
   String get dosage => 'Dosage';
 
   @override
-  String get waterDetails => 'Water Intake';
+  String get waterDetails => 'I drank water';
 
   @override
   String get amountMl => 'Amount (ml)';
@@ -369,7 +415,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get glasses => 'Glasses';
 
   @override
-  String get alcoholDetails => 'Alcohol Consumption';
+  String get alcoholDetails => 'I drank alcohol';
 
   @override
   String get drinks => 'Drinks';
@@ -390,22 +436,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get other => 'Other';
 
   @override
+  String get alcoholAmount => 'Amount';
+
+  @override
+  String get single => 'Single';
+
+  @override
+  String get double => 'Double';
+
+  @override
+  String get triple => '3';
+
+  @override
   String get toiletDetails => 'Bathroom Visit';
 
   @override
-  String get toiletType => 'Type';
+  String get toiletType => 'Urine Amount';
 
   @override
-  String get urination => 'Urination';
+  String get urination => 'Little';
 
   @override
-  String get bowelMovement => 'Bowel Movement';
+  String get bowelMovement => 'Medium';
 
   @override
-  String get both => 'Both';
+  String get both => 'A lot';
 
   @override
-  String get stressDetails => 'Stress Level';
+  String get stressDetails => 'I felt stressed';
 
   @override
   String get stressLevel => 'Level (1-10)';

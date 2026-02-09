@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -65,7 +66,14 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
     super.dispose();
   }
 
-  Future<void> _selectDateTime() async {
+  void _selectQuickTime(int minutesAgo) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _selectedDateTime = DateTime.now().subtract(Duration(minutes: minutesAgo));
+    });
+  }
+
+  Future<void> _selectCustomDateTime() async {
     final date = await showDatePicker(
       context: context,
       initialDate: _selectedDateTime,
@@ -330,51 +338,124 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
     final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
-    final textTertiary = isDark ? AppColors.darkTextTertiary : AppColors.textTertiary;
-    final surfaceVariant = isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceVariant;
+    final primaryColor = isDark ? AppColors.primaryDarkMode : AppColors.primary;
+    final surfaceColor = isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceVariant;
+    final cardBg = isDark ? AppColors.darkCardBackground : AppColors.cardBackground;
+    final borderColor = isDark ? AppColors.darkBorderSubtle : Colors.transparent;
 
-    return GestureDetector(
-      onTap: _selectDateTime,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: surfaceVariant,
-          borderRadius: AppSpacing.borderRadiusMd,
+    final now = DateTime.now();
+    final isNow = _selectedDateTime.difference(now).inMinutes.abs() < 2;
+    final is15MinAgo = (_selectedDateTime.difference(now).inMinutes + 15).abs() < 2;
+    final is30MinAgo = (_selectedDateTime.difference(now).inMinutes + 30).abs() < 2;
+    final is1HourAgo = (_selectedDateTime.difference(now).inMinutes + 60).abs() < 2;
+    final isCustom = !isNow && !is15MinAgo && !is30MinAgo && !is1HourAgo;
+
+    // Localized labels
+    final nowLabel = l10n.localeName == 'tr' ? 'Şimdi' : 'Now';
+    final min15Label = l10n.localeName == 'tr' ? '15 dk önce' : '15 min ago';
+    final min30Label = l10n.localeName == 'tr' ? '30 dk önce' : '30 min ago';
+    final hour1Label = l10n.localeName == 'tr' ? '1 saat önce' : '1 hour ago';
+    final customLabel = l10n.localeName == 'tr' ? 'Özel' : 'Custom';
+
+    final quickOptions = [
+      (nowLabel, 0, isNow),
+      (min15Label, 15, is15MinAgo),
+      (min30Label, 30, is30MinAgo),
+      (hour1Label, 60, is1HourAgo),
+    ];
+
+    return Column(
+      children: [
+        // Quick time buttons
+        Row(
+          children: quickOptions.map((option) {
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () => _selectQuickTime(option.$2),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: option.$3
+                          ? primaryColor.withValues(alpha: isDark ? 0.2 : 0.15)
+                          : surfaceColor,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: option.$3 ? primaryColor : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: Text(
+                      option.$1,
+                      textAlign: TextAlign.center,
+                      style: AppTypography.labelSmall.copyWith(
+                        color: option.$3 ? primaryColor : textSecondary,
+                        fontWeight: option.$3 ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
         ),
-        child: Row(
-          children: [
-            Icon(
-              Icons.calendar_today_rounded,
-              color: textSecondary,
-              size: 20,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _formatDate(_selectedDateTime, l10n),
-                    style: AppTypography.bodyLarge.copyWith(
-                      color: textPrimary,
-                    ),
-                  ),
-                  Text(
-                    _formatTime(_selectedDateTime, l10n),
-                    style: AppTypography.bodySmall.copyWith(
-                      color: textSecondary,
-                    ),
-                  ),
-                ],
+
+        const SizedBox(height: 12),
+
+        // Custom time button
+        GestureDetector(
+          onTap: _selectCustomDateTime,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isCustom
+                  ? primaryColor.withValues(alpha: isDark ? 0.15 : 0.1)
+                  : cardBg,
+              borderRadius: AppSpacing.borderRadiusMd,
+              border: Border.all(
+                color: isCustom ? primaryColor : borderColor,
+                width: isCustom ? 2 : (isDark ? 1 : 0),
               ),
             ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: textTertiary,
+            child: Row(
+              children: [
+                Icon(
+                  Icons.calendar_today_rounded,
+                  color: isCustom ? primaryColor : textSecondary,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        customLabel,
+                        style: AppTypography.labelSmall.copyWith(
+                          color: textSecondary,
+                        ),
+                      ),
+                      Text(
+                        '${_formatDate(_selectedDateTime, l10n)} - ${_formatTime(_selectedDateTime, l10n)}',
+                        style: AppTypography.bodyLarge.copyWith(
+                          color: textPrimary,
+                          fontWeight: isCustom ? FontWeight.w600 : FontWeight.normal,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: textSecondary,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 

@@ -54,6 +54,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get welcomeBack => 'Tekrar Hoş Geldiniz';
 
   @override
+  String get welcomeDescription =>
+      'Sağlık ölçümlerinizi takip edin, günlük aktivitelerinizi kaydedin ve doktorunuzla bağlantıda kalın.';
+
+  @override
+  String get getStarted => 'Başla';
+
+  @override
   String get scanQrCode => 'QR Kodu Tara';
 
   @override
@@ -316,6 +323,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pleaseEnterTitle => 'Lütfen bir başlık girin';
 
   @override
+  String get foodDetails => 'Yemek yedim';
+
+  @override
   String get nutritionOptional => 'Besin değerleri (isteğe bağlı)';
 
   @override
@@ -325,10 +335,25 @@ class AppLocalizationsTr extends AppLocalizations {
   String get carbsG => 'Karbonhidrat (g)';
 
   @override
-  String get sleepDetails => 'Uyku Detayları';
+  String get sleepDetails => 'Uyandım';
 
   @override
   String get durationHours => 'Süre (saat)';
+
+  @override
+  String get sleepDuration => 'Uyku süresi';
+
+  @override
+  String get sleepDuration2to5 => '2-5 saat';
+
+  @override
+  String get sleepDuration5to7 => '5-7 saat';
+
+  @override
+  String get sleepDuration7to9 => '7-9 saat';
+
+  @override
+  String get sleepDuration9plus => '9+ saat';
 
   @override
   String get quality => 'Kalite';
@@ -346,7 +371,17 @@ class AppLocalizationsTr extends AppLocalizations {
   String get excellent => 'Mükemmel';
 
   @override
-  String get exerciseDetails => 'Egzersiz Detayları';
+  String get usualSleepTime => 'Olağan uyku saati';
+
+  @override
+  String get usualSleepTimeHint =>
+      'Bildirimler ve hesaplamalar için kullanılır';
+
+  @override
+  String get sleepTimeUpdated => 'Uyku saati güncellendi';
+
+  @override
+  String get exerciseDetails => 'Spor yaptım';
 
   @override
   String get durationMin => 'Süre (dk)';
@@ -355,13 +390,25 @@ class AppLocalizationsTr extends AppLocalizations {
   String get caloriesBurned => 'Yakılan kalori';
 
   @override
-  String get medicationDetails => 'İlaç Detayları';
+  String get exerciseDuration => 'Spor yapma süresi';
+
+  @override
+  String get duration30min => '30 dk';
+
+  @override
+  String get duration1hour => '1 saat';
+
+  @override
+  String get duration2hours => '2 saat';
+
+  @override
+  String get medicationDetails => 'İlaç aldım';
 
   @override
   String get dosage => 'Doz';
 
   @override
-  String get waterDetails => 'Su Tüketimi';
+  String get waterDetails => 'Su içtim';
 
   @override
   String get amountMl => 'Miktar (ml)';
@@ -370,7 +417,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get glasses => 'Bardak';
 
   @override
-  String get alcoholDetails => 'Alkol Tüketimi';
+  String get alcoholDetails => 'Alkol içtim';
 
   @override
   String get drinks => 'İçki';
@@ -391,22 +438,34 @@ class AppLocalizationsTr extends AppLocalizations {
   String get other => 'Diğer';
 
   @override
-  String get toiletDetails => 'Tuvalet Kaydı';
+  String get alcoholAmount => 'Miktar';
 
   @override
-  String get toiletType => 'Tür';
+  String get single => 'Tek';
 
   @override
-  String get urination => 'İdrar';
+  String get double => 'Duble';
 
   @override
-  String get bowelMovement => 'Büyük abdest';
+  String get triple => '3';
 
   @override
-  String get both => 'Her ikisi';
+  String get toiletDetails => 'Tuvalete çıktım';
 
   @override
-  String get stressDetails => 'Stres Seviyesi';
+  String get toiletType => 'İdrar miktarı';
+
+  @override
+  String get urination => 'Az';
+
+  @override
+  String get bowelMovement => 'Orta';
+
+  @override
+  String get both => 'Çok';
+
+  @override
+  String get stressDetails => 'Stres yaşadım';
 
   @override
   String get stressLevel => 'Seviye (1-10)';

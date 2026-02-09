@@ -6,9 +6,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_constants.dart';
-import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/widgets/widgets.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../bloc/auth_bloc.dart';
 
 /// OTP verification page
@@ -114,6 +114,8 @@ class _OtpPageState extends State<OtpPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
@@ -145,12 +147,12 @@ class _OtpPageState extends State<OtpPage> {
 
                 // Header
                 Text(
-                  AppStrings.enterOtp,
+                  l10n.enterOtp,
                   style: AppTypography.displaySmall,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Enter the 6-digit code sent to your phone',
+                  l10n.otpSentTo,
                   style: AppTypography.bodyMedium.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -174,7 +176,7 @@ class _OtpPageState extends State<OtpPage> {
                   builder: (context, state) {
                     final isLoading = state is AuthLoading;
                     return AppButton(
-                      label: AppStrings.verifyOtp,
+                      label: l10n.verifyOtp,
                       onPressed: isLoading ? null : _submitOtp,
                       isLoading: isLoading,
                     );
@@ -189,8 +191,8 @@ class _OtpPageState extends State<OtpPage> {
                     onPressed: _resendCountdown > 0 ? null : _resendOtp,
                     child: Text(
                       _resendCountdown > 0
-                          ? 'Resend code in ${_resendCountdown}s'
-                          : AppStrings.resendOtp,
+                          ? '${l10n.resendOtp} (${_resendCountdown}s)'
+                          : l10n.resendOtp,
                       style: AppTypography.buttonMedium.copyWith(
                         color: _resendCountdown > 0
                             ? AppColors.textTertiary
