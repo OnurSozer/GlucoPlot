@@ -90,14 +90,20 @@ export function MedicalHistoryStep({ data, onChange }: MedicalHistoryStepProps) 
         </div>
       )}
 
-      {/* Diagnosis Date */}
+      {/* Diagnosis Year */}
       {data.has_diabetes && (
         <div>
           <Input
             label={t('medicalHistory.diagnosisDate')}
-            type="date"
+            type="number"
+            placeholder={t('medicalHistory.diagnosisYearPlaceholder')}
             value={data.diagnosis_date || ''}
-            onChange={(e) => onChange({ ...data, diagnosis_date: e.target.value || undefined })}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === '' || (val.length <= 4 && /^\d*$/.test(val))) {
+                onChange({ ...data, diagnosis_date: val || undefined });
+              }
+            }}
             leftIcon={<Calendar size={18} />}
           />
         </div>

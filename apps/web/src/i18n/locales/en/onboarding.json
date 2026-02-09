@@ -31,7 +31,19 @@
     "relativePhone": "Relative Phone",
     "relativeEmail": "Relative Email",
     "doctorPhone": "Doctor's Phone",
-    "doctorEmail": "Doctor's Email"
+    "doctorEmail": "Doctor's Email",
+    "placeholders": {
+      "fullName": "John Smith",
+      "nationalId": "12345678901",
+      "phone": "+90-555-0123",
+      "emergencyPhone": "+90-555-0124",
+      "emergencyEmail": "emergency@email.com",
+      "relativeName": "Jane Smith",
+      "relativePhone": "+90-555-0125",
+      "relativeEmail": "relative@email.com",
+      "doctorPhone": "+90-555-0126",
+      "doctorEmail": "doctor@email.com"
+    }
   },
   "notifications": {
     "title": "Notification Preferences",
@@ -123,7 +135,8 @@
       "secondary": "Secondary to exocrine pancreatic disease",
       "chemicallyInduced": "Chemically induced"
     },
-    "diagnosisDate": "When were you diagnosed?",
+    "diagnosisDate": "What year were you diagnosed?",
+    "diagnosisYearPlaceholder": "e.g. 2018",
     "medicationType": "Do you use medication for diabetes?",
     "medicationOptions": {
       "oralHypoglycemic": "Oral hypoglycemic",

@@ -33,6 +33,16 @@
     "lastReading": "Son ölçüm",
     "noReadings": "Henüz ölçüm yok"
   },
+  "mealTiming": {
+    "fasting": "Açlık",
+    "post_meal": "Tokluk",
+    "other": "Diğer"
+  },
+  "chart": {
+    "loading": "Grafik yükleniyor...",
+    "noData": "Ölçüm verisi yok",
+    "noDataDesc": "Ölçümler kaydedildiğinde burada görünecek"
+  },
   "measurementTypes": {
     "glucose": "Glukoz",
     "blood_pressure": "Kan Basıncı",

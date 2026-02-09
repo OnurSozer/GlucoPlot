@@ -6,7 +6,7 @@
     "submissionFailed": "Hasta oluşturulamadı. Lütfen tekrar deneyin."
   },
   "steps": {
-    "basicInfo": "Demografik Bilgiler",
+    "basicInfo": "Temel Bilgiler",
     "notifications": "Uyarı Tercihleri",
     "physical": "Demografik Veriler",
     "habits": "Alışkanlıklar",
@@ -18,7 +18,7 @@
     "labInfo": "Laboratuvar Bilgileri"
   },
   "basicInfo": {
-    "title": "Demografik Bilgiler",
+    "title": "Temel Bilgiler",
     "fullName": "Ad Soyad",
     "nationalId": "TC Kimlik No / Hasta No",
     "sex": "Cinsiyet",
@@ -31,7 +31,19 @@
     "relativePhone": "Yakın Telefonu",
     "relativeEmail": "Yakın E-postası",
     "doctorPhone": "Doktor Telefonu",
-    "doctorEmail": "Doktor E-postası"
+    "doctorEmail": "Doktor E-postası",
+    "placeholders": {
+      "fullName": "Ahmet Yılmaz",
+      "nationalId": "12345678901",
+      "phone": "+90-555-0123",
+      "emergencyPhone": "+90-555-0124",
+      "emergencyEmail": "acil@email.com",
+      "relativeName": "Ayşe Yılmaz",
+      "relativePhone": "+90-555-0125",
+      "relativeEmail": "yakin@email.com",
+      "doctorPhone": "+90-555-0126",
+      "doctorEmail": "doktor@email.com"
+    }
   },
   "notifications": {
     "title": "Uyarı Tercihleri",
@@ -123,7 +135,8 @@
       "secondary": "Ekzokrin pankreas hastalığına sekonder",
       "chemicallyInduced": "Kimyasal ile indüklenmiş"
     },
-    "diagnosisDate": "Ne zaman tanı aldınız?",
+    "diagnosisDate": "Hangi yıl tanı aldınız?",
+    "diagnosisYearPlaceholder": "örn. 2018",
     "medicationType": "Diyabet için ilaç kullanıyor musunuz?",
     "medicationOptions": {
       "oralHypoglycemic": "Oral hipoglisemik",

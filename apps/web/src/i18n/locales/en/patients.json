@@ -33,6 +33,16 @@
     "lastReading": "Last reading",
     "noReadings": "No readings yet"
   },
+  "mealTiming": {
+    "fasting": "Fasting",
+    "post_meal": "After Meal",
+    "other": "Other"
+  },
+  "chart": {
+    "loading": "Loading chart...",
+    "noData": "No measurement data available",
+    "noDataDesc": "Measurements will appear here once recorded"
+  },
   "measurementTypes": {
     "glucose": "Glucose",
     "blood_pressure": "Blood Pressure",

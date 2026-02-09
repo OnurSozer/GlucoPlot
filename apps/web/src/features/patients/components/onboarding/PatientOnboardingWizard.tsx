@@ -15,6 +15,7 @@ import {
     getVisibleSteps,
     getDefaultOnboardingData,
 } from '../../../../types/onboarding.types';
+import { useAuthStore } from '../../../../stores/auth-store';
 
 import { WizardProgress } from './WizardProgress';
 import { WizardNavigation } from './WizardNavigation';
@@ -42,6 +43,7 @@ export function PatientOnboardingWizard({
     onComplete,
 }: PatientOnboardingWizardProps) {
     const { t } = useTranslation('onboarding');
+    const doctor = useAuthStore((state) => state.doctor);
 
     // Form data state
     const [formData, setFormData] = useState<PatientOnboardingData>(() => ({
@@ -107,6 +109,8 @@ export function PatientOnboardingWizard({
                     <BasicInfoStep
                         data={formData.basicInfo}
                         onChange={(data) => setFormData((prev) => ({ ...prev, basicInfo: data }))}
+                        doctorPhone={doctor?.phone ?? undefined}
+                        doctorEmail={doctor?.email ?? undefined}
                     />
                 );
             case 'notifications':

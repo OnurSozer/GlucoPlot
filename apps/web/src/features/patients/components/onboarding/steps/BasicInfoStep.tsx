@@ -41,14 +41,14 @@ export function BasicInfoStep({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Input
           label={`${t('basicInfo.fullName')} *`}
-          placeholder="John Smith"
+          placeholder={t('basicInfo.placeholders.fullName')}
           value={data.full_name}
           onChange={(e) => handleChange('full_name', e.target.value)}
           leftIcon={<User size={18} />}
         />
         <Input
           label={t('basicInfo.nationalId')}
-          placeholder="12345678901"
+          placeholder={t('basicInfo.placeholders.nationalId')}
           value={data.national_id || ''}
           onChange={(e) => handleChange('national_id', e.target.value)}
           leftIcon={<CreditCard size={18} />}
@@ -84,7 +84,7 @@ export function BasicInfoStep({
       {/* Phone */}
       <Input
         label={t('basicInfo.phone')}
-        placeholder="+90-555-0123"
+        placeholder={t('basicInfo.placeholders.phone')}
         value={data.phone || ''}
         onChange={(e) => handleChange('phone', e.target.value)}
         leftIcon={<Phone size={18} />}
@@ -99,7 +99,7 @@ export function BasicInfoStep({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
             label={t('basicInfo.emergencyPhone')}
-            placeholder="+90-555-0124"
+            placeholder={t('basicInfo.placeholders.emergencyPhone')}
             value={data.emergency_contact_phone || ''}
             onChange={(e) => handleChange('emergency_contact_phone', e.target.value)}
             leftIcon={<Phone size={18} />}
@@ -107,7 +107,7 @@ export function BasicInfoStep({
           <Input
             label={t('basicInfo.emergencyEmail')}
             type="email"
-            placeholder="emergency@email.com"
+            placeholder={t('basicInfo.placeholders.emergencyEmail')}
             value={data.emergency_contact_email || ''}
             onChange={(e) => handleChange('emergency_contact_email', e.target.value)}
             leftIcon={<Mail size={18} />}
@@ -123,14 +123,14 @@ export function BasicInfoStep({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Input
             label={t('basicInfo.relativeName')}
-            placeholder="Jane Smith"
+            placeholder={t('basicInfo.placeholders.relativeName')}
             value={data.relative_name || ''}
             onChange={(e) => handleChange('relative_name', e.target.value)}
             leftIcon={<User size={18} />}
           />
           <Input
             label={t('basicInfo.relativePhone')}
-            placeholder="+90-555-0125"
+            placeholder={t('basicInfo.placeholders.relativePhone')}
             value={data.relative_phone || ''}
             onChange={(e) => handleChange('relative_phone', e.target.value)}
             leftIcon={<Phone size={18} />}
@@ -138,7 +138,7 @@ export function BasicInfoStep({
           <Input
             label={t('basicInfo.relativeEmail')}
             type="email"
-            placeholder="relative@email.com"
+            placeholder={t('basicInfo.placeholders.relativeEmail')}
             value={data.relative_email || ''}
             onChange={(e) => handleChange('relative_email', e.target.value)}
             leftIcon={<Mail size={18} />}
@@ -154,7 +154,7 @@ export function BasicInfoStep({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
             label={t('basicInfo.doctorPhone')}
-            placeholder="+90-555-0126"
+            placeholder={t('basicInfo.placeholders.doctorPhone')}
             value={data.doctor_phone || doctorPhone || ''}
             onChange={(e) => handleChange('doctor_phone', e.target.value)}
             leftIcon={<Phone size={18} />}
@@ -162,7 +162,7 @@ export function BasicInfoStep({
           <Input
             label={t('basicInfo.doctorEmail')}
             type="email"
-            placeholder="doctor@email.com"
+            placeholder={t('basicInfo.placeholders.doctorEmail')}
             value={data.doctor_email || doctorEmail || ''}
             onChange={(e) => handleChange('doctor_email', e.target.value)}
             leftIcon={<Mail size={18} />}

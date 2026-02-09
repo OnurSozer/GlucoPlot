@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     XAxis,
     YAxis,
@@ -39,14 +40,15 @@ interface GlucoseChartDataPoint {
     fullDate: string; // Full date for tooltip
 }
 
-// Meal timing display configuration
-const MEAL_TIMING_CONFIG: Record<MealTiming, { color: string; label: string }> = {
-    fasting: { color: '#3B82F6', label: 'Fasting' },
-    post_meal: { color: '#F97316', label: 'After Meal' },
-    other: { color: '#6B7280', label: 'Other' },
+// Meal timing color configuration
+const MEAL_TIMING_COLORS: Record<MealTiming, string> = {
+    fasting: '#3B82F6',
+    post_meal: '#F97316',
+    other: '#6B7280',
 };
 
 export function MeasurementChart({ patientId, type, days = 14 }: MeasurementChartProps) {
+    const { t } = useTranslation('patients');
     const [data, setData] = useState<ChartDataPoint[]>([]);
     const [glucoseData, setGlucoseData] = useState<GlucoseChartDataPoint[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -163,7 +165,7 @@ export function MeasurementChart({ patientId, type, days = 14 }: MeasurementChar
     if (isLoading) {
         return (
             <div className="h-64 bg-gray-50 rounded-xl animate-pulse flex items-center justify-center">
-                <p className="text-gray-400">Loading chart...</p>
+                <p className="text-gray-400">{t('chart.loading')}</p>
             </div>
         );
     }
@@ -171,8 +173,8 @@ export function MeasurementChart({ patientId, type, days = 14 }: MeasurementChar
     if (!hasData) {
         return (
             <div className="h-64 bg-gray-50 rounded-xl flex flex-col items-center justify-center">
-                <p className="text-gray-500">No measurement data available</p>
-                <p className="text-sm text-gray-400 mt-1">Measurements will appear here once recorded</p>
+                <p className="text-gray-500">{t('chart.noData')}</p>
+                <p className="text-sm text-gray-400 mt-1">{t('chart.noDataDesc')}</p>
             </div>
         );
     }
@@ -182,8 +184,8 @@ export function MeasurementChart({ patientId, type, days = 14 }: MeasurementChar
             {/* Meal Timing Toggles (glucose only) */}
             {isGlucoseChart && (
                 <div className="flex flex-wrap items-center gap-4 mb-4">
-                    {(Object.keys(MEAL_TIMING_CONFIG) as MealTiming[]).map((timing) => {
-                        const config = MEAL_TIMING_CONFIG[timing];
+                    {(Object.keys(MEAL_TIMING_COLORS) as MealTiming[]).map((timing) => {
+                        const color = MEAL_TIMING_COLORS[timing];
                         const isVisible = visibleTimings.has(timing);
                         const timingStats = glucoseStats?.[timing];
 
@@ -204,10 +206,10 @@ export function MeasurementChart({ patientId, type, days = 14 }: MeasurementChar
                                 />
                                 <span
                                     className="w-3 h-3 rounded-full flex-shrink-0"
-                                    style={{ backgroundColor: config.color, opacity: isVisible ? 1 : 0.4 }}
+                                    style={{ backgroundColor: color, opacity: isVisible ? 1 : 0.4 }}
                                 />
                                 <span className={`text-sm font-medium ${isVisible ? 'text-gray-700' : 'text-gray-400'}`}>
-                                    {config.label}
+                                    {t(`mealTiming.${timing}`)}
                                 </span>
                                 {timingStats && (
                                     <span className="text-xs text-gray-400 ml-1">
@@ -265,16 +267,16 @@ export function MeasurementChart({ patientId, type, days = 14 }: MeasurementChar
                             {isGlucoseChart ? (
                                 <>
                                     <linearGradient id="gradient-fasting" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={MEAL_TIMING_CONFIG.fasting.color} stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor={MEAL_TIMING_CONFIG.fasting.color} stopOpacity={0} />
+                                        <stop offset="5%" stopColor={MEAL_TIMING_COLORS.fasting} stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor={MEAL_TIMING_COLORS.fasting} stopOpacity={0} />
                                     </linearGradient>
                                     <linearGradient id="gradient-post_meal" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={MEAL_TIMING_CONFIG.post_meal.color} stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor={MEAL_TIMING_CONFIG.post_meal.color} stopOpacity={0} />
+                                        <stop offset="5%" stopColor={MEAL_TIMING_COLORS.post_meal} stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor={MEAL_TIMING_COLORS.post_meal} stopOpacity={0} />
                                     </linearGradient>
                                     <linearGradient id="gradient-other" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={MEAL_TIMING_CONFIG.other.color} stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor={MEAL_TIMING_CONFIG.other.color} stopOpacity={0} />
+                                        <stop offset="5%" stopColor={MEAL_TIMING_COLORS.other} stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor={MEAL_TIMING_COLORS.other} stopOpacity={0} />
                                     </linearGradient>
                                 </>
                             ) : (
@@ -313,14 +315,13 @@ export function MeasurementChart({ patientId, type, days = 14 }: MeasurementChar
                                                 <p className="text-xs text-gray-500 mb-2">{point.fullDate}</p>
                                                 {payload.map((entry, index) => {
                                                     const timing = entry.dataKey as MealTiming;
-                                                    const config = MEAL_TIMING_CONFIG[timing];
                                                     return (
                                                         <div key={index} className="flex items-center gap-2">
                                                             <span
                                                                 className="w-2 h-2 rounded-full"
-                                                                style={{ backgroundColor: config.color }}
+                                                                style={{ backgroundColor: MEAL_TIMING_COLORS[timing] }}
                                                             />
-                                                            <span className="text-sm text-gray-600">{config.label}:</span>
+                                                            <span className="text-sm text-gray-600">{t(`mealTiming.${timing}`)}:</span>
                                                             <span className="text-sm font-medium text-gray-900">
                                                                 {entry.value} mg/dL
                                                             </span>
@@ -352,11 +353,11 @@ export function MeasurementChart({ patientId, type, days = 14 }: MeasurementChar
                                         type="monotone"
                                         dataKey="fasting"
                                         name="Fasting"
-                                        stroke={MEAL_TIMING_CONFIG.fasting.color}
+                                        stroke={MEAL_TIMING_COLORS.fasting}
                                         strokeWidth={2}
                                         fill="url(#gradient-fasting)"
-                                        dot={{ r: 4, fill: MEAL_TIMING_CONFIG.fasting.color, strokeWidth: 2, stroke: '#fff' }}
-                                        activeDot={{ r: 6, fill: MEAL_TIMING_CONFIG.fasting.color, strokeWidth: 2, stroke: '#fff' }}
+                                        dot={{ r: 4, fill: MEAL_TIMING_COLORS.fasting, strokeWidth: 2, stroke: '#fff' }}
+                                        activeDot={{ r: 6, fill: MEAL_TIMING_COLORS.fasting, strokeWidth: 2, stroke: '#fff' }}
                                         connectNulls
                                     />
                                 )}
@@ -365,11 +366,11 @@ export function MeasurementChart({ patientId, type, days = 14 }: MeasurementChar
                                         type="monotone"
                                         dataKey="post_meal"
                                         name="After Meal"
-                                        stroke={MEAL_TIMING_CONFIG.post_meal.color}
+                                        stroke={MEAL_TIMING_COLORS.post_meal}
                                         strokeWidth={2}
                                         fill="url(#gradient-post_meal)"
-                                        dot={{ r: 4, fill: MEAL_TIMING_CONFIG.post_meal.color, strokeWidth: 2, stroke: '#fff' }}
-                                        activeDot={{ r: 6, fill: MEAL_TIMING_CONFIG.post_meal.color, strokeWidth: 2, stroke: '#fff' }}
+                                        dot={{ r: 4, fill: MEAL_TIMING_COLORS.post_meal, strokeWidth: 2, stroke: '#fff' }}
+                                        activeDot={{ r: 6, fill: MEAL_TIMING_COLORS.post_meal, strokeWidth: 2, stroke: '#fff' }}
                                         connectNulls
                                     />
                                 )}
@@ -378,11 +379,11 @@ export function MeasurementChart({ patientId, type, days = 14 }: MeasurementChar
                                         type="monotone"
                                         dataKey="other"
                                         name="Other"
-                                        stroke={MEAL_TIMING_CONFIG.other.color}
+                                        stroke={MEAL_TIMING_COLORS.other}
                                         strokeWidth={2}
                                         fill="url(#gradient-other)"
-                                        dot={{ r: 4, fill: MEAL_TIMING_CONFIG.other.color, strokeWidth: 2, stroke: '#fff' }}
-                                        activeDot={{ r: 6, fill: MEAL_TIMING_CONFIG.other.color, strokeWidth: 2, stroke: '#fff' }}
+                                        dot={{ r: 4, fill: MEAL_TIMING_COLORS.other, strokeWidth: 2, stroke: '#fff' }}
+                                        activeDot={{ r: 6, fill: MEAL_TIMING_COLORS.other, strokeWidth: 2, stroke: '#fff' }}
                                         connectNulls
                                     />
                                 )}
