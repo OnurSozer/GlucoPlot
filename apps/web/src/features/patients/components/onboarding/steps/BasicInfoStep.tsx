@@ -2,14 +2,17 @@
  * Basic Info Step - Step 1 of patient onboarding
  */
 
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { User, Phone, Mail, Calendar, CreditCard, UserPlus } from 'lucide-react';
+import { User, Phone, Mail, Calendar, CreditCard, UserPlus, AlertTriangle, Loader2 } from 'lucide-react';
 import { Input } from '../../../../../components/common/Input';
-import type { BasicInfoData } from '../../../../../types/onboarding.types';
+import { onboardingService } from '../../../../../services/onboarding.service';
+import type { BasicInfoData, PatientOnboardingData } from '../../../../../types/onboarding.types';
 
 interface BasicInfoStepProps {
   data: BasicInfoData;
   onChange: (data: BasicInfoData) => void;
+  onExistingPatientFound?: (data: PatientOnboardingData) => void;
   doctorPhone?: string;
   doctorEmail?: string;
 }
@@ -17,13 +20,70 @@ interface BasicInfoStepProps {
 export function BasicInfoStep({
   data,
   onChange,
+  onExistingPatientFound,
   doctorPhone,
   doctorEmail,
 }: BasicInfoStepProps) {
   const { t } = useTranslation('onboarding');
+  const [duplicatePatient, setDuplicatePatient] = useState<{ patient_id: string; full_name: string } | null>(null);
+  const [isChecking, setIsChecking] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   const handleChange = (field: keyof BasicInfoData, value: string) => {
     onChange({ ...data, [field]: value || undefined });
+  };
+
+  const checkNationalId = useCallback(async (nationalId: string) => {
+    if (nationalId.length < 5) {
+      setDuplicatePatient(null);
+      return;
+    }
+
+    setIsChecking(true);
+    const { data: found } = await onboardingService.findPatientByNationalId(nationalId);
+    setIsChecking(false);
+
+    setDuplicatePatient(found);
+  }, []);
+
+  useEffect(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    const nationalId = data.national_id;
+    if (!nationalId || nationalId.length < 5) {
+      setDuplicatePatient(null);
+      return;
+    }
+
+    debounceRef.current = setTimeout(() => {
+      checkNationalId(nationalId);
+    }, 600);
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [data.national_id, checkNationalId]);
+
+  const handleLoadData = async () => {
+    if (!duplicatePatient || !onExistingPatientFound) return;
+
+    setIsLoadingData(true);
+    const { data: existingData } = await onboardingService.getOnboardingData(duplicatePatient.patient_id);
+    setIsLoadingData(false);
+
+    if (existingData) {
+      onExistingPatientFound(existingData);
+      setDuplicatePatient(null);
+    }
+  };
+
+  const handleDismiss = () => {
+    setDuplicatePatient(null);
   };
 
   return (
@@ -46,14 +106,52 @@ export function BasicInfoStep({
           onChange={(e) => handleChange('full_name', e.target.value)}
           leftIcon={<User size={18} />}
         />
-        <Input
-          label={t('basicInfo.nationalId')}
-          placeholder={t('basicInfo.placeholders.nationalId')}
-          value={data.national_id || ''}
-          onChange={(e) => handleChange('national_id', e.target.value)}
-          leftIcon={<CreditCard size={18} />}
-        />
+        <div>
+          <Input
+            label={t('basicInfo.nationalId')}
+            placeholder={t('basicInfo.placeholders.nationalId')}
+            value={data.national_id || ''}
+            onChange={(e) => handleChange('national_id', e.target.value)}
+            leftIcon={<CreditCard size={18} />}
+          />
+          {isChecking && (
+            <p className="mt-1 text-xs text-gray-400 flex items-center gap-1">
+              <Loader2 size={12} className="animate-spin" />
+              {t('basicInfo.checking')}
+            </p>
+          )}
+        </div>
       </div>
+
+      {/* Duplicate patient inline popup */}
+      {duplicatePatient && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+          <AlertTriangle size={20} className="text-amber-500 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm text-amber-800">
+              {t('basicInfo.duplicateFound', { name: duplicatePatient.full_name })}
+            </p>
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                onClick={handleLoadData}
+                disabled={isLoadingData}
+                className="px-3 py-1.5 text-sm font-medium rounded-lg bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {isLoadingData && <Loader2 size={14} className="animate-spin" />}
+                {t('basicInfo.loadData')}
+              </button>
+              <button
+                type="button"
+                onClick={handleDismiss}
+                className="px-3 py-1.5 text-sm font-medium rounded-lg bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+              >
+                {t('basicInfo.continueAsNew')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Sex and DOB */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

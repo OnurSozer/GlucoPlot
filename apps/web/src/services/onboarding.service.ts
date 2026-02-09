@@ -23,6 +23,43 @@ import type {
 
 export const onboardingService = {
   /**
+   * Find an existing patient by national ID for the current doctor
+   */
+  async findPatientByNationalId(nationalId: string): Promise<{
+    data: { patient_id: string; full_name: string } | null;
+    error: Error | null;
+  }> {
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        return { data: null, error: new Error('Not authenticated') };
+      }
+
+      const { data: patient, error } = await supabase
+        .from('patients')
+        .select('id, full_name')
+        .eq('doctor_id', user.id)
+        .eq('national_id', nationalId)
+        .maybeSingle();
+
+      if (error) {
+        return { data: null, error };
+      }
+
+      if (!patient) {
+        return { data: null, error: null };
+      }
+
+      return {
+        data: { patient_id: patient.id, full_name: patient.full_name },
+        error: null,
+      };
+    } catch (error) {
+      return { data: null, error: error as Error };
+    }
+  },
+
+  /**
    * Create a new patient with all onboarding data
    */
   async createPatientWithOnboarding(data: PatientOnboardingData): Promise<{

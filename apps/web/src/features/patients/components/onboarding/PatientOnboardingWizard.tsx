@@ -85,6 +85,11 @@ export function PatientOnboardingWizard({
         }
     }, [currentStepIndex]);
 
+    // Handle loading data from an existing patient (duplicate national ID)
+    const handleExistingPatientFound = useCallback((data: PatientOnboardingData) => {
+        setFormData(data);
+    }, []);
+
     const handleSubmit = useCallback(async () => {
         setIsSubmitting(true);
         setError(null);
@@ -109,6 +114,7 @@ export function PatientOnboardingWizard({
                     <BasicInfoStep
                         data={formData.basicInfo}
                         onChange={(data) => setFormData((prev) => ({ ...prev, basicInfo: data }))}
+                        onExistingPatientFound={handleExistingPatientFound}
                         doctorPhone={doctor?.phone ?? undefined}
                         doctorEmail={doctor?.email ?? undefined}
                     />

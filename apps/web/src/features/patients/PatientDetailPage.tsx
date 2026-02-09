@@ -12,6 +12,7 @@ import {
     Droplets,
     Calendar,
     Phone,
+    CreditCard,
     FileText,
     BarChart3,
     ClipboardList,
@@ -178,6 +179,12 @@ export function PatientDetailPage() {
                                 )}
                                 {patient.gender && (
                                     <span>{t(`common:common.${patient.gender}`)}</span>
+                                )}
+                                {patient.national_id && (
+                                    <span className="flex items-center gap-1.5">
+                                        <CreditCard size={16} />
+                                        {patient.national_id}
+                                    </span>
                                 )}
                                 {patient.phone && (
                                     <span className="flex items-center gap-1.5">

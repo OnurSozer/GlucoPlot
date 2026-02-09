@@ -32,6 +32,10 @@
     "relativeEmail": "Yakın E-postası",
     "doctorPhone": "Doktor Telefonu",
     "doctorEmail": "Doktor E-postası",
+    "duplicateFound": "Bu kimlik numarasıyla kayıtlı **{{name}}** adlı bir hasta zaten mevcut. Kayıtlı verilerini yüklemek ister misiniz?",
+    "loadData": "Verileri Yükle",
+    "continueAsNew": "Yeni Olarak Devam Et",
+    "checking": "Kontrol ediliyor...",
     "placeholders": {
       "fullName": "Ahmet Yılmaz",
       "nationalId": "12345678901",

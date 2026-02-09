@@ -32,6 +32,10 @@
     "relativeEmail": "Relative Email",
     "doctorPhone": "Doctor's Phone",
     "doctorEmail": "Doctor's Email",
+    "duplicateFound": "A patient named **{{name}}** already exists with this ID. Would you like to load their saved data?",
+    "loadData": "Load Data",
+    "continueAsNew": "Continue as New",
+    "checking": "Checking...",
     "placeholders": {
       "fullName": "John Smith",
       "nationalId": "12345678901",
