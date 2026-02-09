@@ -1,5 +1,6 @@
 /**
  * Patient Detail Page - View patient info, measurements, and logs
+ * Uses SWR pattern via TanStack Query for instant cached data display
  */
 
 import { useState, useEffect } from 'react';
@@ -27,8 +28,8 @@ import { MeasurementChart } from './MeasurementChart';
 import { PatientProfileView } from './PatientProfileView';
 import { DailyLogsTab } from './components/DailyLogsTab';
 import { patientsService } from '../../services/patients.service';
-import { measurementsService } from '../../services/measurements.service';
 import { onboardingService } from '../../services/onboarding.service';
+import { usePatient, useLatestMeasurements, useInvalidatePatients } from '../../hooks/queries';
 import {
     formatDate,
     calculateAge,
@@ -36,7 +37,7 @@ import {
     getMeasurementColor,
     formatPhone
 } from '../../utils/format';
-import type { Patient, Measurement, MeasurementType } from '../../types/database.types';
+import type { MeasurementType } from '../../types/database.types';
 import type { PatientOnboardingData } from '../../types/onboarding.types';
 
 type TabType = 'measurements' | 'dailyLogs';
@@ -54,14 +55,41 @@ export function PatientDetailPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { t, i18n } = useTranslation(['patients', 'dailyLogs', 'common']);
-    const [patient, setPatient] = useState<Patient | null>(null);
     const [onboardingData, setOnboardingData] = useState<PatientOnboardingData | null>(null);
-    const [latestMeasurements, setLatestMeasurements] = useState<Partial<Record<MeasurementType, Measurement>>>({});
     const [selectedMeasurementType, setSelectedMeasurementType] = useState<MeasurementType>('glucose');
     const [activeTab, setActiveTab] = useState<TabType>('measurements');
-    const [isLoading, setIsLoading] = useState(true);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const { invalidateAll: invalidatePatients } = useInvalidatePatients();
+
+    // SWR pattern: cached data shows instantly, refreshes in background
+    const {
+        data: patient,
+        isLoading: patientLoading,
+    } = usePatient(id || '', !!id);
+
+    const {
+        data: latestMeasurements = {},
+        isLoading: measurementsLoading,
+    } = useLatestMeasurements(id || '', !!id);
+
+    const isLoading = patientLoading || measurementsLoading;
+
+    // Load onboarding data (not using query hook yet - less critical)
+    useEffect(() => {
+        if (!id) return;
+
+        const loadOnboarding = async () => {
+            try {
+                const { data: onboarding } = await onboardingService.getOnboardingData(id);
+                setOnboardingData(onboarding);
+            } catch (error) {
+                console.error('Error loading onboarding data:', error);
+            }
+        };
+
+        loadOnboarding();
+    }, [id]);
 
     const handleDeletePatient = async () => {
         if (!id) return;
@@ -70,6 +98,7 @@ export function PatientDetailPage() {
         try {
             const result = await patientsService.deletePatient(id);
             if (result.success) {
+                invalidatePatients(); // Clear cache
                 navigate('/patients', { replace: true });
             } else {
                 console.error('Failed to delete patient:', result.error);
@@ -83,55 +112,6 @@ export function PatientDetailPage() {
             setShowDeleteModal(false);
         }
     };
-
-    useEffect(() => {
-        if (!id) return;
-
-        const abortController = new AbortController();
-
-        const loadPatientData = async () => {
-            try {
-                setIsLoading(true);
-
-                // Load patient
-                const { data: patientData } = await patientsService.getPatientById(id);
-
-                if (abortController.signal.aborted) return;
-
-                if (patientData) {
-                    setPatient(patientData);
-                }
-
-                // Load latest measurements
-                const latest = await measurementsService.getLatestMeasurements(id);
-
-                if (abortController.signal.aborted) return;
-
-                setLatestMeasurements(latest);
-
-                // Load onboarding data for height/weight
-                const { data: onboarding } = await onboardingService.getOnboardingData(id);
-
-                if (abortController.signal.aborted) return;
-
-                setOnboardingData(onboarding);
-
-            } catch (error) {
-                if (abortController.signal.aborted) return;
-                console.error('Error loading patient data:', error);
-            } finally {
-                if (!abortController.signal.aborted) {
-                    setIsLoading(false);
-                }
-            }
-        };
-
-        loadPatientData();
-
-        return () => {
-            abortController.abort();
-        };
-    }, [id]);
 
     if (isLoading) {
         return (

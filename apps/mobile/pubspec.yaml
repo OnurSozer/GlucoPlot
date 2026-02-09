@@ -18,8 +18,10 @@ dependencies:
 
   # State Management
   flutter_bloc: ^9.1.1
+  hydrated_bloc: ^10.1.1
   equatable: ^2.0.5
   provider: ^6.1.1
+  path_provider: ^2.1.2
 
   # Dependency Injection
   get_it: ^8.0.0

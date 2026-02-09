@@ -161,4 +161,56 @@ class RiskAlert extends Equatable {
       createdAt: createdAt ?? this.createdAt,
     );
   }
+
+  /// Convert to JSON for HydratedBloc caching
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'patient_id': patientId,
+      'measurement_id': measurementId,
+      'measurement_type': measurementType.value,
+      'severity': severity.value,
+      'message': message,
+      'value': value,
+      'threshold_min': thresholdMin,
+      'threshold_max': thresholdMax,
+      'status': status.value,
+      'acknowledged_at': acknowledgedAt?.toIso8601String(),
+      'acknowledged_by': acknowledgedBy,
+      'resolved_at': resolvedAt?.toIso8601String(),
+      'resolved_by': resolvedBy,
+      'created_at': createdAt?.toIso8601String(),
+    };
+  }
+
+  /// Create from JSON for HydratedBloc caching
+  factory RiskAlert.fromJson(Map<String, dynamic> json) {
+    return RiskAlert(
+      id: json['id'] as String,
+      patientId: json['patient_id'] as String,
+      measurementId: json['measurement_id'] as String?,
+      measurementType: MeasurementType.fromString(json['measurement_type'] as String),
+      severity: AlertSeverity.fromString(json['severity'] as String),
+      message: json['message'] as String,
+      value: json['value'] != null ? (json['value'] as num).toDouble() : null,
+      thresholdMin: json['threshold_min'] != null
+          ? (json['threshold_min'] as num).toDouble()
+          : null,
+      thresholdMax: json['threshold_max'] != null
+          ? (json['threshold_max'] as num).toDouble()
+          : null,
+      status: AlertStatus.fromString(json['status'] as String),
+      acknowledgedAt: json['acknowledged_at'] != null
+          ? DateTime.parse(json['acknowledged_at'] as String)
+          : null,
+      acknowledgedBy: json['acknowledged_by'] as String?,
+      resolvedAt: json['resolved_at'] != null
+          ? DateTime.parse(json['resolved_at'] as String)
+          : null,
+      resolvedBy: json['resolved_by'] as String?,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : null,
+    );
+  }
 }

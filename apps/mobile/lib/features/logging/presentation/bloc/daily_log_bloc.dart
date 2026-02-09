@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
 
 import '../../domain/entities/daily_log.dart';
 import '../../domain/repositories/daily_log_repository.dart';
@@ -8,7 +8,8 @@ part 'daily_log_event.dart';
 part 'daily_log_state.dart';
 
 /// Daily Log BLoC for managing daily log state
-class DailyLogBloc extends Bloc<DailyLogEvent, DailyLogState> {
+/// Uses HydratedBloc for SWR-like caching - shows cached data instantly
+class DailyLogBloc extends HydratedBloc<DailyLogEvent, DailyLogState> {
   DailyLogBloc({required DailyLogRepository repository})
       : _repository = repository,
         super(const DailyLogInitial()) {
@@ -52,7 +53,31 @@ class DailyLogBloc extends Bloc<DailyLogEvent, DailyLogState> {
     DailyLogLoadRequested event,
     Emitter<DailyLogState> emit,
   ) async {
-    emit(const DailyLogLoading());
+    final currentState = state;
+    final existingCache = currentState is DailyLogLoaded
+        ? currentState.logsCache
+        : <String, List<DailyLog>>{};
+
+    // Generate cache key
+    final dateKey = event.date != null
+        ? '${event.date!.year}-${event.date!.month.toString().padLeft(2, '0')}-${event.date!.day.toString().padLeft(2, '0')}'
+        : null;
+
+    // SWR: Check for cached data
+    final cachedLogs = dateKey != null ? existingCache[dateKey] : null;
+
+    if (cachedLogs != null) {
+      // Show cached data immediately, refresh in background
+      emit(DailyLogLoaded(
+        logs: cachedLogs,
+        selectedDate: event.date,
+        filterLogType: event.logType,
+        isRefreshing: true,
+        logsCache: existingCache,
+      ));
+    } else {
+      emit(const DailyLogLoading());
+    }
 
     final result = await _repository.getLogs(
       date: event.date,
@@ -62,13 +87,33 @@ class DailyLogBloc extends Bloc<DailyLogEvent, DailyLogState> {
 
     switch (result) {
       case DailyLogSuccess(:final data):
+        final newCache = Map<String, List<DailyLog>>.from(existingCache);
+        if (dateKey != null) {
+          newCache[dateKey] = data;
+          if (newCache.length > 7) {
+            final sortedKeys = newCache.keys.toList()..sort();
+            newCache.remove(sortedKeys.first);
+          }
+        }
         emit(DailyLogLoaded(
           logs: data,
           selectedDate: event.date,
           filterLogType: event.logType,
+          logsCache: newCache,
         ));
       case DailyLogFailure(:final message):
-        emit(DailyLogError(message));
+        if (cachedLogs != null) {
+          emit(DailyLogLoaded(
+            logs: cachedLogs,
+            selectedDate: event.date,
+            filterLogType: event.logType,
+            isRefreshing: false,
+            error: message,
+            logsCache: existingCache,
+          ));
+        } else {
+          emit(DailyLogError(message));
+        }
     }
   }
 
@@ -103,8 +148,29 @@ class DailyLogBloc extends Bloc<DailyLogEvent, DailyLogState> {
     final logType = currentState is DailyLogLoaded
         ? currentState.filterLogType
         : null;
+    final existingCache = currentState is DailyLogLoaded
+        ? currentState.logsCache
+        : <String, List<DailyLog>>{};
 
-    emit(const DailyLogLoading());
+    // Generate cache key for the new date
+    final dateKey = '${event.date.year}-${event.date.month.toString().padLeft(2, '0')}-${event.date.day.toString().padLeft(2, '0')}';
+
+    // SWR: Check if we have cached data for this date
+    final cachedLogs = existingCache[dateKey];
+
+    if (cachedLogs != null) {
+      // Show cached data immediately, then refresh in background
+      emit(DailyLogLoaded(
+        logs: cachedLogs,
+        selectedDate: event.date,
+        filterLogType: logType,
+        isRefreshing: true, // Show refresh indicator
+        logsCache: existingCache,
+      ));
+    } else {
+      // No cache, show loading
+      emit(const DailyLogLoading());
+    }
 
     final result = await _repository.getLogs(
       date: event.date,
@@ -114,13 +180,34 @@ class DailyLogBloc extends Bloc<DailyLogEvent, DailyLogState> {
 
     switch (result) {
       case DailyLogSuccess(:final data):
+        // Update cache with fresh data
+        final newCache = Map<String, List<DailyLog>>.from(existingCache);
+        newCache[dateKey] = data;
+        // Keep only last 7 days in cache
+        if (newCache.length > 7) {
+          final sortedKeys = newCache.keys.toList()..sort();
+          newCache.remove(sortedKeys.first);
+        }
         emit(DailyLogLoaded(
           logs: data,
           selectedDate: event.date,
           filterLogType: logType,
+          logsCache: newCache,
         ));
       case DailyLogFailure(:final message):
-        emit(DailyLogError(message));
+        if (cachedLogs != null) {
+          // Keep showing cached data but with error
+          emit(DailyLogLoaded(
+            logs: cachedLogs,
+            selectedDate: event.date,
+            filterLogType: logType,
+            isRefreshing: false,
+            error: message,
+            logsCache: existingCache,
+          ));
+        } else {
+          emit(DailyLogError(message));
+        }
     }
   }
 
@@ -258,5 +345,66 @@ class DailyLogBloc extends Bloc<DailyLogEvent, DailyLogState> {
       case DailyLogFailure(:final message):
         emit(currentState.copyWith(error: message));
     }
+  }
+
+  /// Restore state from cache for SWR pattern
+  @override
+  DailyLogState? fromJson(Map<String, dynamic> json) {
+    try {
+      final logsJson = json['logs'] as List<dynamic>?;
+      if (logsJson == null) return null;
+
+      final logs = logsJson
+          .map((e) => DailyLog.fromJson(e as Map<String, dynamic>))
+          .toList();
+
+      final selectedDateStr = json['selectedDate'] as String?;
+      final filterLogTypeStr = json['filterLogType'] as String?;
+
+      // Restore per-date cache
+      final logsCacheJson = json['logsCache'] as Map<String, dynamic>?;
+      final logsCache = <String, List<DailyLog>>{};
+      if (logsCacheJson != null) {
+        for (final entry in logsCacheJson.entries) {
+          final dateKey = entry.key;
+          final logsList = (entry.value as List<dynamic>)
+              .map((e) => DailyLog.fromJson(e as Map<String, dynamic>))
+              .toList();
+          logsCache[dateKey] = logsList;
+        }
+      }
+
+      return DailyLogLoaded(
+        logs: logs,
+        selectedDate:
+            selectedDateStr != null ? DateTime.parse(selectedDateStr) : null,
+        filterLogType:
+            filterLogTypeStr != null ? LogType.fromString(filterLogTypeStr) : null,
+        logsCache: logsCache,
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Save state to cache for SWR pattern
+  @override
+  Map<String, dynamic>? toJson(DailyLogState state) {
+    if (state is DailyLogLoaded) {
+      // Serialize per-date cache
+      final logsCacheJson = <String, dynamic>{};
+      for (final entry in state.logsCache.entries) {
+        logsCacheJson[entry.key] = entry.value.map((e) => e.toJson()).toList();
+      }
+
+      return {
+        'logs': state.logs.map((e) => e.toJson()).toList(),
+        'selectedDate': state.selectedDate?.toIso8601String(),
+        'filterLogType': state.filterLogType?.value,
+        'logsCache': logsCacheJson,
+        'cachedAt': DateTime.now().toIso8601String(),
+      };
+    }
+    return null;
   }
 }

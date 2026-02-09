@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
 
 import '../../../measurements/domain/entities/measurement.dart';
 import '../../../logging/domain/entities/daily_log.dart';
@@ -10,7 +10,8 @@ part 'dashboard_event.dart';
 part 'dashboard_state.dart';
 
 /// Dashboard BLoC for managing dashboard state
-class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
+/// Uses HydratedBloc for SWR-like caching - shows cached data instantly
+class DashboardBloc extends HydratedBloc<DashboardEvent, DashboardState> {
   DashboardBloc({required DashboardRepository repository})
       : _repository = repository,
         super(const DashboardInitial()) {
@@ -125,5 +126,82 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       case DashboardFailure(:final message):
         emit(currentState.copyWith(error: message));
     }
+  }
+
+  /// Restore state from cache for SWR pattern
+  @override
+  DashboardState? fromJson(Map<String, dynamic> json) {
+    try {
+      // Deserialize latestMeasurements map
+      final latestMeasurementsJson =
+          json['latestMeasurements'] as Map<String, dynamic>?;
+      final latestMeasurements = <MeasurementType, Measurement>{};
+      if (latestMeasurementsJson != null) {
+        for (final entry in latestMeasurementsJson.entries) {
+          final type = MeasurementType.fromString(entry.key);
+          final measurement =
+              Measurement.fromJson(entry.value as Map<String, dynamic>);
+          latestMeasurements[type] = measurement;
+        }
+      }
+
+      // Deserialize activeAlerts list
+      final alertsJson = json['activeAlerts'] as List<dynamic>?;
+      final activeAlerts = alertsJson
+              ?.map((e) => RiskAlert.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [];
+
+      // Deserialize todayLogs list
+      final logsJson = json['todayLogs'] as List<dynamic>?;
+      final todayLogs = logsJson
+              ?.map((e) => DailyLog.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [];
+
+      // Deserialize lastGlucose
+      final lastGlucoseJson = json['lastGlucose'] as Map<String, dynamic>?;
+      final lastGlucose = lastGlucoseJson != null
+          ? Measurement.fromJson(lastGlucoseJson)
+          : null;
+
+      // Deserialize glucoseTrend
+      final glucoseTrendStr = json['glucoseTrend'] as String?;
+      final glucoseTrend = MeasurementTrend.fromString(glucoseTrendStr);
+
+      return DashboardLoaded(
+        latestMeasurements: latestMeasurements,
+        activeAlerts: activeAlerts,
+        todayLogs: todayLogs,
+        lastGlucose: lastGlucose,
+        glucoseTrend: glucoseTrend,
+        medicationTakenToday: json['medicationTakenToday'] as bool?,
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Save state to cache for SWR pattern
+  @override
+  Map<String, dynamic>? toJson(DashboardState state) {
+    if (state is DashboardLoaded) {
+      // Serialize latestMeasurements map
+      final latestMeasurementsJson = <String, dynamic>{};
+      for (final entry in state.latestMeasurements.entries) {
+        latestMeasurementsJson[entry.key.value] = entry.value.toJson();
+      }
+
+      return {
+        'latestMeasurements': latestMeasurementsJson,
+        'activeAlerts': state.activeAlerts.map((e) => e.toJson()).toList(),
+        'todayLogs': state.todayLogs.map((e) => e.toJson()).toList(),
+        'lastGlucose': state.lastGlucose?.toJson(),
+        'glucoseTrend': state.glucoseTrend?.name,
+        'medicationTakenToday': state.medicationTakenToday,
+        'cachedAt': DateTime.now().toIso8601String(),
+      };
+    }
+    return null;
   }
 }

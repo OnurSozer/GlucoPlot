@@ -120,15 +120,15 @@ class CurvedGradientHeader extends StatelessWidget {
                     ),
                   ),
                   if (subtitle != null) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       subtitle!,
-                      style: AppTypography.bodyMedium.copyWith(
+                      style: AppTypography.bodySmall.copyWith(
                         color: AppColors.textOnPrimary.withValues(alpha: 0.9),
                       ),
                     ),
                   ],
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 34),
                 ],
               ),
             ),

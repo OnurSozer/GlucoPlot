@@ -1,8 +1,9 @@
 /**
  * DailyLogsTab - Tab content for viewing patient daily logs and measurements
+ * Uses SWR pattern via TanStack Query for instant cached data display
  */
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
     UtensilsCrossed,
@@ -20,14 +21,14 @@ import {
     Bath,
     Brain,
     Activity,
-    Heart
+    Heart,
+    RefreshCw
 } from 'lucide-react';
 import { format, subDays, addDays, isToday, parseISO } from 'date-fns';
 import { tr, enUS } from 'date-fns/locale';
 import { Card, CardContent } from '../../../components/common/Card';
 import { DailyLogCard } from './DailyLogCard';
-import { dailyLogsService } from '../../../services/daily-logs.service';
-import { measurementsService } from '../../../services/measurements.service';
+import { useDailyLogs, useMeasurements } from '../../../hooks/queries';
 import type { DailyLog, Measurement, MealTiming } from '../../../types/database.types';
 
 interface DailyLogsTabProps {
@@ -249,74 +250,54 @@ export function DailyLogsTab({ patientId }: DailyLogsTabProps) {
         };
         return translationMap[id];
     };
-    const [allLogs, setAllLogs] = useState<DailyLog[]>([]);
-    const [allMeasurements, setAllMeasurements] = useState<Measurement[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
     const [selectedFilter, setSelectedFilter] = useState<FilterType | null>(null);
-    const [error, setError] = useState<string | null>(null);
     const dateInputRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-        const abortController = new AbortController();
+    // Date strings for queries - memoized to ensure stable references
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
+    const startOfDay = `${dateStr}T00:00:00`;
+    const endOfDay = `${dateStr}T23:59:59`;
 
-        const loadData = async () => {
-            try {
-                setIsLoading(true);
-                setError(null);
+    // Memoize filter objects to ensure stable query keys for caching
+    const logsFilters = useMemo(() => ({
+        patientId,
+        startDate: dateStr,
+        endDate: dateStr,
+        limit: 100,
+    }), [patientId, dateStr]);
 
-                const dateStr = format(selectedDate, 'yyyy-MM-dd');
-                const startOfDay = `${dateStr}T00:00:00`;
-                const endOfDay = `${dateStr}T23:59:59`;
+    const measurementsFilters = useMemo(() => ({
+        patientId,
+        startDate: startOfDay,
+        endDate: endOfDay,
+        limit: 100,
+    }), [patientId, startOfDay, endOfDay]);
 
-                // Load logs and measurements in parallel
-                const [logsResult, measurementsResult] = await Promise.all([
-                    dailyLogsService.getDailyLogs({
-                        patientId,
-                        startDate: dateStr,
-                        endDate: dateStr,
-                        limit: 100,
-                    }),
-                    measurementsService.getMeasurements({
-                        patientId,
-                        startDate: startOfDay,
-                        endDate: endOfDay,
-                        limit: 100,
-                    }),
-                ]);
+    // SWR pattern: cached data shows instantly, refreshes in background
+    const {
+        data: allLogs = [],
+        isLoading: logsLoading,
+        isFetching: logsFetching,
+        error: logsError,
+    } = useDailyLogs(logsFilters);
 
-                if (abortController.signal.aborted) return;
+    const {
+        data: rawMeasurements = [],
+        isLoading: measurementsLoading,
+        isFetching: measurementsFetching,
+        error: measurementsError,
+    } = useMeasurements(measurementsFilters);
 
-                if (logsResult.error) {
-                    setError(logsResult.error.message);
-                } else {
-                    setAllLogs(logsResult.data || []);
-                }
+    // Filter measurements to only glucose and blood_pressure
+    const allMeasurements = useMemo(
+        () => rawMeasurements.filter(m => m.type === 'glucose' || m.type === 'blood_pressure'),
+        [rawMeasurements]
+    );
 
-                if (!measurementsResult.error) {
-                    // Filter to only glucose and blood_pressure
-                    const filtered = (measurementsResult.data || []).filter(
-                        m => m.type === 'glucose' || m.type === 'blood_pressure'
-                    );
-                    setAllMeasurements(filtered);
-                }
-            } catch (err) {
-                if (abortController.signal.aborted) return;
-                setError('Failed to load data');
-                console.error('Error loading daily logs:', err);
-            } finally {
-                if (!abortController.signal.aborted) {
-                    setIsLoading(false);
-                }
-            }
-        };
-
-        loadData();
-
-        return () => {
-            abortController.abort();
-        };
-    }, [patientId, selectedDate]);
+    const isLoading = logsLoading || measurementsLoading;
+    const isFetching = logsFetching || measurementsFetching;
+    const error = logsError?.message || measurementsError?.message || null;
 
     // Create unified items from logs and measurements
     const allItems = useMemo((): UnifiedItem[] => {
@@ -434,6 +415,11 @@ export function DailyLogsTab({ patientId }: DailyLogsTabProps) {
                         >
                             <ChevronLeft size={20} className="text-gray-500" />
                         </button>
+
+                        {/* Background refresh indicator */}
+                        {isFetching && !isLoading && (
+                            <RefreshCw size={14} className="absolute right-4 top-4 text-gray-400 animate-spin" />
+                        )}
 
                         <button
                             onClick={handleDatePickerClick}

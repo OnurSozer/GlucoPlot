@@ -179,4 +179,40 @@ class Measurement extends Equatable {
       createdAt: createdAt ?? this.createdAt,
     );
   }
+
+  /// Convert to JSON for HydratedBloc caching
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'patient_id': patientId,
+      'type': type.value,
+      'value_primary': value,
+      'value_secondary': secondaryValue,
+      'unit': unit,
+      'measured_at': measuredAt.toIso8601String(),
+      'meal_timing': mealTiming?.value,
+      'notes': notes,
+      'created_at': createdAt?.toIso8601String(),
+    };
+  }
+
+  /// Create from JSON for HydratedBloc caching
+  factory Measurement.fromJson(Map<String, dynamic> json) {
+    return Measurement(
+      id: json['id'] as String,
+      patientId: json['patient_id'] as String,
+      type: MeasurementType.fromString(json['type'] as String),
+      value: (json['value_primary'] as num).toDouble(),
+      secondaryValue: json['value_secondary'] != null
+          ? (json['value_secondary'] as num).toDouble()
+          : null,
+      unit: json['unit'] as String?,
+      measuredAt: DateTime.parse(json['measured_at'] as String),
+      mealTiming: MealTiming.fromString(json['meal_timing'] as String?),
+      notes: json['notes'] as String?,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : null,
+    );
+  }
 }

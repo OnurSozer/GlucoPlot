@@ -250,4 +250,38 @@ class DailyLog extends Equatable {
       createdAt: createdAt ?? this.createdAt,
     );
   }
+
+  /// Convert to JSON for HydratedBloc caching
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'patient_id': patientId,
+      'log_date': logDate.toIso8601String(),
+      'log_type': logType.value,
+      'title': title,
+      'description': description,
+      'metadata': metadata,
+      'logged_at': loggedAt?.toIso8601String(),
+      'created_at': createdAt?.toIso8601String(),
+    };
+  }
+
+  /// Create from JSON for HydratedBloc caching
+  factory DailyLog.fromJson(Map<String, dynamic> json) {
+    return DailyLog(
+      id: json['id'] as String,
+      patientId: json['patient_id'] as String,
+      logDate: DateTime.parse(json['log_date'] as String),
+      logType: LogType.fromString(json['log_type'] as String),
+      title: json['title'] as String,
+      description: json['description'] as String?,
+      metadata: json['metadata'] as Map<String, dynamic>?,
+      loggedAt: json['logged_at'] != null
+          ? DateTime.parse(json['logged_at'] as String)
+          : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : null,
+    );
+  }
 }

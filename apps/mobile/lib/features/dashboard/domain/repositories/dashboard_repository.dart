@@ -40,7 +40,15 @@ class DashboardSummary {
 enum MeasurementTrend {
   increasing,
   decreasing,
-  stable,
+  stable;
+
+  static MeasurementTrend? fromString(String? value) {
+    if (value == null) return null;
+    return MeasurementTrend.values.firstWhere(
+      (e) => e.name == value,
+      orElse: () => MeasurementTrend.stable,
+    );
+  }
 }
 
 /// Dashboard repository interface

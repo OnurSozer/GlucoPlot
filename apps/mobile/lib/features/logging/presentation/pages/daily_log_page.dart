@@ -26,6 +26,9 @@ class _DailyLogPageState extends State<DailyLogPage> {
   List<Measurement> _measurements = [];
   bool _isLoadingMeasurements = false;
 
+  // Per-date measurements cache for SWR pattern
+  final Map<String, List<Measurement>> _measurementsCache = {};
+
   @override
   void initState() {
     super.initState();
@@ -35,8 +38,24 @@ class _DailyLogPageState extends State<DailyLogPage> {
     _loadMeasurements(_selectedDate);
   }
 
+  /// Generate cache key for date
+  String _dateKey(DateTime date) =>
+      '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+
   Future<void> _loadMeasurements(DateTime date) async {
-    setState(() => _isLoadingMeasurements = true);
+    final dateKey = _dateKey(date);
+
+    // SWR: Check cache first
+    final cachedMeasurements = _measurementsCache[dateKey];
+    if (cachedMeasurements != null) {
+      // Show cached data immediately
+      setState(() {
+        _measurements = cachedMeasurements;
+        _isLoadingMeasurements = true; // Still fetching fresh data
+      });
+    } else {
+      setState(() => _isLoadingMeasurements = true);
+    }
 
     final repository = sl<MeasurementRepository>();
     final startOfDay = DateTime(date.year, date.month, date.day);
@@ -52,10 +71,19 @@ class _DailyLogPageState extends State<DailyLogPage> {
         _isLoadingMeasurements = false;
         if (result is MeasurementSuccess<List<Measurement>>) {
           // Filter to only glucose and blood_pressure
-          _measurements = result.data
+          final filtered = result.data
               .where((m) => m.type == MeasurementType.glucose || m.type == MeasurementType.bloodPressure)
               .toList();
-        } else {
+          _measurements = filtered;
+          // Update cache
+          _measurementsCache[dateKey] = filtered;
+          // Keep only last 7 days in cache
+          if (_measurementsCache.length > 7) {
+            final sortedKeys = _measurementsCache.keys.toList()..sort();
+            _measurementsCache.remove(sortedKeys.first);
+          }
+        } else if (cachedMeasurements == null) {
+          // Only clear if no cache
           _measurements = [];
         }
       });
@@ -288,7 +316,10 @@ class _DailyLogPageState extends State<DailyLogPage> {
                 ),
 
                 // Content based on state
-                if (state is DailyLogLoading && _isLoadingMeasurements)
+                // Show loading if first load (no cache) - wait for BOTH logs AND measurements
+                // isFirstLoad = logs loading without cache OR measurements loading without cache
+                if ((state is DailyLogLoading) ||
+                    (_isLoadingMeasurements && _measurements.isEmpty))
                   const SliverFillRemaining(
                     child: Center(child: AppLoadingIndicator()),
                   )

@@ -1,32 +1,31 @@
 /**
  * Patients Page - List all patients
+ * Uses SWR pattern via TanStack Query for instant cached data display
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Search, Plus, ChevronRight, QrCode } from 'lucide-react';
+import { Search, Plus, ChevronRight, QrCode, RefreshCw } from 'lucide-react';
 import { Card, CardContent } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { StatusBadge } from '../../components/common/Badge';
 import { PatientOnboardingModal } from './components/onboarding';
 import { ViewQRModal } from './ViewQRModal';
-import { patientsService } from '../../services/patients.service';
 import { onboardingService } from '../../services/onboarding.service';
-import { useAuthStore } from '../../stores/auth-store';
+import { usePatientsFiltered, useInvalidatePatients } from '../../hooks/queries';
 import { calculateAge } from '../../utils/format';
 import type { Patient, PatientStatus } from '../../types/database.types';
 import type { PatientOnboardingData } from '../../types/onboarding.types';
 
 export function PatientsPage() {
     const { t } = useTranslation(['patients', 'common']);
-    const [patients, setPatients] = useState<Patient[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<PatientStatus | 'all'>('all');
     const [showOnboardingModal, setShowOnboardingModal] = useState(false);
     const [viewQrPatient, setViewQrPatient] = useState<{ id: string; full_name: string } | null>(null);
+    const { invalidateAll: invalidatePatients } = useInvalidatePatients();
 
     const statusFilters: { value: PatientStatus | 'all'; labelKey: string }[] = [
         { value: 'all', labelKey: 'common:common.all' },
@@ -35,41 +34,17 @@ export function PatientsPage() {
         { value: 'inactive', labelKey: 'status.inactive' },
     ];
 
-    const { user, isInitialized } = useAuthStore();
-    const userId = user?.id; // Use primitive for stable dependency
+    // SWR pattern: cached data shows instantly, refreshes in background
+    const {
+        data: patientsData,
+        isLoading,
+        isFetching,
+    } = usePatientsFiltered({
+        status: statusFilter === 'all' ? undefined : statusFilter,
+        search: searchQuery || undefined,
+    });
 
-    const loadPatients = useCallback(async (signal?: AbortSignal) => {
-        try {
-            setIsLoading(true);
-            const { data, error } = await patientsService.getPatientsFiltered({
-                status: statusFilter,
-                search: searchQuery,
-            });
-
-            if (signal?.aborted) return;
-
-            if (error) {
-                console.error('Error loading patients:', error);
-            } else {
-                setPatients(data || []);
-            }
-        } finally {
-            if (!signal?.aborted) {
-                setIsLoading(false);
-            }
-        }
-    }, [statusFilter, searchQuery]);
-
-    useEffect(() => {
-        if (!isInitialized || !userId) return;
-
-        const abortController = new AbortController();
-        loadPatients(abortController.signal);
-
-        return () => {
-            abortController.abort();
-        };
-    }, [isInitialized, userId, loadPatients]);
+    const patients = patientsData?.data ?? [];
 
     const handlePatientCreated = async (data: PatientOnboardingData) => {
         const result = await onboardingService.createPatientWithOnboarding(data);
@@ -80,16 +55,22 @@ export function PatientsPage() {
                 full_name: data.basicInfo.full_name,
             });
         }
-        loadPatients();
+        invalidatePatients(); // Refresh the patients list cache
     };
 
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
             <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
-                    <p className="text-gray-500 mt-1">{t('subtitle')}</p>
+                <div className="flex items-center gap-3">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
+                        <p className="text-gray-500 mt-1">{t('subtitle')}</p>
+                    </div>
+                    {/* Background refresh indicator */}
+                    {isFetching && !isLoading && (
+                        <RefreshCw size={16} className="text-gray-400 animate-spin" />
+                    )}
                 </div>
                 <Button
                     leftIcon={<Plus size={18} />}

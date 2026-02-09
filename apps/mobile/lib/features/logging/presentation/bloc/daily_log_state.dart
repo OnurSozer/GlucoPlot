@@ -18,7 +18,7 @@ class DailyLogLoading extends DailyLogState {
   const DailyLogLoading();
 }
 
-/// Loaded state with data
+/// Loaded state with data and per-date cache for SWR pattern
 class DailyLogLoaded extends DailyLogState {
   const DailyLogLoaded({
     required this.logs,
@@ -28,6 +28,7 @@ class DailyLogLoaded extends DailyLogState {
     this.isSubmitting = false,
     this.submitSuccess = false,
     this.error,
+    this.logsCache = const {}, // Per-date cache: dateString -> logs
   });
 
   final List<DailyLog> logs;
@@ -37,6 +38,12 @@ class DailyLogLoaded extends DailyLogState {
   final bool isSubmitting;
   final bool submitSuccess;
   final String? error;
+  final Map<String, List<DailyLog>> logsCache; // Cache logs by date string
+
+  /// Get cache key for current date
+  String? get currentCacheKey => selectedDate != null
+      ? '${selectedDate!.year}-${selectedDate!.month.toString().padLeft(2, '0')}-${selectedDate!.day.toString().padLeft(2, '0')}'
+      : null;
 
   @override
   List<Object?> get props => [
@@ -47,6 +54,7 @@ class DailyLogLoaded extends DailyLogState {
         isSubmitting,
         submitSuccess,
         error,
+        logsCache,
       ];
 
   DailyLogLoaded copyWith({
@@ -58,6 +66,7 @@ class DailyLogLoaded extends DailyLogState {
     bool? isSubmitting,
     bool? submitSuccess,
     String? error,
+    Map<String, List<DailyLog>>? logsCache,
   }) {
     return DailyLogLoaded(
       logs: logs ?? this.logs,
@@ -67,7 +76,20 @@ class DailyLogLoaded extends DailyLogState {
       isSubmitting: isSubmitting ?? this.isSubmitting,
       submitSuccess: submitSuccess ?? false,
       error: error,
+      logsCache: logsCache ?? this.logsCache,
     );
+  }
+
+  /// Update cache for a specific date
+  DailyLogLoaded withCachedLogs(String dateKey, List<DailyLog> logs) {
+    final newCache = Map<String, List<DailyLog>>.from(logsCache);
+    newCache[dateKey] = logs;
+    // Keep only last 7 days in cache to prevent memory bloat
+    if (newCache.length > 7) {
+      final sortedKeys = newCache.keys.toList()..sort();
+      newCache.remove(sortedKeys.first);
+    }
+    return copyWith(logsCache: newCache);
   }
 }
 

@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
 
 import '../../domain/entities/measurement.dart';
 import '../../domain/repositories/measurement_repository.dart';
@@ -8,7 +8,8 @@ part 'measurement_event.dart';
 part 'measurement_state.dart';
 
 /// Measurement BLoC for managing measurement state
-class MeasurementBloc extends Bloc<MeasurementEvent, MeasurementState> {
+/// Uses HydratedBloc for SWR-like caching - shows cached data instantly
+class MeasurementBloc extends HydratedBloc<MeasurementEvent, MeasurementState> {
   MeasurementBloc({required MeasurementRepository repository})
       : _repository = repository,
         super(const MeasurementInitial()) {
@@ -200,5 +201,43 @@ class MeasurementBloc extends Bloc<MeasurementEvent, MeasurementState> {
       case MeasurementFailure(:final message):
         emit(currentState.copyWith(isLoadingMore: false, error: message));
     }
+  }
+
+  /// Restore state from cache for SWR pattern
+  @override
+  MeasurementState? fromJson(Map<String, dynamic> json) {
+    try {
+      final measurementsJson = json['measurements'] as List<dynamic>?;
+      if (measurementsJson == null) return null;
+
+      final measurements = measurementsJson
+          .map((e) => Measurement.fromJson(e as Map<String, dynamic>))
+          .toList();
+
+      final filterTypeStr = json['filterType'] as String?;
+
+      return MeasurementLoaded(
+        measurements: measurements,
+        filterType:
+            filterTypeStr != null ? MeasurementType.fromString(filterTypeStr) : null,
+        hasMore: json['hasMore'] as bool? ?? false,
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Save state to cache for SWR pattern
+  @override
+  Map<String, dynamic>? toJson(MeasurementState state) {
+    if (state is MeasurementLoaded) {
+      return {
+        'measurements': state.measurements.map((e) => e.toJson()).toList(),
+        'filterType': state.filterType?.value,
+        'hasMore': state.hasMore,
+        'cachedAt': DateTime.now().toIso8601String(),
+      };
+    }
+    return null;
   }
 }
