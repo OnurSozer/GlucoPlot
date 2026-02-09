@@ -69,7 +69,10 @@
     "required": "Zorunlu",
     "optional": "İsteğe bağlı",
     "years": "yaş",
-    "ageUnknown": "Yaş bilinmiyor"
+    "ageUnknown": "Yaş bilinmiyor",
+    "refreshing": "Yenileniyor...",
+    "noPhone": "Telefon yok",
+    "deleting": "Siliniyor..."
   },
   "severity": {
     "low": "Düşük",
@@ -91,5 +94,64 @@
     "label": "Dil",
     "english": "English",
     "turkish": "Türkçe"
+  },
+  "admin": {
+    "portal": "Yönetici Portalı",
+    "administrator": "Yönetici",
+    "nav": {
+      "dashboard": "Kontrol Paneli",
+      "doctors": "Doktorlar"
+    },
+    "dashboard": {
+      "welcome": "Hoş geldiniz, {{name}}",
+      "overview": "Yönetici Kontrol Paneli",
+      "totalDoctors": "Toplam Doktor",
+      "totalPatients": "Toplam Hasta",
+      "quickActions": "Hızlı İşlemler"
+    },
+    "doctors": {
+      "title": "Doktorlar",
+      "subtitle": "Doktor hesaplarını yönetin",
+      "addDoctor": "Doktor Ekle",
+      "searchPlaceholder": "Doktor ara...",
+      "noDoctors": "Doktor bulunamadı",
+      "noDoctorsDesc": "İlk doktorunuzu ekleyerek başlayın",
+      "patients": "{{count}} hasta"
+    },
+    "doctorDetail": {
+      "profile": "Doktor Profili",
+      "patients": "Hastalar",
+      "noPatients": "Henüz hasta yok",
+      "edit": "Düzenle",
+      "delete": "Sil",
+      "confirmDelete": "Bu doktoru silmek istediğinizden emin misiniz? Bu işlem tüm hastalarını da silecektir.",
+      "notFound": "Doktor bulunamadı",
+      "joinedOn": "Katılım tarihi: {{date}}"
+    },
+    "createDoctor": {
+      "title": "Yeni Doktor Ekle",
+      "email": "E-posta",
+      "emailPlaceholder": "doktor@ornek.com",
+      "password": "Şifre",
+      "passwordPlaceholder": "En az 6 karakter",
+      "fullName": "Ad Soyad",
+      "fullNamePlaceholder": "Dr. Ahmet Yılmaz",
+      "phone": "Telefon",
+      "phonePlaceholder": "+90 555 123 4567",
+      "specialty": "Uzmanlık Alanı",
+      "specialtyPlaceholder": "örn. Endokrinoloji",
+      "create": "Doktor Oluştur",
+      "success": "Doktor başarıyla oluşturuldu",
+      "error": "Doktor oluşturulamadı",
+      "emailRequired": "E-posta zorunludur",
+      "passwordMinLength": "Şifre en az 6 karakter olmalıdır",
+      "nameRequired": "Ad soyad zorunludur"
+    },
+    "editDoctor": {
+      "title": "Doktoru Düzenle",
+      "save": "Değişiklikleri Kaydet",
+      "error": "Doktor güncellenemedi",
+      "emailReadOnly": "E-posta değiştirilemez"
+    }
   }
 }

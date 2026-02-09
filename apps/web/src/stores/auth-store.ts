@@ -1,24 +1,30 @@
 /**
  * Auth store using Zustand
- * Manages doctor authentication state
+ * Manages doctor and admin authentication state
  */
 
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import type { User, Subscription } from '@supabase/supabase-js';
-import type { Doctor } from '../types/database.types';
+import type { Admin, Doctor } from '../types/database.types';
+
+export type UserRole = 'admin' | 'doctor' | null;
 
 interface AuthState {
     user: User | null;
     doctor: Doctor | null;
+    admin: Admin | null;
     isLoading: boolean;
     isInitialized: boolean;
     error: string | null;
     _subscription: Subscription | null;
 
+    // Computed
+    userRole: () => UserRole;
+
     // Actions
     initialize: () => Promise<void>;
-    signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+    signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string; role?: UserRole }>;
     signOut: () => Promise<void>;
     clearError: () => void;
     cleanup: () => void;
@@ -34,13 +40,32 @@ async function fetchDoctorProfile(userId: string): Promise<Doctor | null> {
     return data || null;
 }
 
+// Helper to fetch admin profile
+async function fetchAdminProfile(userId: string): Promise<Admin | null> {
+    const { data } = await supabase
+        .from('admins')
+        .select('*')
+        .eq('id', userId)
+        .single();
+    return data || null;
+}
+
 export const useAuthStore = create<AuthState>((set, get) => ({
     user: null,
     doctor: null,
+    admin: null,
     isLoading: false,
     isInitialized: false,
     error: null,
     _subscription: null,
+
+    // Computed property for user role
+    userRole: () => {
+        const state = get();
+        if (state.admin) return 'admin';
+        if (state.doctor) return 'doctor';
+        return null;
+    },
 
     initialize: async () => {
         // Prevent double initialization
@@ -55,19 +80,34 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             const { data: { session } } = await supabase.auth.getSession();
 
             if (session?.user) {
-                // Fetch doctor profile
+                // Try to fetch doctor profile first
                 const doctor = await fetchDoctorProfile(session.user.id);
 
-                set({
-                    user: session.user,
-                    doctor,
-                    isLoading: false,
-                    isInitialized: true,
-                });
+                if (doctor) {
+                    set({
+                        user: session.user,
+                        doctor,
+                        admin: null,
+                        isLoading: false,
+                        isInitialized: true,
+                    });
+                } else {
+                    // If not a doctor, try admin
+                    const admin = await fetchAdminProfile(session.user.id);
+
+                    set({
+                        user: session.user,
+                        doctor: null,
+                        admin,
+                        isLoading: false,
+                        isInitialized: true,
+                    });
+                }
             } else {
                 set({
                     user: null,
                     doctor: null,
+                    admin: null,
                     isLoading: false,
                     isInitialized: true,
                 });
@@ -87,16 +127,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                         }
                         // Only fetch if user changed (e.g., OAuth, magic link, page reload)
                         const doctor = await fetchDoctorProfile(session.user.id);
-                        set({ user: session.user, doctor, isLoading: false });
+                        if (doctor) {
+                            set({ user: session.user, doctor, admin: null, isLoading: false });
+                        } else {
+                            const admin = await fetchAdminProfile(session.user.id);
+                            set({ user: session.user, doctor: null, admin, isLoading: false });
+                        }
                     } else if (event === 'TOKEN_REFRESHED' && session?.user) {
                         // Token refresh doesn't change user data, only the JWT
                         // Don't update state - avoids unnecessary re-renders
                         console.log('Token refreshed for user:', session.user.id);
                     } else if (event === 'SIGNED_OUT') {
-                        set({ user: null, doctor: null, isLoading: false });
+                        set({ user: null, doctor: null, admin: null, isLoading: false });
                     } else if (event === 'USER_UPDATED' && session?.user) {
                         const doctor = await fetchDoctorProfile(session.user.id);
-                        set({ user: session.user, doctor });
+                        if (doctor) {
+                            set({ user: session.user, doctor, admin: null });
+                        } else {
+                            const admin = await fetchAdminProfile(session.user.id);
+                            set({ user: session.user, doctor: null, admin });
+                        }
                     }
                 } catch (error) {
                     console.error('Auth state change error:', error);
@@ -131,30 +181,47 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             }
 
             if (data.user) {
-                // Fetch doctor profile
-                const { data: doctor, error: doctorError } = await supabase
+                // First, try to fetch doctor profile
+                const { data: doctor } = await supabase
                     .from('doctors')
                     .select('*')
                     .eq('id', data.user.id)
                     .single();
 
-                if (doctorError || !doctor) {
-                    // User is not a doctor
-                    await supabase.auth.signOut();
+                if (doctor) {
                     set({
+                        user: data.user,
+                        doctor,
+                        admin: null,
                         isLoading: false,
-                        error: 'This account is not registered as a doctor',
                     });
-                    return { success: false, error: 'Not a registered doctor' };
+                    return { success: true, role: 'doctor' as UserRole };
                 }
 
-                set({
-                    user: data.user,
-                    doctor,
-                    isLoading: false,
-                });
+                // If not a doctor, try admin
+                const { data: admin } = await supabase
+                    .from('admins')
+                    .select('*')
+                    .eq('id', data.user.id)
+                    .single();
 
-                return { success: true };
+                if (admin) {
+                    set({
+                        user: data.user,
+                        doctor: null,
+                        admin,
+                        isLoading: false,
+                    });
+                    return { success: true, role: 'admin' as UserRole };
+                }
+
+                // User is neither doctor nor admin
+                await supabase.auth.signOut();
+                set({
+                    isLoading: false,
+                    error: 'This account is not registered',
+                });
+                return { success: false, error: 'Account not found' };
             }
 
             set({ isLoading: false });
@@ -168,7 +235,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     signOut: async () => {
         // Clear local state immediately for instant UI feedback
-        set({ user: null, doctor: null, isLoading: false });
+        set({ user: null, doctor: null, admin: null, isLoading: false });
 
         // Sign out from Supabase in background (don't block UI)
         try {

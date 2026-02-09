@@ -1,24 +1,30 @@
 /**
- * Login Page - Doctor authentication
+ * Login Page - Doctor and Admin authentication
  */
 
 import { useState, FormEvent } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Activity, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '../../stores/auth-store';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 
 export function LoginPage() {
-    const { user, doctor, signIn, isLoading, error, clearError } = useAuthStore();
+    const navigate = useNavigate();
+    const { user, doctor, admin, signIn, isLoading, error, clearError } = useAuthStore();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [formError, setFormError] = useState('');
 
-    // Redirect if already logged in
+    // Redirect if already logged in as doctor
     if (user && doctor) {
         return <Navigate to="/" replace />;
+    }
+
+    // Redirect if already logged in as admin
+    if (user && admin) {
+        return <Navigate to="/admin" replace />;
     }
 
     const handleSubmit = async (e: FormEvent) => {
@@ -38,7 +44,14 @@ export function LoginPage() {
 
         const result = await signIn(email.trim(), password);
 
-        if (!result.success && result.error) {
+        if (result.success && result.role) {
+            // Navigate based on role
+            if (result.role === 'admin') {
+                navigate('/admin', { replace: true });
+            } else {
+                navigate('/', { replace: true });
+            }
+        } else if (result.error) {
             setFormError(result.error);
         }
     };

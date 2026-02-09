@@ -20,6 +20,15 @@ export type AlertStatus = 'new' | 'acknowledged' | 'resolved';
 // Table Types
 // ============================================================
 
+export interface Admin {
+    id: string;
+    full_name: string;
+    email: string;
+    phone: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface Doctor {
     id: string;
     full_name: string;
@@ -140,6 +149,11 @@ export interface RiskAlertWithMeasurement extends RiskAlert {
 export interface Database {
     public: {
         Tables: {
+            admins: {
+                Row: Admin;
+                Insert: Omit<Admin, 'created_at' | 'updated_at'>;
+                Update: Partial<Omit<Admin, 'id' | 'created_at'>>;
+            };
             doctors: {
                 Row: Doctor;
                 Insert: Omit<Doctor, 'created_at' | 'updated_at'>;

@@ -30,11 +30,17 @@ export function Card({ children, className = '', onClick, hover = false }: CardP
 interface CardHeaderProps {
     children: ReactNode;
     className?: string;
+    variant?: 'light' | 'dark' | 'orange';
 }
 
-export function CardHeader({ children, className = '' }: CardHeaderProps) {
+export function CardHeader({ children, className = '', variant = 'light' }: CardHeaderProps) {
+    const borderColors = {
+        light: 'border-gray-100',
+        dark: 'border-slate-700',
+        orange: 'border-amber-700/50',
+    };
     return (
-        <div className={`px-6 py-4 border-b border-gray-100 ${className}`}>
+        <div className={`px-6 py-4 border-b ${borderColors[variant]} ${className}`}>
             {children}
         </div>
     );

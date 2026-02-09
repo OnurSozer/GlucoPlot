@@ -69,7 +69,10 @@
     "required": "Required",
     "optional": "Optional",
     "years": "years",
-    "ageUnknown": "Age unknown"
+    "ageUnknown": "Age unknown",
+    "refreshing": "Refreshing...",
+    "noPhone": "No phone",
+    "deleting": "Deleting..."
   },
   "severity": {
     "low": "Low",
@@ -91,5 +94,64 @@
     "label": "Language",
     "english": "English",
     "turkish": "Türkçe"
+  },
+  "admin": {
+    "portal": "Admin Portal",
+    "administrator": "Administrator",
+    "nav": {
+      "dashboard": "Dashboard",
+      "doctors": "Doctors"
+    },
+    "dashboard": {
+      "welcome": "Welcome, {{name}}",
+      "overview": "Admin Dashboard Overview",
+      "totalDoctors": "Total Doctors",
+      "totalPatients": "Total Patients",
+      "quickActions": "Quick Actions"
+    },
+    "doctors": {
+      "title": "Doctors",
+      "subtitle": "Manage doctor accounts",
+      "addDoctor": "Add Doctor",
+      "searchPlaceholder": "Search doctors...",
+      "noDoctors": "No doctors found",
+      "noDoctorsDesc": "Get started by adding your first doctor",
+      "patients": "{{count}} patients"
+    },
+    "doctorDetail": {
+      "profile": "Doctor Profile",
+      "patients": "Patients",
+      "noPatients": "No patients yet",
+      "edit": "Edit",
+      "delete": "Delete",
+      "confirmDelete": "Are you sure you want to delete this doctor? This will also remove all their patients.",
+      "notFound": "Doctor not found",
+      "joinedOn": "Joined on {{date}}"
+    },
+    "createDoctor": {
+      "title": "Add New Doctor",
+      "email": "Email",
+      "emailPlaceholder": "doctor@example.com",
+      "password": "Password",
+      "passwordPlaceholder": "Minimum 6 characters",
+      "fullName": "Full Name",
+      "fullNamePlaceholder": "Dr. John Smith",
+      "phone": "Phone",
+      "phonePlaceholder": "+1 234 567 890",
+      "specialty": "Specialty",
+      "specialtyPlaceholder": "e.g. Endocrinology",
+      "create": "Create Doctor",
+      "success": "Doctor created successfully",
+      "error": "Failed to create doctor",
+      "emailRequired": "Email is required",
+      "passwordMinLength": "Password must be at least 6 characters",
+      "nameRequired": "Full name is required"
+    },
+    "editDoctor": {
+      "title": "Edit Doctor",
+      "save": "Save Changes",
+      "error": "Failed to update doctor",
+      "emailReadOnly": "Email cannot be changed"
+    }
   }
 }
