@@ -13,6 +13,10 @@ interface MedicalHistoryCardProps {
 export function MedicalHistoryCard({ history, diseases }: MedicalHistoryCardProps) {
     const { t } = useTranslation('onboarding');
 
+    // Convert snake_case to camelCase for translation keys
+    const toCamelCase = (str: string) =>
+        str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+
     return (
         <ProfileSection title={t('steps.medicalHistory')} icon={FileText}>
             <div className="space-y-6">
@@ -52,7 +56,7 @@ export function MedicalHistoryCard({ history, diseases }: MedicalHistoryCardProp
                         <div className="flex flex-wrap gap-2">
                             {diseases.diseases.map((disease) => (
                                 <Badge key={disease} variant="warning" className="bg-orange-50 text-orange-700 border-orange-200">
-                                    {t(`chronicDiseases.diseases.${disease}`)}
+                                    {t(`chronicDiseases.diseases.${toCamelCase(disease)}`)}
                                 </Badge>
                             ))}
                             {diseases.other_details && (
