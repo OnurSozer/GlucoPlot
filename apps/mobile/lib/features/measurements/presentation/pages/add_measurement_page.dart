@@ -162,14 +162,34 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
           onPressed: () => context.pop(),
         ),
         title: Text(l10n.addMeasurement),
-        actions: [
-          TextButton(
-            onPressed: _isSubmitting ? null : _submit,
-            child: _isSubmitting
-                ? const AppLoadingIndicator(size: 20)
-                : Text(l10n.save),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: SizedBox(
+            height: 56,
+            child: ElevatedButton(
+              onPressed: _isSubmitting ? null : _submit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 0,
+              ),
+              child: _isSubmitting
+                  ? const AppLoadingIndicator(size: 24, color: Colors.white)
+                  : Text(
+                      l10n.save,
+                      style: AppTypography.labelLarge.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+            ),
           ),
-        ],
+        ),
       ),
       body: SingleChildScrollView(
         padding: AppSpacing.pagePadding,

@@ -322,16 +322,9 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
   Future<void> _submit() async {
     final l10n = AppLocalizations.of(context)!;
 
+    // Auto-generate title based on log type if not set
     if (_titleController.text.isEmpty) {
-      HapticFeedback.heavyImpact();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.pleaseEnterTitle),
-          backgroundColor: AppColors.error,
-          duration: const Duration(seconds: 3),
-        ),
-      );
-      return;
+      _titleController.text = _selectedType.getLabel(l10n);
     }
 
     setState(() => _isSubmitting = true);
@@ -429,21 +422,34 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
               : l10n.addEntry,
           style: AppTypography.titleLarge.copyWith(color: textPrimary),
         ),
-        actions: [
-          TextButton(
-            onPressed: _isSubmitting ? null : _submit,
-            child: _isSubmitting
-                ? const AppLoadingIndicator(size: 20)
-                : Text(
-                    l10n.save,
-                    style: TextStyle(
-                      color: primaryColor,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: SizedBox(
+            height: 56,
+            child: ElevatedButton(
+              onPressed: _isSubmitting ? null : _submit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 0,
+              ),
+              child: _isSubmitting
+                  ? const AppLoadingIndicator(size: 24, color: Colors.white)
+                  : Text(
+                      l10n.save,
+                      style: AppTypography.labelLarge.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
+            ),
           ),
-        ],
+        ),
       ),
       body: SingleChildScrollView(
         padding: AppSpacing.pagePadding,
@@ -470,27 +476,6 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
               const SizedBox(height: 16),
             ],
 
-            // Title input with voice
-            _buildTextFieldWithVoice(
-              controller: _titleController,
-              label: l10n.title,
-              hint: _getHintForType(l10n, _selectedType),
-              isDark: isDark,
-            ),
-
-            const SizedBox(height: 16),
-
-            // Description input with voice
-            _buildTextFieldWithVoice(
-              controller: _descriptionController,
-              label: l10n.descriptionOptional,
-              hint: l10n.addMoreDetails,
-              maxLines: 3,
-              isDark: isDark,
-            ),
-
-            const SizedBox(height: 24),
-
             // Simplified time selector
             Text(
               l10n.when,
@@ -504,7 +489,18 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
             // Type-specific fields
             _buildTypeSpecificFields(l10n, isDark, textSecondary),
 
-            const SizedBox(height: 40),
+            const SizedBox(height: 24),
+
+            // Description input with voice (moved to bottom)
+            _buildTextFieldWithVoice(
+              controller: _descriptionController,
+              label: l10n.descriptionOptional,
+              hint: l10n.addMoreDetails,
+              maxLines: 3,
+              isDark: isDark,
+            ),
+
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -602,7 +598,7 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
   String _getSnackLabel(AppLocalizations l10n) =>
       l10n.localeName == 'tr' ? 'Atıştırmalık' : 'Snack';
   String _getOrEnterCustomLabel(AppLocalizations l10n) =>
-      l10n.localeName == 'tr' ? 'Veya aşağıya özel başlık girin' : 'Or enter custom title below';
+      l10n.localeName == 'tr' ? 'Kayıt için bir öğün seçin' : 'Select a meal for this entry';
   String _getNowLabel(AppLocalizations l10n) =>
       l10n.localeName == 'tr' ? 'Şimdi' : 'Now';
   String _getMinAgoLabel(AppLocalizations l10n, int min) =>
