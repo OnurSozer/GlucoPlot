@@ -3,6 +3,7 @@
  */
 
 import { useState, FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { QrCode, User, Phone } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Modal, ModalFooter } from '../../components/common/Modal';
@@ -17,6 +18,7 @@ interface CreatePatientModalProps {
 }
 
 export function CreatePatientModal({ isOpen, onClose, onCreated }: CreatePatientModalProps) {
+    const { t } = useTranslation('patients');
     const [isLoading, setIsLoading] = useState(false);
     const [step, setStep] = useState<'form' | 'qr'>('form');
     const [error, setError] = useState('');
@@ -50,7 +52,7 @@ export function CreatePatientModal({ isOpen, onClose, onCreated }: CreatePatient
         setError('');
 
         if (!fullName.trim()) {
-            setError('Patient name is required');
+            setError(t('createModal.nameRequired'));
             return;
         }
 
@@ -78,7 +80,7 @@ export function CreatePatientModal({ isOpen, onClose, onCreated }: CreatePatient
                 handleClose();
             }
         } catch (err) {
-            setError('Failed to create patient');
+            setError(t('createModal.createFailed'));
         } finally {
             setIsLoading(false);
         }
@@ -93,7 +95,7 @@ export function CreatePatientModal({ isOpen, onClose, onCreated }: CreatePatient
         <Modal
             isOpen={isOpen}
             onClose={handleClose}
-            title={step === 'form' ? 'Add New Patient' : 'Patient Created'}
+            title={step === 'form' ? t('createModal.title') : t('createModal.titleSuccess')}
             size="md"
         >
             {step === 'form' ? (
@@ -105,16 +107,16 @@ export function CreatePatientModal({ isOpen, onClose, onCreated }: CreatePatient
                     )}
 
                     <Input
-                        label="Full Name *"
-                        placeholder="John Smith"
+                        label={`${t('createModal.fullName')} *`}
+                        placeholder={t('createModal.fullNamePlaceholder')}
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         leftIcon={<User size={18} />}
                     />
 
                     <Input
-                        label="Phone Number"
-                        placeholder="+1-555-0123"
+                        label={t('createModal.phone')}
+                        placeholder={t('createModal.phonePlaceholder')}
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         leftIcon={<Phone size={18} />}
@@ -122,7 +124,7 @@ export function CreatePatientModal({ isOpen, onClose, onCreated }: CreatePatient
 
                     <div className="grid grid-cols-2 gap-4">
                         <Input
-                            label="Date of Birth"
+                            label={t('createModal.dateOfBirth')}
                             type="date"
                             value={dateOfBirth}
                             onChange={(e) => setDateOfBirth(e.target.value)}
@@ -130,29 +132,29 @@ export function CreatePatientModal({ isOpen, onClose, onCreated }: CreatePatient
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                                Gender
+                                {t('createModal.gender')}
                             </label>
                             <select
                                 value={gender}
                                 onChange={(e) => setGender(e.target.value)}
                                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
                             >
-                                <option value="">Select...</option>
-                                <option value="male">Male</option>
-                                <option value="female">Female</option>
-                                <option value="other">Other</option>
+                                <option value="">{t('createModal.genderSelect')}</option>
+                                <option value="male">{t('createModal.genderMale')}</option>
+                                <option value="female">{t('createModal.genderFemale')}</option>
+                                <option value="other">{t('createModal.genderOther')}</option>
                             </select>
                         </div>
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                            Medical Notes
+                            {t('createModal.medicalNotes')}
                         </label>
                         <textarea
                             value={medicalNotes}
                             onChange={(e) => setMedicalNotes(e.target.value)}
-                            placeholder="Add any relevant medical history or notes..."
+                            placeholder={t('createModal.medicalNotesPlaceholder')}
                             rows={3}
                             className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary resize-none"
                         />
@@ -160,10 +162,10 @@ export function CreatePatientModal({ isOpen, onClose, onCreated }: CreatePatient
 
                     <ModalFooter>
                         <Button variant="secondary" type="button" onClick={handleClose}>
-                            Cancel
+                            {t('createModal.cancel')}
                         </Button>
                         <Button type="submit" isLoading={isLoading}>
-                            Create Patient
+                            {t('createModal.createButton')}
                         </Button>
                     </ModalFooter>
                 </form>
@@ -174,11 +176,11 @@ export function CreatePatientModal({ isOpen, onClose, onCreated }: CreatePatient
                     </div>
 
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                        Patient Created Successfully!
+                        {t('createModal.successTitle')}
                     </h3>
 
                     <p className="text-gray-500 mb-6">
-                        Share this QR code with the patient to activate their account
+                        {t('createModal.successDesc')}
                     </p>
 
                     {/* QR Code Display - Actual scannable QR code */}
@@ -197,11 +199,11 @@ export function CreatePatientModal({ isOpen, onClose, onCreated }: CreatePatient
                     </div>
 
                     <p className="text-sm text-gray-400 mb-6">
-                        Token: <code className="bg-gray-100 px-2 py-1 rounded">{qrToken.slice(0, 20)}...</code>
+                        {t('createModal.token')}: <code className="bg-gray-100 px-2 py-1 rounded">{qrToken.slice(0, 20)}...</code>
                     </p>
 
                     <Button onClick={handleDone} fullWidth>
-                        Done
+                        {t('createModal.done')}
                     </Button>
                 </div>
             )}

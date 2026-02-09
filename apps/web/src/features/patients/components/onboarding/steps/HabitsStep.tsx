@@ -39,24 +39,32 @@ export function HabitsStep({ data, onChange }: HabitsStepProps) {
           label={t('habits.healthyEating')}
           value={data.healthy_eating}
           onChange={(v) => handleScaleChange('healthy_eating', v)}
+          leftLabel={t('habits.scaleLow')}
+          rightLabel={t('habits.scaleHigh')}
         />
 
         <ScaleSelector
           label={t('habits.medicationAdherence')}
           value={data.medication_adherence}
           onChange={(v) => handleScaleChange('medication_adherence', v)}
+          leftLabel={t('habits.scaleLow')}
+          rightLabel={t('habits.scaleHigh')}
         />
 
         <ScaleSelector
           label={t('habits.diseaseMonitoring')}
           value={data.disease_monitoring}
           onChange={(v) => handleScaleChange('disease_monitoring', v)}
+          leftLabel={t('habits.scaleLow')}
+          rightLabel={t('habits.scaleHigh')}
         />
 
         <ScaleSelector
           label={t('habits.activityLevel')}
           value={data.activity_level}
           onChange={(v) => handleScaleChange('activity_level', v)}
+          leftLabel={t('habits.scaleLow')}
+          rightLabel={t('habits.scaleHigh')}
         />
 
         <ScaleSelector

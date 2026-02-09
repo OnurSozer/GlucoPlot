@@ -1,6 +1,6 @@
 /**
  * Scale Selector Component
- * A 1-10 scale selector with optional labels
+ * A 1-10 range slider with optional labels
  */
 
 interface ScaleSelectorProps {
@@ -24,61 +24,99 @@ export function ScaleSelector({
   rightLabel,
   disabled = false,
 }: ScaleSelectorProps) {
-  const numbers = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+  const currentValue = value ?? min;
+  const percentage = ((currentValue - min) / (max - min)) * 100;
+  // Offset the bubble so it stays centered on the thumb (10px = half thumb width)
+  const thumbOffset = 10 - (percentage / 100) * 20;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {label && (
         <label className="block text-sm font-medium text-gray-700">
           {label}
         </label>
       )}
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         {leftLabel && (
-          <span className="text-xs text-gray-500 w-24 text-right flex-shrink-0">
+          <span className="text-xs text-gray-500 w-20 text-right flex-shrink-0">
             {leftLabel}
           </span>
         )}
 
-        <div className="flex items-center gap-1 flex-1 justify-center">
-          {numbers.map((num) => (
-            <button
-              key={num}
-              type="button"
-              onClick={() => !disabled && onChange(num)}
-              disabled={disabled}
-              className={`
-                w-8 h-8 rounded-full text-sm font-medium
-                transition-all duration-200
-                ${value === num
-                  ? 'bg-primary text-white shadow-sm scale-110'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }
-                ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-              `}
+        <div className="flex-1 relative">
+          <input
+            type="range"
+            min={min}
+            max={max}
+            step={1}
+            value={currentValue}
+            onChange={(e) => !disabled && onChange(Number(e.target.value))}
+            disabled={disabled}
+            className="scale-slider w-full"
+            style={{ '--slider-percent': `${percentage}%` } as React.CSSProperties}
+          />
+          {value != null && (
+            <div
+              className="absolute top-5 pointer-events-none"
+              style={{ left: `calc(${percentage}% + ${thumbOffset}px)`, transform: 'translateX(-50%)' }}
             >
-              {num}
-            </button>
-          ))}
+              <span className="text-xs font-semibold text-primary">{value}</span>
+            </div>
+          )}
         </div>
 
         {rightLabel && (
-          <span className="text-xs text-gray-500 w-24 flex-shrink-0">
+          <span className="text-xs text-gray-500 w-20 flex-shrink-0">
             {rightLabel}
           </span>
         )}
       </div>
 
-      {/* Visual indicator bar */}
-      <div className="relative h-1 bg-gray-200 rounded-full mx-24">
-        {value && (
-          <div
-            className="absolute h-1 bg-primary rounded-full transition-all duration-200"
-            style={{ width: `${((value - min) / (max - min)) * 100}%` }}
-          />
-        )}
-      </div>
+      <style>{`
+        .scale-slider {
+          -webkit-appearance: none;
+          appearance: none;
+          height: 6px;
+          border-radius: 3px;
+          background: linear-gradient(
+            to right,
+            #E8A87C 0%,
+            #E8A87C var(--slider-percent, 0%),
+            #e5e7eb var(--slider-percent, 0%),
+            #e5e7eb 100%
+          );
+          outline: none;
+          cursor: pointer;
+        }
+        .scale-slider:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        .scale-slider::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: #E8A87C;
+          border: 2px solid white;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+          cursor: pointer;
+        }
+        .scale-slider::-moz-range-thumb {
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: #E8A87C;
+          border: 2px solid white;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+          cursor: pointer;
+        }
+        .scale-slider:focus::-webkit-slider-thumb {
+          box-shadow: 0 0 0 3px rgba(232, 168, 124, 0.3);
+        }
+      `}</style>
     </div>
   );
 }

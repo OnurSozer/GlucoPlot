@@ -60,8 +60,13 @@
     "phonePlaceholder": "+1-555-0123",
     "dateOfBirth": "Date of Birth",
     "gender": "Gender",
+    "genderSelect": "Select...",
+    "genderMale": "Male",
+    "genderFemale": "Female",
+    "genderOther": "Other",
     "medicalNotes": "Medical Notes",
     "medicalNotesPlaceholder": "Add any relevant medical history or notes...",
+    "cancel": "Cancel",
     "createButton": "Create Patient",
     "successTitle": "Patient Created Successfully!",
     "successDesc": "Share this QR code with the patient to activate their account",
@@ -71,14 +76,18 @@
     "createFailed": "Failed to create patient"
   },
   "qrModal": {
-    "title": "Patient QR Code",
-    "scanToActivate": "Patient can scan this QR code to activate their account",
+    "title": "QR Code for {{name}}",
+    "scanToActivate": "Share this QR code with the patient to activate their account",
+    "scanToLogin": "Scan this QR code to log in to the patient app",
     "status": "Status",
     "expires": "Expires",
-    "expired": "Expired",
-    "alreadyActivated": "Patient Already Activated",
-    "alreadyActivatedDesc": "This patient has already scanned the QR code and activated their account.",
-    "loadingFailed": "Failed to load QR code"
+    "expired": "This QR code has expired",
+    "alreadyActivated": "Active Account • Scan to Log In",
+    "loadingFailed": "Failed to load QR code",
+    "loading": "Loading QR code...",
+    "noQrFound": "No QR code found for this patient. They may have already activated their account.",
+    "exportPng": "Export as PNG",
+    "close": "Close"
   },
   "deleteModal": {
     "title": "Delete Patient",

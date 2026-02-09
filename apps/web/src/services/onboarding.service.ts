@@ -15,6 +15,7 @@ import type {
   LabInfoData,
   NotificationPreferenceEntry,
   MedicationClass,
+  RelativeInfo,
 } from '../types/onboarding.types';
 
 // ============================================================
@@ -85,9 +86,6 @@ export const onboardingService = {
           phone: data.basicInfo.phone,
           emergency_contact_phone: data.basicInfo.emergency_contact_phone,
           emergency_contact_email: data.basicInfo.emergency_contact_email,
-          relative_name: data.basicInfo.relative_name,
-          relative_phone: data.basicInfo.relative_phone,
-          relative_email: data.basicInfo.relative_email,
           status: 'pending',
         })
         .select()
@@ -126,6 +124,7 @@ export const onboardingService = {
         this.saveChronicDiseases(patientId, data.chronicDiseases.diseases, data.chronicDiseases.other_details),
         this.saveLabInfo(patientId, data.labInfo),
         this.saveNotificationPreferences(patientId, data.notificationPreferences.preferences),
+        this.saveRelatives(patientId, data.basicInfo.relatives),
         data.medicalHistory.medication_type === 'insulin' && data.insulinSchedule
           ? this.saveMedicationSchedules(patientId, data.insulinSchedule.schedules, 'insulin')
           : Promise.resolve(),
@@ -162,6 +161,7 @@ export const onboardingService = {
         chronicDiseasesResult,
         labInfoResult,
         notificationPrefsResult,
+        relativesResult,
       ] = await Promise.all([
         supabase.from('patients').select('*').eq('id', patientId).single(),
         supabase.from('patient_physical_data').select('*').eq('patient_id', patientId).single(),
@@ -172,6 +172,7 @@ export const onboardingService = {
         supabase.from('patient_chronic_diseases').select('*').eq('patient_id', patientId),
         supabase.from('patient_lab_info').select('*').eq('patient_id', patientId).single(),
         supabase.from('patient_notification_preferences').select('*').eq('patient_id', patientId),
+        supabase.from('patient_relatives').select('*').eq('patient_id', patientId).order('is_primary', { ascending: false }),
       ]);
 
       const patient = patientResult.data;
@@ -189,9 +190,13 @@ export const onboardingService = {
           phone: patient.phone,
           emergency_contact_phone: patient.emergency_contact_phone,
           emergency_contact_email: patient.emergency_contact_email,
-          relative_name: patient.relative_name,
-          relative_phone: patient.relative_phone,
-          relative_email: patient.relative_email,
+          relatives: (relativesResult.data || []).map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            phone: r.phone,
+            email: r.email,
+            is_primary: r.is_primary,
+          })),
         },
         notificationPreferences: {
           preferences: (notificationPrefsResult.data || []).map((p: any) => ({
@@ -420,5 +425,31 @@ export const onboardingService = {
     if (records.length > 0) {
       await supabase.from('patient_notification_preferences').insert(records);
     }
+  },
+
+  async saveRelatives(
+    patientId: string,
+    relatives: RelativeInfo[]
+  ): Promise<void> {
+    // Delete existing relatives
+    await supabase
+      .from('patient_relatives')
+      .delete()
+      .eq('patient_id', patientId);
+
+    // Filter out empty entries (no name provided)
+    const validRelatives = relatives.filter((r) => r.name.trim());
+    if (validRelatives.length === 0) return;
+
+    // Insert new relatives, marking first one as primary
+    const records = validRelatives.map((r, index) => ({
+      patient_id: patientId,
+      name: r.name.trim(),
+      phone: r.phone || null,
+      email: r.email || null,
+      is_primary: index === 0,
+    }));
+
+    await supabase.from('patient_relatives').insert(records);
   },
 };

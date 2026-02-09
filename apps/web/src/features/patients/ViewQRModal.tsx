@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { QRCodeSVG } from 'qrcode.react';
 import { Modal } from '../../components/common/Modal';
 import { Button } from '../../components/common/Button';
@@ -17,6 +18,7 @@ interface ViewQRModalProps {
 }
 
 export function ViewQRModal({ isOpen, onClose, patientId, patientName }: ViewQRModalProps) {
+    const { t } = useTranslation('patients');
     const [isLoading, setIsLoading] = useState(true);
     const [token, setToken] = useState<string | null>(null);
     const [inviteStatus, setInviteStatus] = useState<string | null>(null);
@@ -82,7 +84,7 @@ export function ViewQRModal({ isOpen, onClose, patientId, patientName }: ViewQRM
         const { data, error: fetchError } = await patientsService.getPatientInvite(patientId);
 
         if (fetchError || !data) {
-            setError('No QR code found for this patient. They may have already activated their account.');
+            setError(t('qrModal.noQrFound'));
             setToken(null);
         } else {
             setToken(data.token);
@@ -99,14 +101,14 @@ export function ViewQRModal({ isOpen, onClose, patientId, patientName }: ViewQRM
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={`QR Code for ${patientName}`}
+            title={t('qrModal.title', { name: patientName })}
             size="md"
         >
             <div className="text-center py-4">
                 {isLoading ? (
                     <div className="py-12">
                         <RefreshCw className="w-8 h-8 text-gray-400 animate-spin mx-auto" />
-                        <p className="text-gray-500 mt-4">Loading QR code...</p>
+                        <p className="text-gray-500 mt-4">{t('qrModal.loading')}</p>
                     </div>
                 ) : error ? (
                     <div className="py-8">
@@ -121,7 +123,7 @@ export function ViewQRModal({ isOpen, onClose, patientId, patientName }: ViewQRM
                             <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4">
                                 <p className="text-blue-700 text-sm font-medium flex items-center gap-2 justify-center">
                                     <CheckCircle size={16} />
-                                    Active Account • Scan to Log In
+                                    {t('qrModal.alreadyActivated')}
                                 </p>
                             </div>
                         )}
@@ -129,15 +131,15 @@ export function ViewQRModal({ isOpen, onClose, patientId, patientName }: ViewQRM
                         {isExpired && inviteStatus !== 'redeemed' && (
                             <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
                                 <p className="text-amber-700 text-sm font-medium">
-                                    ⚠ This QR code has expired
+                                    {t('qrModal.expired')}
                                 </p>
                             </div>
                         )}
 
                         <p className="text-gray-500 mb-6">
                             {inviteStatus === 'redeemed'
-                                ? "Scan this QR code to log in to the patient app"
-                                : "Share this QR code with the patient to activate their account"}
+                                ? t('qrModal.scanToLogin')
+                                : t('qrModal.scanToActivate')}
                         </p>
 
                         {/* QR Code Display */}
@@ -159,20 +161,20 @@ export function ViewQRModal({ isOpen, onClose, patientId, patientName }: ViewQRM
                                 className="inline-flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
                             >
                                 <Download size={16} />
-                                Export as PNG
+                                {t('qrModal.exportPng')}
                             </button>
                         </div>
 
                         {expiresAt && inviteStatus === 'pending' && !isExpired && (
                             <p className="text-sm text-gray-400 mb-4">
-                                Expires: {new Date(expiresAt).toLocaleDateString()}
+                                {t('qrModal.expires')}: {new Date(expiresAt).toLocaleDateString()}
                             </p>
                         )}
                     </>
                 ) : null}
 
                 <Button onClick={onClose} fullWidth>
-                    Close
+                    {t('qrModal.close')}
                 </Button>
             </div>
         </Modal>

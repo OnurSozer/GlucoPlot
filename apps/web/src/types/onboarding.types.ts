@@ -74,6 +74,14 @@ export type ExerciseDuration = '0-15' | '15-30' | '30-60' | '60+';
 // Form Step Data Interfaces
 // ============================================================
 
+export interface RelativeInfo {
+  id?: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  is_primary?: boolean;
+}
+
 export interface BasicInfoData {
   full_name: string;
   national_id?: string;
@@ -82,9 +90,7 @@ export interface BasicInfoData {
   phone?: string;
   emergency_contact_phone?: string;
   emergency_contact_email?: string;
-  relative_name?: string;
-  relative_phone?: string;
-  relative_email?: string;
+  relatives: RelativeInfo[];
   doctor_phone?: string;
   doctor_email?: string;
 }
@@ -242,6 +248,7 @@ export function getDefaultOnboardingData(): PatientOnboardingData {
   return {
     basicInfo: {
       full_name: '',
+      relatives: [],
     },
     notificationPreferences: {
       preferences: [],

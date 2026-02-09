@@ -4,10 +4,11 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { User, Phone, Mail, Calendar, CreditCard, UserPlus, AlertTriangle, Loader2 } from 'lucide-react';
+import { User, Mail, Calendar, CreditCard, UserPlus, AlertTriangle, Loader2, Plus, X } from 'lucide-react';
 import { Input } from '../../../../../components/common/Input';
+import { PhoneInput } from '../../../../../components/common/PhoneInput';
 import { onboardingService } from '../../../../../services/onboarding.service';
-import type { BasicInfoData, PatientOnboardingData } from '../../../../../types/onboarding.types';
+import type { BasicInfoData, PatientOnboardingData, RelativeInfo } from '../../../../../types/onboarding.types';
 
 interface BasicInfoStepProps {
   data: BasicInfoData;
@@ -84,6 +85,27 @@ export function BasicInfoStep({
 
   const handleDismiss = () => {
     setDuplicatePatient(null);
+  };
+
+  const addRelative = () => {
+    onChange({
+      ...data,
+      relatives: [...data.relatives, { name: '' }],
+    });
+  };
+
+  const removeRelative = (index: number) => {
+    onChange({
+      ...data,
+      relatives: data.relatives.filter((_, i) => i !== index),
+    });
+  };
+
+  const updateRelative = (index: number, field: keyof RelativeInfo, value: string) => {
+    const updated = data.relatives.map((r, i) =>
+      i === index ? { ...r, [field]: value || undefined } : r
+    );
+    onChange({ ...data, relatives: updated });
   };
 
   return (
@@ -180,12 +202,11 @@ export function BasicInfoStep({
       </div>
 
       {/* Phone */}
-      <Input
+      <PhoneInput
         label={t('basicInfo.phone')}
-        placeholder={t('basicInfo.placeholders.phone')}
+        placeholder="505 555 55 **"
         value={data.phone || ''}
-        onChange={(e) => handleChange('phone', e.target.value)}
-        leftIcon={<Phone size={18} />}
+        onChange={(val) => handleChange('phone', val)}
       />
 
       {/* Emergency Contact Section */}
@@ -195,12 +216,11 @@ export function BasicInfoStep({
           {t('basicInfo.emergencyContact')}
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
+          <PhoneInput
             label={t('basicInfo.emergencyPhone')}
-            placeholder={t('basicInfo.placeholders.emergencyPhone')}
+            placeholder="505 555 55 **"
             value={data.emergency_contact_phone || ''}
-            onChange={(e) => handleChange('emergency_contact_phone', e.target.value)}
-            leftIcon={<Phone size={18} />}
+            onChange={(val) => handleChange('emergency_contact_phone', val)}
           />
           <Input
             label={t('basicInfo.emergencyEmail')}
@@ -213,35 +233,63 @@ export function BasicInfoStep({
         </div>
       </div>
 
-      {/* Relative Contact Section */}
+      {/* Relatives Section */}
       <div className="pt-4 border-t border-gray-200">
         <h4 className="text-md font-medium text-gray-900 mb-4">
-          {t('basicInfo.relativeName')}
+          {t('basicInfo.relativeTitle')}
         </h4>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Input
-            label={t('basicInfo.relativeName')}
-            placeholder={t('basicInfo.placeholders.relativeName')}
-            value={data.relative_name || ''}
-            onChange={(e) => handleChange('relative_name', e.target.value)}
-            leftIcon={<User size={18} />}
-          />
-          <Input
-            label={t('basicInfo.relativePhone')}
-            placeholder={t('basicInfo.placeholders.relativePhone')}
-            value={data.relative_phone || ''}
-            onChange={(e) => handleChange('relative_phone', e.target.value)}
-            leftIcon={<Phone size={18} />}
-          />
-          <Input
-            label={t('basicInfo.relativeEmail')}
-            type="email"
-            placeholder={t('basicInfo.placeholders.relativeEmail')}
-            value={data.relative_email || ''}
-            onChange={(e) => handleChange('relative_email', e.target.value)}
-            leftIcon={<Mail size={18} />}
-          />
-        </div>
+
+        {data.relatives.map((relative, index) => (
+          <div key={index} className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-600">
+                {t('basicInfo.relativeIndex', { index: index + 1 })}
+              </span>
+              {data.relatives.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeRelative(index)}
+                  className="text-sm text-red-500 hover:text-red-700 flex items-center gap-1"
+                >
+                  <X size={14} />
+                  {t('basicInfo.removeRelative')}
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Input
+                label={t('basicInfo.relativeName')}
+                placeholder={t('basicInfo.placeholders.relativeName')}
+                value={relative.name || ''}
+                onChange={(e) => updateRelative(index, 'name', e.target.value)}
+                leftIcon={<User size={18} />}
+              />
+              <PhoneInput
+                label={t('basicInfo.relativePhone')}
+                placeholder="505 555 55 **"
+                value={relative.phone || ''}
+                onChange={(val) => updateRelative(index, 'phone', val)}
+              />
+              <Input
+                label={t('basicInfo.relativeEmail')}
+                type="email"
+                placeholder={t('basicInfo.placeholders.relativeEmail')}
+                value={relative.email || ''}
+                onChange={(e) => updateRelative(index, 'email', e.target.value)}
+                leftIcon={<Mail size={18} />}
+              />
+            </div>
+          </div>
+        ))}
+
+        <button
+          type="button"
+          onClick={addRelative}
+          className="mt-2 px-4 py-2 text-sm font-medium text-primary hover:text-primary/80 border border-dashed border-gray-300 hover:border-primary rounded-xl flex items-center gap-2 transition-colors"
+        >
+          <Plus size={16} />
+          {t('basicInfo.addRelative')}
+        </button>
       </div>
 
       {/* Doctor Contact Section */}
@@ -250,12 +298,11 @@ export function BasicInfoStep({
           {t('basicInfo.doctorPhone')}
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
+          <PhoneInput
             label={t('basicInfo.doctorPhone')}
-            placeholder={t('basicInfo.placeholders.doctorPhone')}
+            placeholder="505 555 55 **"
             value={data.doctor_phone || doctorPhone || ''}
-            onChange={(e) => handleChange('doctor_phone', e.target.value)}
-            leftIcon={<Phone size={18} />}
+            onChange={(val) => handleChange('doctor_phone', val)}
           />
           <Input
             label={t('basicInfo.doctorEmail')}

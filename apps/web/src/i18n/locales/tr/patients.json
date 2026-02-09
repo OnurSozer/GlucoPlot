@@ -60,8 +60,13 @@
     "phonePlaceholder": "+90-555-0123",
     "dateOfBirth": "Doğum Tarihi",
     "gender": "Cinsiyet",
+    "genderSelect": "Seçin...",
+    "genderMale": "Erkek",
+    "genderFemale": "Kadın",
+    "genderOther": "Diğer",
     "medicalNotes": "Tıbbi Notlar",
     "medicalNotesPlaceholder": "İlgili tıbbi geçmiş veya notları ekleyin...",
+    "cancel": "İptal",
     "createButton": "Hasta Oluştur",
     "successTitle": "Hasta Başarıyla Oluşturuldu!",
     "successDesc": "Hastanın hesabını aktif etmesi için bu QR kodu paylaşın",
@@ -71,14 +76,18 @@
     "createFailed": "Hasta oluşturulamadı"
   },
   "qrModal": {
-    "title": "Hasta QR Kodu",
-    "scanToActivate": "Hasta hesabını aktif etmek için bu QR kodu tarayabilir",
+    "title": "{{name}} - QR Kod",
+    "scanToActivate": "Hasta hesabını aktif etmek için bu QR kodu paylaşın",
+    "scanToLogin": "Hasta uygulamasına giriş yapmak için bu QR kodu taratın",
     "status": "Durum",
     "expires": "Son Geçerlilik",
-    "expired": "Süresi Dolmuş",
-    "alreadyActivated": "Hasta Zaten Aktif",
-    "alreadyActivatedDesc": "Bu hasta QR kodu tarayıp hesabını aktif etmiş.",
-    "loadingFailed": "QR kodu yüklenemedi"
+    "expired": "Bu QR kodunun süresi dolmuş",
+    "alreadyActivated": "Aktif Hesap • Giriş İçin Taratın",
+    "loadingFailed": "QR kodu yüklenemedi",
+    "loading": "QR kod yükleniyor...",
+    "noQrFound": "Bu hasta için QR kodu bulunamadı. Hesabını aktif etmiş olabilir.",
+    "exportPng": "PNG olarak indir",
+    "close": "Kapat"
   },
   "deleteModal": {
     "title": "Hasta Sil",
