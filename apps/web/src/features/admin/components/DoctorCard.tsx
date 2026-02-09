@@ -54,28 +54,28 @@ export function DoctorCard({ doctor, onDeleted }: DoctorCardProps) {
 
     return (
         <Link to={`/admin/doctors/${doctor.id}`}>
-            <Card className="bg-amber-900/40 border-amber-700/50 hover:bg-amber-900/60 transition-colors cursor-pointer group relative">
+            <Card hover className="cursor-pointer group relative">
                 <CardContent className="p-6">
                     <div className="flex items-start gap-4">
                         {/* Avatar */}
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center flex-shrink-0">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-secondary to-secondary-dark flex items-center justify-center flex-shrink-0">
                             <span className="text-lg font-bold text-white">{initials}</span>
                         </div>
 
                         {/* Info */}
                         <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-white truncate group-hover:text-amber-300 transition-colors">
+                            <h3 className="font-semibold text-gray-900 truncate group-hover:text-primary transition-colors">
                                 {doctor.full_name}
                             </h3>
                             <div className="flex items-center gap-1.5 mt-1">
-                                <Stethoscope size={14} className="text-amber-400" />
-                                <span className="text-sm text-amber-100 truncate">
+                                <Stethoscope size={14} className="text-gray-400" />
+                                <span className="text-sm text-gray-500 truncate">
                                     {doctor.specialty || t('auth.generalPractice')}
                                 </span>
                             </div>
                             <div className="flex items-center gap-1.5 mt-2">
-                                <Users size={14} className="text-amber-400" />
-                                <span className="text-sm text-amber-100">
+                                <Users size={14} className="text-gray-400" />
+                                <span className="text-sm text-gray-500">
                                     {t('admin.doctors.patients', { count: patients.length })}
                                 </span>
                             </div>
@@ -89,7 +89,7 @@ export function DoctorCard({ doctor, onDeleted }: DoctorCardProps) {
                                     e.stopPropagation();
                                     setShowMenu(!showMenu);
                                 }}
-                                className="p-2 rounded-lg text-amber-400 hover:text-white hover:bg-amber-700 transition-colors"
+                                className="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
                             >
                                 <MoreVertical size={18} />
                             </button>
@@ -104,11 +104,11 @@ export function DoctorCard({ doctor, onDeleted }: DoctorCardProps) {
                                             setShowMenu(false);
                                         }}
                                     />
-                                    <div className="absolute right-0 top-full mt-1 w-40 bg-amber-800 rounded-lg shadow-xl border border-amber-700 z-20 overflow-hidden">
+                                    <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-xl border border-gray-200 z-20 overflow-hidden">
                                         <button
                                             onClick={handleDelete}
                                             disabled={isDeleting}
-                                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-900/30 transition-colors disabled:opacity-50"
+                                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
                                         >
                                             <Trash2 size={16} />
                                             {isDeleting ? t('common.deleting') : t('admin.doctorDetail.delete')}
@@ -120,7 +120,7 @@ export function DoctorCard({ doctor, onDeleted }: DoctorCardProps) {
                     </div>
 
                     {/* Email */}
-                    <p className="text-sm text-amber-200 mt-3 truncate">{doctor.email}</p>
+                    <p className="text-sm text-gray-500 mt-3 truncate">{doctor.email}</p>
                 </CardContent>
             </Card>
         </Link>

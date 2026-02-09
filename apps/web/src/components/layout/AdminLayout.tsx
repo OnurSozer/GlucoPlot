@@ -15,7 +15,7 @@ export function AdminLayout() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900">
+        <div className="min-h-screen bg-gradient-to-b from-[#FDF6F0] to-[#F5EDE6]">
             <AdminSidebar />
 
             {/* Main Content */}

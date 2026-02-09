@@ -30,14 +30,13 @@ export function DoctorsPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-white">{t('admin.doctors.title')}</h1>
-                    <p className="text-slate-400 mt-1">{t('admin.doctors.subtitle')}</p>
+                    <h1 className="text-2xl font-bold text-gray-900">{t('admin.doctors.title')}</h1>
+                    <p className="text-gray-500 mt-1">{t('admin.doctors.subtitle')}</p>
                 </div>
                 <Button
                     onClick={() => setShowCreateModal(true)}
-                    className="bg-amber-600 hover:bg-amber-500 text-white"
+                    leftIcon={<UserPlus size={18} />}
                 >
-                    <UserPlus size={18} className="mr-2" />
                     {t('admin.doctors.addDoctor')}
                 </Button>
             </div>
@@ -49,7 +48,6 @@ export function DoctorsPage() {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     leftIcon={<Search size={18} />}
-                    variant="orange"
                 />
             </div>
 
@@ -57,13 +55,13 @@ export function DoctorsPage() {
             {isLoading && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {[...Array(6)].map((_, i) => (
-                        <Card key={i} className="bg-amber-900/40 border-amber-700/50 animate-pulse">
+                        <Card key={i} className="animate-pulse">
                             <CardContent className="p-6">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-full bg-amber-800/50" />
+                                    <div className="w-12 h-12 rounded-full bg-gray-200" />
                                     <div className="flex-1">
-                                        <div className="h-4 bg-amber-800/50 rounded w-3/4 mb-2" />
-                                        <div className="h-3 bg-amber-800/50 rounded w-1/2" />
+                                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+                                        <div className="h-3 bg-gray-200 rounded w-1/2" />
                                     </div>
                                 </div>
                             </CardContent>
@@ -87,22 +85,21 @@ export function DoctorsPage() {
 
             {/* Empty State */}
             {!isLoading && doctors.length === 0 && (
-                <Card className="bg-amber-900/40 border-amber-700/50">
+                <Card>
                     <CardContent className="p-12 text-center">
-                        <div className="w-16 h-16 rounded-full bg-amber-800/50 flex items-center justify-center mx-auto mb-4">
-                            <Stethoscope className="text-amber-400" size={32} />
+                        <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                            <Stethoscope className="text-gray-400" size={32} />
                         </div>
-                        <h3 className="text-lg font-medium text-white mb-2">
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
                             {t('admin.doctors.noDoctors')}
                         </h3>
-                        <p className="text-amber-200/70 mb-6">
+                        <p className="text-gray-500 mb-6">
                             {t('admin.doctors.noDoctorsDesc')}
                         </p>
                         <Button
                             onClick={() => setShowCreateModal(true)}
-                            className="bg-amber-600 hover:bg-amber-500 text-white"
+                            leftIcon={<UserPlus size={18} />}
                         >
-                            <UserPlus size={18} className="mr-2" />
                             {t('admin.doctors.addDoctor')}
                         </Button>
                     </CardContent>
@@ -111,7 +108,7 @@ export function DoctorsPage() {
 
             {/* Fetching Indicator */}
             {isFetching && !isLoading && (
-                <div className="fixed bottom-4 right-4 bg-slate-800 text-slate-300 px-4 py-2 rounded-lg shadow-lg text-sm">
+                <div className="fixed bottom-4 right-4 bg-white text-gray-700 px-4 py-2 rounded-lg shadow-lg text-sm border border-gray-200">
                     {t('common.refreshing')}
                 </div>
             )}

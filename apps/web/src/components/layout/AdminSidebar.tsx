@@ -24,16 +24,16 @@ export function AdminSidebar() {
     const { admin, signOut } = useAuthStore();
 
     return (
-        <aside className="fixed left-0 top-0 h-screen w-64 bg-slate-900/95 backdrop-blur-md border-r border-slate-800 flex flex-col z-40">
+        <aside className="fixed left-0 top-0 h-screen w-64 bg-white/80 backdrop-blur-md border-r border-gray-100 flex flex-col z-40">
             {/* Logo */}
-            <div className="p-6 border-b border-slate-800">
+            <div className="p-6 border-b border-gray-100">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center">
                         <Shield size={24} className="text-white" />
                     </div>
                     <div>
-                        <h1 className="font-bold text-lg text-white">{t('app.name')}</h1>
-                        <p className="text-xs text-slate-400">{t('admin.portal')}</p>
+                        <h1 className="font-bold text-lg text-gray-900">{t('app.name')}</h1>
+                        <p className="text-xs text-gray-500">{t('admin.portal')}</p>
                     </div>
                 </div>
             </div>
@@ -55,8 +55,8 @@ export function AdminSidebar() {
                                         flex items-center gap-3 px-4 py-3 rounded-xl
                                         transition-all duration-200
                                         ${isActive
-                                            ? 'bg-indigo-600/20 text-indigo-300 font-medium'
-                                            : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                                            ? 'bg-gradient-to-r from-primary/10 to-primary/5 text-primary-dark font-medium'
+                                            : 'text-gray-600 hover:bg-gray-50'
                                         }
                                     `}
                                 >
@@ -70,24 +70,24 @@ export function AdminSidebar() {
             </nav>
 
             {/* Language Switcher */}
-            <div className="px-4 py-2 border-t border-slate-800">
-                <LanguageSwitcher variant="dark" />
+            <div className="px-4 py-2 border-t border-gray-100">
+                <LanguageSwitcher />
             </div>
 
             {/* Admin Profile & Sign Out */}
-            <div className="p-4 border-t border-slate-800">
+            <div className="p-4 border-t border-gray-100">
                 {/* Admin Profile */}
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-800 mb-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-secondary to-secondary-dark flex items-center justify-center">
                         <span className="text-white font-medium text-sm">
                             {admin?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'AD'}
                         </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-white truncate">
+                        <p className="text-sm font-medium text-gray-900 truncate">
                             {admin?.full_name || 'Admin'}
                         </p>
-                        <p className="text-xs text-slate-400 truncate">
+                        <p className="text-xs text-gray-500 truncate">
                             {t('admin.administrator')}
                         </p>
                     </div>
@@ -96,7 +96,7 @@ export function AdminSidebar() {
                 {/* Sign Out Button */}
                 <button
                     onClick={signOut}
-                    className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-slate-400 hover:bg-red-900/30 hover:text-red-400 transition-colors"
+                    className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors"
                 >
                     <LogOut size={20} />
                     <span>{t('nav.signOut')}</span>

@@ -96,15 +96,15 @@ export function CreateDoctorModal({ isOpen, onClose, onSuccess }: CreateDoctorMo
             />
 
             {/* Modal */}
-            <div className="relative w-full max-w-md mx-4 bg-amber-950 rounded-2xl shadow-2xl border border-amber-800">
+            <div className="relative w-full max-w-md mx-4 bg-white rounded-2xl shadow-2xl border border-gray-200">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-amber-800">
-                    <h2 className="text-xl font-semibold text-white">
+                <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                    <h2 className="text-xl font-semibold text-gray-900">
                         {t('admin.createDoctor.title')}
                     </h2>
                     <button
                         onClick={onClose}
-                        className="p-2 rounded-lg text-amber-400 hover:text-white hover:bg-amber-800 transition-colors"
+                        className="p-2 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
                     >
                         <X size={20} />
                     </button>
@@ -113,7 +113,7 @@ export function CreateDoctorModal({ isOpen, onClose, onSuccess }: CreateDoctorMo
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     {error && (
-                        <div className="p-3 bg-red-900/30 border border-red-800 rounded-lg text-red-400 text-sm">
+                        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
                             {error}
                         </div>
                     )}
@@ -125,7 +125,6 @@ export function CreateDoctorModal({ isOpen, onClose, onSuccess }: CreateDoctorMo
                         value={formData.full_name}
                         onChange={handleChange}
                         leftIcon={<User size={18} />}
-                        variant="orange"
                         required
                     />
 
@@ -137,7 +136,6 @@ export function CreateDoctorModal({ isOpen, onClose, onSuccess }: CreateDoctorMo
                         value={formData.email}
                         onChange={handleChange}
                         leftIcon={<Mail size={18} />}
-                        variant="orange"
                         required
                     />
 
@@ -149,7 +147,6 @@ export function CreateDoctorModal({ isOpen, onClose, onSuccess }: CreateDoctorMo
                         value={formData.password}
                         onChange={handleChange}
                         leftIcon={<Lock size={18} />}
-                        variant="orange"
                         required
                     />
 
@@ -161,7 +158,6 @@ export function CreateDoctorModal({ isOpen, onClose, onSuccess }: CreateDoctorMo
                         value={formData.phone}
                         onChange={handleChange}
                         leftIcon={<Phone size={18} />}
-                        variant="orange"
                     />
 
                     <Input
@@ -171,7 +167,6 @@ export function CreateDoctorModal({ isOpen, onClose, onSuccess }: CreateDoctorMo
                         value={formData.specialty}
                         onChange={handleChange}
                         leftIcon={<Stethoscope size={18} />}
-                        variant="orange"
                     />
 
                     {/* Actions */}
@@ -180,14 +175,14 @@ export function CreateDoctorModal({ isOpen, onClose, onSuccess }: CreateDoctorMo
                             type="button"
                             variant="secondary"
                             onClick={onClose}
-                            className="flex-1 bg-amber-800 hover:bg-amber-700 text-white border-amber-700"
+                            className="flex-1"
                         >
                             {t('common.cancel')}
                         </Button>
                         <Button
                             type="submit"
                             isLoading={isSubmitting}
-                            className="flex-1 bg-amber-600 hover:bg-amber-500 text-white"
+                            className="flex-1"
                         >
                             {t('admin.createDoctor.create')}
                         </Button>

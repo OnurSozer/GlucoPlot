@@ -157,6 +157,32 @@ begin
     ''
   );
 
+  -- Create identity record (required for Supabase Auth to work)
+  insert into auth.identities (
+    id,
+    user_id,
+    identity_data,
+    provider,
+    provider_id,
+    last_sign_in_at,
+    created_at,
+    updated_at
+  ) values (
+    gen_random_uuid(),
+    v_user_id,
+    jsonb_build_object(
+      'sub', v_user_id::text,
+      'email', p_email,
+      'email_verified', true,
+      'provider', 'email'
+    ),
+    'email',
+    v_user_id::text,
+    now(),
+    now(),
+    now()
+  );
+
   -- Create doctor profile
   insert into doctors (id, full_name, email, phone, specialty)
   values (v_user_id, p_full_name, p_email, p_phone, p_specialty)
@@ -296,6 +322,18 @@ grant execute on function delete_doctor(uuid) to authenticated;
 --     now(),
 --     '',
 --     ''
+--   );
+--
+--   INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at)
+--   VALUES (
+--     gen_random_uuid(),
+--     v_user_id,
+--     jsonb_build_object('sub', v_user_id::text, 'email', 'admin@glucoplot.com', 'email_verified', true, 'provider', 'email'),
+--     'email',
+--     v_user_id::text,
+--     now(),
+--     now(),
+--     now()
 --   );
 --
 --   INSERT INTO admins (id, full_name, email)
