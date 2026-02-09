@@ -88,7 +88,8 @@
     "welcomeBack": "Tekrar Hoş Geldiniz",
     "signInToContinue": "Doktor hesabınıza giriş yapın",
     "invalidCredentials": "Geçersiz e-posta veya şifre",
-    "generalPractice": "Genel Uygulama"
+    "generalPractice": "Genel Uygulama",
+    "contactAdmin": "Erişim için yöneticinizle iletişime geçin"
   },
   "language": {
     "label": "Dil",

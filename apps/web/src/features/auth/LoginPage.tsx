@@ -4,6 +4,7 @@
 
 import { useState, FormEvent } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Activity, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '../../stores/auth-store';
 import { Button } from '../../components/common/Button';
@@ -11,6 +12,7 @@ import { Input } from '../../components/common/Input';
 
 export function LoginPage() {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const { user, doctor, admin, signIn, isLoading, error, clearError } = useAuthStore();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -34,11 +36,11 @@ export function LoginPage() {
 
         // Validate
         if (!email.trim()) {
-            setFormError('Email is required');
+            setFormError(t('admin.createDoctor.emailRequired'));
             return;
         }
         if (!password) {
-            setFormError('Password is required');
+            setFormError(t('admin.createDoctor.passwordMinLength'));
             return;
         }
 
@@ -72,14 +74,14 @@ export function LoginPage() {
                         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center mb-4 shadow-lg">
                             <Activity size={32} className="text-white" />
                         </div>
-                        <h1 className="text-2xl font-bold text-gray-900">GlucoPlot</h1>
-                        <p className="text-gray-500 text-sm mt-1">Doctor Portal</p>
+                        <h1 className="text-2xl font-bold text-gray-900">{t('app.name')}</h1>
+                        <p className="text-gray-500 text-sm mt-1">{t('app.subtitle')}</p>
                     </div>
 
                     {/* Welcome text */}
                     <div className="text-center mb-8">
-                        <h2 className="text-xl font-semibold text-gray-900">Welcome back</h2>
-                        <p className="text-gray-500 text-sm mt-1">Sign in to manage your patients</p>
+                        <h2 className="text-xl font-semibold text-gray-900">{t('auth.welcomeBack')}</h2>
+                        <p className="text-gray-500 text-sm mt-1">{t('auth.signInToContinue')}</p>
                     </div>
 
                     {/* Error message */}
@@ -93,8 +95,8 @@ export function LoginPage() {
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <Input
                             type="email"
-                            label="Email"
-                            placeholder="doctor@example.com"
+                            label={t('auth.email')}
+                            placeholder="doktor@ornek.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             leftIcon={<Mail size={18} />}
@@ -103,7 +105,7 @@ export function LoginPage() {
 
                         <Input
                             type={showPassword ? 'text' : 'password'}
-                            label="Password"
+                            label={t('auth.password')}
                             placeholder="••••••••"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
@@ -127,13 +129,13 @@ export function LoginPage() {
                             size="lg"
                             isLoading={isLoading}
                         >
-                            Sign In
+                            {t('auth.login')}
                         </Button>
                     </form>
 
                     {/* Help text */}
                     <p className="text-center text-sm text-gray-500 mt-6">
-                        Contact your administrator if you need access
+                        {t('auth.contactAdmin')}
                     </p>
                 </div>
 

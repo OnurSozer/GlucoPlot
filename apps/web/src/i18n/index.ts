@@ -1,6 +1,6 @@
 /**
  * i18n configuration for GlucoPlot
- * Supports English (default) and Turkish
+ * Supports Turkish (default) and English
  */
 
 import i18n from 'i18next';
@@ -37,12 +37,12 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    fallbackLng: 'en',
+    fallbackLng: 'tr',
     defaultNS: 'common',
     ns: ['common', 'patients', 'onboarding', 'dailyLogs'],
 
     detection: {
-      order: ['localStorage', 'navigator'],
+      order: ['localStorage'],
       caches: ['localStorage'],
       lookupLocalStorage: 'glucoplot_language',
     },
