@@ -9,7 +9,7 @@ import type { PhysicalData } from '../../../../types/onboarding.types';
 interface PhysicalInfoCardProps {
     data: PhysicalData;
     patientId: string;
-    gender?: 'male' | 'female' | 'other';
+    gender?: 'male' | 'female';
     onUpdate?: (data: PhysicalData) => void;
 }
 

@@ -142,7 +142,6 @@ export function CreatePatientModal({ isOpen, onClose, onCreated }: CreatePatient
                                 <option value="">{t('createModal.genderSelect')}</option>
                                 <option value="male">{t('createModal.genderMale')}</option>
                                 <option value="female">{t('createModal.genderFemale')}</option>
-                                <option value="other">{t('createModal.genderOther')}</option>
                             </select>
                         </div>
                     </div>

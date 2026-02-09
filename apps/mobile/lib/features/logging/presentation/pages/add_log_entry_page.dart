@@ -201,6 +201,7 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
       final time = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.fromDateTime(_selectedDateTime),
+        initialEntryMode: TimePickerEntryMode.input,
       );
 
       if (time != null && mounted) {

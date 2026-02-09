@@ -85,6 +85,7 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
       final time = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.fromDateTime(_selectedDateTime),
+        initialEntryMode: TimePickerEntryMode.input,
       );
 
       if (time != null && mounted) {

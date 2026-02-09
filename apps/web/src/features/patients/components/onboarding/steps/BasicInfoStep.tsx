@@ -189,7 +189,6 @@ export function BasicInfoStep({
             <option value="">{t('common:common.select')}</option>
             <option value="male">{t('common:common.male')}</option>
             <option value="female">{t('common:common.female')}</option>
-            <option value="other">{t('common:common.other')}</option>
           </select>
         </div>
         <Input

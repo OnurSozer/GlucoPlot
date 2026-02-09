@@ -20,13 +20,9 @@ export type DiabetesType =
 export type MedicationClass = 'insulin' | 'oral_hypoglycemic' | 'none';
 
 export type InsulinType =
-  | 'none'
   | 'nph'
   | 'lente'
-  | 'ultralente'
-  | 'regular'
-  | 'rapid'
-  | 'long';
+  | 'ultralente';
 
 export type MedTimePeriod =
   | 'morning'
@@ -85,7 +81,7 @@ export interface RelativeInfo {
 export interface BasicInfoData {
   full_name: string;
   national_id?: string;
-  gender?: 'male' | 'female' | 'other';
+  gender?: 'male' | 'female';
   date_of_birth?: string;
   phone?: string;
   emergency_contact_phone?: string;
@@ -319,11 +315,7 @@ export const DIABETES_TYPES: DiabetesType[] = [
 ];
 
 export const INSULIN_TYPES: InsulinType[] = [
-  'none',
   'nph',
   'lente',
   'ultralente',
-  'regular',
-  'rapid',
-  'long',
 ];

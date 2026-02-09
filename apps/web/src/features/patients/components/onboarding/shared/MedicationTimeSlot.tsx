@@ -43,19 +43,15 @@ export function MedicationTimeSlot({
 
   const getInsulinTypeLabel = (type: InsulinType): string => {
     const keyMap: Record<InsulinType, string> = {
-      none: 'onboarding:insulinSchedule.insulinTypes.none',
       nph: 'onboarding:insulinSchedule.insulinTypes.nph',
       lente: 'onboarding:insulinSchedule.insulinTypes.lente',
       ultralente: 'onboarding:insulinSchedule.insulinTypes.ultralente',
-      regular: 'onboarding:insulinSchedule.insulinTypes.regular',
-      rapid: 'onboarding:insulinSchedule.insulinTypes.rapid',
-      long: 'onboarding:insulinSchedule.insulinTypes.long',
     };
     return t(keyMap[type]);
   };
 
   const handleTypeChange = (selectedType: string) => {
-    if (selectedType === 'none' || selectedType === '') {
+    if (selectedType === '') {
       onChange(undefined);
     } else {
       onChange({
@@ -86,7 +82,7 @@ export function MedicationTimeSlot({
   };
 
   const isActive = value?.is_active !== false && (
-    mode === 'insulin' ? value?.insulin_type && value.insulin_type !== 'none' : true
+    mode === 'insulin' ? !!value?.insulin_type : true
   );
 
   return (
@@ -102,7 +98,7 @@ export function MedicationTimeSlot({
           <select
             value={
               mode === 'insulin'
-                ? value?.insulin_type || 'none'
+                ? value?.insulin_type || ''
                 : value?.is_active ? 'yes' : 'none'
             }
             onChange={(e) => handleTypeChange(e.target.value)}
@@ -110,11 +106,14 @@ export function MedicationTimeSlot({
             className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
           >
             {mode === 'insulin' ? (
-              INSULIN_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {getInsulinTypeLabel(type)}
-                </option>
-              ))
+              <>
+                <option value="">{t('onboarding:insulinSchedule.insulinTypes.none')}</option>
+                {INSULIN_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {getInsulinTypeLabel(type)}
+                  </option>
+                ))}
+              </>
             ) : (
               <>
                 <option value="none">{t('onboarding:oralMedication.medicationOptions.none')}</option>

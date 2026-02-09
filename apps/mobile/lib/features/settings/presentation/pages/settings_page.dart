@@ -270,6 +270,7 @@ class SettingsPage extends StatelessWidget {
     final TimeOfDay? selectedTime = await showTimePicker(
       context: context,
       initialTime: settings.usualSleepTime,
+      initialEntryMode: TimePickerEntryMode.input,
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
