@@ -65,10 +65,10 @@ export function EditDoctorModal({ isOpen, onClose, onSuccess, doctor }: EditDoct
                 specialty: formData.specialty.trim() || null,
             });
 
-            if (result.data?.success || result.data) {
+            if (!result.error) {
                 onSuccess();
             } else {
-                setError(result.data?.error || t('admin.editDoctor.error'));
+                setError(result.error.message || t('admin.editDoctor.error'));
             }
         } catch (err) {
             console.error('Update doctor error:', err);
