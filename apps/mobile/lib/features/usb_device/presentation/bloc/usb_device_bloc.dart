@@ -16,6 +16,13 @@ class UsbDeviceBloc extends Bloc<UsbDeviceEvent, UsbDeviceState> {
   StreamSubscription? _deviceReadySubscription;
   StreamSubscription? _measurementStartedSubscription;
 
+  /// Timer to detect when deviceReady heartbeat stops (strip removed)
+  Timer? _deviceReadyTimeoutTimer;
+
+  /// Timeout duration: if no deviceReady received within this period,
+  /// assume the strip was removed. Device sends ~every 1s, so 3s is safe.
+  static const _deviceReadyTimeout = Duration(seconds: 3);
+
   /// Maximum number of readings to keep in history
   static const int _maxHistorySize = 50;
 
@@ -31,6 +38,7 @@ class UsbDeviceBloc extends Bloc<UsbDeviceEvent, UsbDeviceState> {
     on<UsbClearLatestReadingRequested>(_onClearLatestReadingRequested);
     on<UsbDeviceReadyReceived>(_onDeviceReady);
     on<UsbMeasurementStartedReceived>(_onMeasurementStarted);
+    on<UsbDeviceReadyTimeout>(_onDeviceReadyTimeout);
 
     _setupStreamListeners();
   }
@@ -86,6 +94,7 @@ class UsbDeviceBloc extends Bloc<UsbDeviceEvent, UsbDeviceState> {
       ));
     } else {
       // Device disconnected: reset all device-related state
+      _deviceReadyTimeoutTimer?.cancel();
       emit(state.copyWith(
         connectionStatus: event.status,
         isLoading: false,
@@ -151,17 +160,38 @@ class UsbDeviceBloc extends Bloc<UsbDeviceEvent, UsbDeviceState> {
     Emitter<UsbDeviceState> emit,
   ) {
     emit(state.copyWith(isDeviceReady: true));
+
+    // Reset heartbeat timer — if no deviceReady arrives within the timeout,
+    // we assume the strip was removed
+    _deviceReadyTimeoutTimer?.cancel();
+    _deviceReadyTimeoutTimer = Timer(_deviceReadyTimeout, () {
+      add(const UsbDeviceReadyTimeout());
+    });
   }
 
   void _onMeasurementStarted(
     UsbMeasurementStartedReceived event,
     Emitter<UsbDeviceState> emit,
   ) {
+    // Measurement in progress — stop watching for strip removal
+    _deviceReadyTimeoutTimer?.cancel();
     emit(state.copyWith(isMeasuring: true));
+  }
+
+  void _onDeviceReadyTimeout(
+    UsbDeviceReadyTimeout event,
+    Emitter<UsbDeviceState> emit,
+  ) {
+    // Only reset if we're still in the deviceReady state and not measuring
+    if (state.isDeviceReady && !state.isMeasuring) {
+      print('[UsbBloc] DeviceReady heartbeat timed out — strip likely removed');
+      emit(state.copyWith(isDeviceReady: false));
+    }
   }
 
   @override
   Future<void> close() {
+    _deviceReadyTimeoutTimer?.cancel();
     _connectionStatusSubscription?.cancel();
     _glucoseReadingSubscription?.cancel();
     _deviceInfoSubscription?.cancel();

@@ -71,3 +71,8 @@ class UsbDeviceReadyReceived extends UsbDeviceEvent {
 class UsbMeasurementStartedReceived extends UsbDeviceEvent {
   const UsbMeasurementStartedReceived();
 }
+
+/// Internal event fired when deviceReady heartbeat times out (strip removed)
+class UsbDeviceReadyTimeout extends UsbDeviceEvent {
+  const UsbDeviceReadyTimeout();
+}
