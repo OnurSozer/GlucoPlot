@@ -109,6 +109,7 @@ class MeasurementRepositoryImpl implements MeasurementRepository {
     required DateTime measuredAt,
     MealTiming? mealTiming,
     String? notes,
+    bool isAutoSaved = false,
   }) async {
     try {
       final patientId = await _getCurrentPatientId();
@@ -126,6 +127,7 @@ class MeasurementRepositoryImpl implements MeasurementRepository {
         measuredAt: measuredAt,
         mealTiming: mealTiming,
         notes: notes,
+        isAutoSaved: isAutoSaved,
       );
 
       final result = await _remoteDataSource.addMeasurement(model);

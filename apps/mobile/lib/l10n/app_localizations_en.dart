@@ -599,6 +599,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get managePreferences => 'Manage your preferences';
 
   @override
+  String get discardMeasurement => 'Do you want to leave without saving?';
+
+  @override
+  String get discard => 'Discard';
+
+  @override
+  String get mealTimingFasting => 'Fasting';
+
+  @override
+  String get mealTimingPostMeal => 'After Meal';
+
+  @override
+  String get mealTimingOther => 'Other';
+
+  @override
+  String get selectMealTiming => 'Select meal timing';
+
+  @override
   String get pleaseEnterValue => 'Please enter a value';
 
   @override

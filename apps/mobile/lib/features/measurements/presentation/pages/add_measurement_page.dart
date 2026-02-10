@@ -7,6 +7,7 @@ import '../../../../core/theme/theme.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/measurement.dart' as domain;
+import '../../domain/entities/measurement.dart' show MealTiming;
 import '../bloc/measurement_bloc.dart';
 
 /// Add measurement page
@@ -31,6 +32,7 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
   DateTime _selectedDateTime = DateTime.now();
   bool _isSubmitting = false;
   bool _showTypeSelector = true;
+  bool _allowPop = false;
 
   @override
   void initState() {
@@ -102,6 +104,116 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
     }
   }
 
+  bool get _hasInput =>
+      _valueController.text.isNotEmpty ||
+      _secondaryController.text.isNotEmpty ||
+      _notesController.text.isNotEmpty;
+
+  Future<void> _handleClose() async {
+    if (!_hasInput) {
+      setState(() => _allowPop = true);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.pop();
+      });
+      return;
+    }
+
+    final l10n = AppLocalizations.of(context)!;
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.discardMeasurement),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop('discard'),
+            child: Text(
+              l10n.discard,
+              style: const TextStyle(color: Colors.red),
+            ),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop('save'),
+            child: Text(l10n.save),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (result == 'discard') {
+      setState(() => _allowPop = true);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.pop();
+      });
+    } else if (result == 'save') {
+      await _submitWithMealTiming();
+    }
+  }
+
+  Future<MealTiming?> _showMealTimingPicker() async {
+    final l10n = AppLocalizations.of(context)!;
+    return showDialog<MealTiming>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text(l10n.selectMealTiming),
+        children: [
+          SimpleDialogOption(
+            onPressed: () => Navigator.of(context).pop(MealTiming.fasting),
+            child: Text(l10n.mealTimingFasting),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.of(context).pop(MealTiming.postMeal),
+            child: Text(l10n.mealTimingPostMeal),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.of(context).pop(MealTiming.other),
+            child: Text(l10n.mealTimingOther),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _submitWithMealTiming() async {
+    final l10n = AppLocalizations.of(context)!;
+
+    if (_valueController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.pleaseEnterValue)),
+      );
+      return;
+    }
+
+    final value = double.tryParse(_valueController.text);
+    if (value == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.pleaseEnterValidNumber)),
+      );
+      return;
+    }
+
+    double? secondaryValue;
+    if (_selectedType == _MeasurementTypeUI.bloodPressure) {
+      secondaryValue = double.tryParse(_secondaryController.text);
+      if (secondaryValue == null && _secondaryController.text.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.pleaseEnterValidDiastolic)),
+        );
+        return;
+      }
+    }
+
+    // Ask for meal timing for glucose measurements
+    MealTiming? mealTiming;
+    if (_selectedType == _MeasurementTypeUI.glucose && mounted) {
+      mealTiming = await _showMealTimingPicker();
+      if (mealTiming == null && mounted) return; // User cancelled
+    }
+
+    await _doSubmit(value, secondaryValue, mealTiming);
+  }
+
   Future<void> _submit() async {
     final l10n = AppLocalizations.of(context)!;
 
@@ -131,6 +243,19 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
       }
     }
 
+    // Ask for meal timing for glucose measurements
+    MealTiming? mealTiming;
+    if (_selectedType == _MeasurementTypeUI.glucose && mounted) {
+      mealTiming = await _showMealTimingPicker();
+      if (mealTiming == null && mounted) return; // User cancelled
+    }
+
+    await _doSubmit(value, secondaryValue, mealTiming);
+  }
+
+  Future<void> _doSubmit(double value, double? secondaryValue, MealTiming? mealTiming) async {
+    final l10n = AppLocalizations.of(context)!;
+
     setState(() => _isSubmitting = true);
 
     // Dispatch add event to BLoC
@@ -140,14 +265,18 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
       secondaryValue: secondaryValue,
       unit: _selectedType.unit,
       measuredAt: _selectedDateTime,
+      mealTiming: mealTiming,
       notes: _notesController.text.isEmpty ? null : _notesController.text,
-    ));
+    ),);
 
     // Wait a bit for the operation
     await Future.delayed(const Duration(milliseconds: 300));
 
     if (mounted) {
-      setState(() => _isSubmitting = false);
+      setState(() {
+        _isSubmitting = false;
+        _allowPop = true;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(l10n.measurementSaved),
@@ -164,102 +293,109 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
-          onPressed: () => context.pop(),
+    return PopScope(
+      canPop: _allowPop,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        await _handleClose();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.close_rounded),
+            onPressed: _handleClose,
+          ),
+          title: Text(l10n.addMeasurement),
         ),
-        title: Text(l10n.addMeasurement),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: SizedBox(
-            height: 56,
-            child: ElevatedButton(
-              onPressed: _isSubmitting ? null : _submit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: SizedBox(
+              height: 56,
+              child: ElevatedButton(
+                onPressed: _isSubmitting ? null : _submit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 0,
                 ),
-                elevation: 0,
-              ),
-              child: _isSubmitting
-                  ? const AppLoadingIndicator(size: 24, color: Colors.white)
-                  : Text(
-                      l10n.save,
-                      style: AppTypography.labelLarge.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
+                child: _isSubmitting
+                    ? const AppLoadingIndicator(size: 24, color: Colors.white)
+                    : Text(
+                        l10n.save,
+                        style: AppTypography.labelLarge.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
+              ),
             ),
           ),
         ),
-      ),
-      body: SingleChildScrollView(
-        padding: AppSpacing.pagePadding,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Measurement type selector (only shown when no initial type provided)
-            if (_showTypeSelector) ...[
+        body: SingleChildScrollView(
+          padding: AppSpacing.pagePadding,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Measurement type selector (only shown when no initial type provided)
+              if (_showTypeSelector) ...[
+                Text(
+                  l10n.selectType,
+                  style: AppTypography.labelMedium.copyWith(
+                    color: textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildTypeSelector(l10n),
+                const SizedBox(height: 32),
+              ],
+
+              // Value input
+              MeasurementInputField(
+                controller: _valueController,
+                label: _getTypeLabel(l10n, _selectedType),
+                unit: _selectedType.unit,
+                hint: _selectedType.hint,
+                autofocus: true,
+              ),
+
+              // Secondary value for blood pressure
+              if (_selectedType == _MeasurementTypeUI.bloodPressure) ...[
+                const SizedBox(height: 16),
+                MeasurementInputField(
+                  controller: _secondaryController,
+                  label: l10n.diastolic,
+                  unit: 'mmHg',
+                  hint: '80',
+                ),
+              ],
+
+              const SizedBox(height: 24),
+
+              // Date/time selector
               Text(
-                l10n.selectType,
+                l10n.whenMeasured,
                 style: AppTypography.labelMedium.copyWith(
                   color: textSecondary,
                 ),
               ),
               const SizedBox(height: 12),
-              _buildTypeSelector(l10n),
-              const SizedBox(height: 32),
-            ],
+              _buildDateTimeSelector(l10n),
 
-            // Value input
-            MeasurementInputField(
-              controller: _valueController,
-              label: _getTypeLabel(l10n, _selectedType),
-              unit: _selectedType.unit,
-              hint: _selectedType.hint,
-              autofocus: true,
-            ),
+              const SizedBox(height: 24),
 
-            // Secondary value for blood pressure
-            if (_selectedType == _MeasurementTypeUI.bloodPressure) ...[
-              const SizedBox(height: 16),
-              MeasurementInputField(
-                controller: _secondaryController,
-                label: l10n.diastolic,
-                unit: 'mmHg',
-                hint: '80',
+              // Notes
+              AppTextField(
+                controller: _notesController,
+                label: l10n.notes,
+                hint: l10n.notesHint,
+                maxLines: 3,
               ),
             ],
-
-            const SizedBox(height: 24),
-
-            // Date/time selector
-            Text(
-              l10n.whenMeasured,
-              style: AppTypography.labelMedium.copyWith(
-                color: textSecondary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            _buildDateTimeSelector(l10n),
-
-            const SizedBox(height: 24),
-
-            // Notes
-            AppTextField(
-              controller: _notesController,
-              label: l10n.notes,
-              hint: l10n.notesHint,
-              maxLines: 3,
-            ),
-          ],
+          ),
         ),
       ),
     );

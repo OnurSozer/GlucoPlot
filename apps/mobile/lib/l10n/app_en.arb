@@ -226,6 +226,13 @@
   "selectLanguage": "Select Language",
   "managePreferences": "Manage your preferences",
 
+  "discardMeasurement": "Do you want to leave without saving?",
+  "discard": "Discard",
+  "mealTimingFasting": "Fasting",
+  "mealTimingPostMeal": "After Meal",
+  "mealTimingOther": "Other",
+  "selectMealTiming": "Select meal timing",
+
   "pleaseEnterValue": "Please enter a value",
   "pleaseEnterValidNumber": "Please enter a valid number",
   "pleaseEnterValidDiastolic": "Please enter a valid diastolic value",

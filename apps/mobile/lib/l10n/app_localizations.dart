@@ -1262,6 +1262,42 @@ abstract class AppLocalizations {
   /// **'Manage your preferences'**
   String get managePreferences;
 
+  /// No description provided for @discardMeasurement.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to leave without saving?'**
+  String get discardMeasurement;
+
+  /// No description provided for @discard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get discard;
+
+  /// No description provided for @mealTimingFasting.
+  ///
+  /// In en, this message translates to:
+  /// **'Fasting'**
+  String get mealTimingFasting;
+
+  /// No description provided for @mealTimingPostMeal.
+  ///
+  /// In en, this message translates to:
+  /// **'After Meal'**
+  String get mealTimingPostMeal;
+
+  /// No description provided for @mealTimingOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get mealTimingOther;
+
+  /// No description provided for @selectMealTiming.
+  ///
+  /// In en, this message translates to:
+  /// **'Select meal timing'**
+  String get selectMealTiming;
+
   /// No description provided for @pleaseEnterValue.
   ///
   /// In en, this message translates to:

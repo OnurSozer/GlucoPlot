@@ -112,6 +112,7 @@ class Measurement extends Equatable {
     required this.measuredAt,
     this.mealTiming,
     this.notes,
+    this.isAutoSaved = false,
     this.createdAt,
   });
 
@@ -124,6 +125,7 @@ class Measurement extends Equatable {
   final DateTime measuredAt;
   final MealTiming? mealTiming; // For glucose measurements
   final String? notes;
+  final bool isAutoSaved; // True if auto-saved by device without user confirmation
   final DateTime? createdAt;
 
   @override
@@ -137,6 +139,7 @@ class Measurement extends Equatable {
         measuredAt,
         mealTiming,
         notes,
+        isAutoSaved,
         createdAt,
       ];
 
@@ -164,6 +167,7 @@ class Measurement extends Equatable {
     DateTime? measuredAt,
     MealTiming? mealTiming,
     String? notes,
+    bool? isAutoSaved,
     DateTime? createdAt,
   }) {
     return Measurement(
@@ -176,6 +180,7 @@ class Measurement extends Equatable {
       measuredAt: measuredAt ?? this.measuredAt,
       mealTiming: mealTiming ?? this.mealTiming,
       notes: notes ?? this.notes,
+      isAutoSaved: isAutoSaved ?? this.isAutoSaved,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -192,6 +197,7 @@ class Measurement extends Equatable {
       'measured_at': measuredAt.toIso8601String(),
       'meal_timing': mealTiming?.value,
       'notes': notes,
+      'is_auto_saved': isAutoSaved,
       'created_at': createdAt?.toIso8601String(),
     };
   }
@@ -210,6 +216,7 @@ class Measurement extends Equatable {
       measuredAt: DateTime.parse(json['measured_at'] as String),
       mealTiming: MealTiming.fromString(json['meal_timing'] as String?),
       notes: json['notes'] as String?,
+      isAutoSaved: json['is_auto_saved'] as bool? ?? false,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : null,

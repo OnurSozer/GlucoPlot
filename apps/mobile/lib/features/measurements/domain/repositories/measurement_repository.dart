@@ -41,6 +41,7 @@ abstract class MeasurementRepository {
     required DateTime measuredAt,
     MealTiming? mealTiming,
     String? notes,
+    bool isAutoSaved = false,
   });
 
   /// Update a measurement

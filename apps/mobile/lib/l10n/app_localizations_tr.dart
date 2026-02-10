@@ -601,6 +601,24 @@ class AppLocalizationsTr extends AppLocalizations {
   String get managePreferences => 'Tercihlerinizi yönetin';
 
   @override
+  String get discardMeasurement => 'Ölçümü kaydetmeden çıkmak istiyor musunuz?';
+
+  @override
+  String get discard => 'Sil';
+
+  @override
+  String get mealTimingFasting => 'Açlık';
+
+  @override
+  String get mealTimingPostMeal => 'Tokluk';
+
+  @override
+  String get mealTimingOther => 'Diğer';
+
+  @override
+  String get selectMealTiming => 'Ölçüm zamanı seçin';
+
+  @override
   String get pleaseEnterValue => 'Lütfen bir değer girin';
 
   @override

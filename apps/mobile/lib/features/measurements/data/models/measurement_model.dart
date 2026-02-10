@@ -12,6 +12,7 @@ class MeasurementModel extends Measurement {
     required super.measuredAt,
     super.mealTiming,
     super.notes,
+    super.isAutoSaved,
     super.createdAt,
   });
 
@@ -29,6 +30,7 @@ class MeasurementModel extends Measurement {
       measuredAt: DateTime.parse(json['measured_at'] as String).toLocal(),
       mealTiming: MealTiming.fromString(json['meal_timing'] as String?),
       notes: json['notes'] as String?,
+      isAutoSaved: json['is_auto_saved'] as bool? ?? false,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String).toLocal()
           : null,
@@ -47,6 +49,7 @@ class MeasurementModel extends Measurement {
       measuredAt: measurement.measuredAt,
       mealTiming: measurement.mealTiming,
       notes: measurement.notes,
+      isAutoSaved: measurement.isAutoSaved,
       createdAt: measurement.createdAt,
     );
   }
@@ -62,6 +65,7 @@ class MeasurementModel extends Measurement {
       'measured_at': measuredAt.toUtc().toIso8601String(),
       if (mealTiming != null) 'meal_timing': mealTiming!.value,
       if (notes != null) 'notes': notes,
+      'is_auto_saved': isAutoSaved,
     };
   }
 
@@ -75,6 +79,7 @@ class MeasurementModel extends Measurement {
       'measured_at': measuredAt.toUtc().toIso8601String(),
       'meal_timing': mealTiming?.value,
       'notes': notes,
+      'is_auto_saved': isAutoSaved,
     };
   }
 }

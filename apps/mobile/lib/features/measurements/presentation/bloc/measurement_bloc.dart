@@ -120,6 +120,7 @@ class MeasurementBloc extends HydratedBloc<MeasurementEvent, MeasurementState> {
       secondaryValue: event.secondaryValue,
       unit: event.unit,
       measuredAt: event.measuredAt,
+      mealTiming: event.mealTiming,
       notes: event.notes,
     );
 

@@ -15,8 +15,8 @@ import '../bloc/usb_device_state.dart';
 
 /// Premium glucose measurement page with USB device integration
 /// Step 1: Connect device with instructions
-/// Step 2: Display measurement result
-/// Step 3: Select meal timing and save
+/// Step 2: Display measurement result (auto-saved immediately)
+/// Step 3: User can optionally select meal timing and save (overrides auto-save)
 class GlucoseMeasurementPage extends StatefulWidget {
   const GlucoseMeasurementPage({super.key});
 
@@ -28,6 +28,10 @@ class _GlucoseMeasurementPageState extends State<GlucoseMeasurementPage> {
   MealTiming? _selectedMealTiming;
   GlucoseReading? _capturedReading;
   bool _isSaving = false;
+  bool _allowPop = false;
+
+  /// The ID of the auto-saved measurement in the database
+  String? _autoSavedMeasurementId;
 
   @override
   void initState() {
@@ -101,9 +105,99 @@ class _GlucoseMeasurementPageState extends State<GlucoseMeasurementPage> {
 
   String _getGlucoseUnit() => 'mg/dL';
 
+  /// Auto-save the reading immediately when received from the device
+  Future<void> _autoSaveReading(GlucoseReading reading) async {
+    try {
+      final repository = sl<MeasurementRepository>();
+      final result = await repository.addMeasurement(
+        type: MeasurementType.glucose,
+        value: reading.concentration,
+        unit: 'mg/dL',
+        measuredAt: reading.timestamp,
+        isAutoSaved: true,
+      );
+
+      if (!mounted) return;
+
+      switch (result) {
+        case MeasurementSuccess(:final data):
+          setState(() {
+            _autoSavedMeasurementId = data.id;
+          });
+        case MeasurementFailure(:final message):
+          debugPrint('Auto-save failed: $message');
+      }
+    } catch (e) {
+      debugPrint('Auto-save error: $e');
+    }
+  }
+
+  /// Save with meal timing: update the existing auto-saved record
+  Future<void> _saveWithMealTiming(MealTiming mealTiming) async {
+    if (_capturedReading == null || _autoSavedMeasurementId == null) return;
+
+    setState(() => _isSaving = true);
+    HapticFeedback.mediumImpact();
+
+    try {
+      final repository = sl<MeasurementRepository>();
+
+      // Get the existing measurement and update it
+      final getResult = await repository.getMeasurement(_autoSavedMeasurementId!);
+
+      if (!mounted) return;
+
+      switch (getResult) {
+        case MeasurementSuccess(:final data):
+          final updated = data.copyWith(
+            mealTiming: mealTiming,
+            isAutoSaved: false,
+          );
+          final updateResult = await repository.updateMeasurement(updated);
+
+          if (!mounted) return;
+
+          switch (updateResult) {
+            case MeasurementSuccess():
+              final l10n = AppLocalizations.of(context)!;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    l10n.localeName == 'tr'
+                        ? 'Ölçüm kaydedildi'
+                        : 'Measurement saved',
+                  ),
+                  backgroundColor: AppColors.success,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+              _popPage();
+            case MeasurementFailure(:final message):
+              _showErrorSnackBar(message);
+              setState(() => _isSaving = false);
+          }
+        case MeasurementFailure(:final message):
+          _showErrorSnackBar(message);
+          setState(() => _isSaving = false);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _showErrorSnackBar('$e');
+      setState(() => _isSaving = false);
+    }
+  }
+
+  /// Legacy save for when auto-save hasn't completed yet (fallback)
   Future<void> _saveReading() async {
     if (_capturedReading == null || _selectedMealTiming == null) return;
 
+    // If we have an auto-saved record, update it
+    if (_autoSavedMeasurementId != null) {
+      await _saveWithMealTiming(_selectedMealTiming!);
+      return;
+    }
+
+    // Fallback: create new record if auto-save somehow didn't work
     setState(() => _isSaving = true);
     HapticFeedback.mediumImpact();
 
@@ -115,14 +209,14 @@ class _GlucoseMeasurementPageState extends State<GlucoseMeasurementPage> {
         unit: 'mg/dL',
         measuredAt: _capturedReading!.timestamp,
         mealTiming: _selectedMealTiming,
+        isAutoSaved: false,
       );
 
       if (!mounted) return;
 
-      final l10n = AppLocalizations.of(context)!;
-
       switch (result) {
         case MeasurementSuccess():
+          final l10n = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -134,38 +228,202 @@ class _GlucoseMeasurementPageState extends State<GlucoseMeasurementPage> {
               behavior: SnackBarBehavior.floating,
             ),
           );
-          context.pop();
+          _popPage();
         case MeasurementFailure(:final message):
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                l10n.localeName == 'tr'
-                    ? 'Kayıt başarısız: $message'
-                    : 'Failed to save: $message',
-              ),
-              backgroundColor: AppColors.error,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          _showErrorSnackBar(message);
           setState(() => _isSaving = false);
       }
     } catch (e) {
       if (!mounted) return;
-
-      final l10n = AppLocalizations.of(context)!;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            l10n.localeName == 'tr'
-                ? 'Kayıt başarısız: $e'
-                : 'Failed to save: $e',
-          ),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      _showErrorSnackBar('$e');
       setState(() => _isSaving = false);
     }
+  }
+
+  void _showErrorSnackBar(String message) {
+    final l10n = AppLocalizations.of(context)!;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          l10n.localeName == 'tr'
+              ? 'Kayıt başarısız: $message'
+              : 'Failed to save: $message',
+        ),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _popPage() {
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.pop();
+    });
+  }
+
+  /// Handle X button or back button press
+  Future<void> _handleClose() async {
+    // If no reading captured yet, just close
+    if (_capturedReading == null) {
+      _popPage();
+      return;
+    }
+
+    final l10n = AppLocalizations.of(context)!;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final glucoseColor = isDark ? AppColors.glucoseDark : AppColors.glucose;
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          l10n.localeName == 'tr'
+              ? 'Ölçüm kaydedilmedi'
+              : 'Measurement not saved',
+        ),
+        content: Text(
+          l10n.localeName == 'tr'
+              ? 'Ölçüm zamanı seçmeden çıkmak istediğinize emin misiniz?'
+              : 'Are you sure you want to leave without selecting meal timing?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop('delete'),
+            child: Text(
+              l10n.localeName == 'tr' ? 'Sil' : 'Delete',
+              style: TextStyle(
+                color: isDark ? AppColors.errorDark : AppColors.error,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop('save'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: glucoseColor,
+              foregroundColor: Colors.white,
+            ),
+            child: Text(
+              l10n.localeName == 'tr' ? 'Kaydet' : 'Save',
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted || result == null) return;
+
+    if (result == 'delete') {
+      // User chose "Sil" - keep auto-saved record as-is, just close
+      _popPage();
+    } else if (result == 'save') {
+      // User chose "Kaydet" - show meal timing picker
+      await _showMealTimingPicker();
+    }
+  }
+
+  /// Show meal timing bottom sheet when user chooses "Kaydet" from popup
+  Future<void> _showMealTimingPicker() async {
+    final l10n = AppLocalizations.of(context)!;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final glucoseColor = isDark ? AppColors.glucoseDark : AppColors.glucose;
+    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+    final cardBg = isDark ? AppColors.darkCardBackground : AppColors.cardBackground;
+
+    final selected = await showModalBottomSheet<MealTiming>(
+      context: context,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: textSecondary.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  _getSelectMealTiming(l10n),
+                  style: AppTypography.titleMedium.copyWith(
+                    color: textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: MealTiming.values.map((timing) {
+                    return Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          left: timing == MealTiming.fasting ? 0 : 6,
+                          right: timing == MealTiming.other ? 0 : 6,
+                        ),
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            Navigator.of(context).pop(timing);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            decoration: BoxDecoration(
+                              color: cardBg,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isDark
+                                    ? AppColors.darkBorderSubtle
+                                    : AppColors.border,
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  timing == MealTiming.fasting
+                                      ? Icons.no_food_rounded
+                                      : timing == MealTiming.postMeal
+                                          ? Icons.restaurant_rounded
+                                          : Icons.schedule_rounded,
+                                  color: glucoseColor,
+                                  size: 28,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  _getMealTimingLabel(timing, l10n),
+                                  style: AppTypography.bodyMedium.copyWith(
+                                    color: textPrimary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (!mounted || selected == null) return;
+
+    // Save with selected meal timing
+    await _saveWithMealTiming(selected);
   }
 
   @override
@@ -174,46 +432,56 @@ class _GlucoseMeasurementPageState extends State<GlucoseMeasurementPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? AppColors.darkBackground : AppColors.background;
 
-    return Scaffold(
-      backgroundColor: bgColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.close_rounded,
-            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-          ),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          l10n.glucoseMeasurement,
-          style: AppTypography.titleLarge.copyWith(
-            color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: BlocConsumer<UsbDeviceBloc, UsbDeviceState>(
-        listener: (context, state) {
-          // Capture reading when received
-          if (state.latestReading != null && _capturedReading == null) {
-            setState(() {
-              _capturedReading = state.latestReading;
-            });
-            HapticFeedback.heavyImpact();
-          }
-        },
-        builder: (context, state) {
-          return SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: _capturedReading != null
-                  ? _buildMeasurementResultView(l10n, isDark)
-                  : _buildConnectionView(state, l10n, isDark),
+    return PopScope(
+      canPop: _allowPop || _capturedReading == null,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          _handleClose();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: bgColor,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(
+              Icons.close_rounded,
+              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
             ),
-          );
-        },
+            onPressed: _handleClose,
+          ),
+          title: Text(
+            l10n.glucoseMeasurement,
+            style: AppTypography.titleLarge.copyWith(
+              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+            ),
+          ),
+          centerTitle: true,
+        ),
+        body: BlocConsumer<UsbDeviceBloc, UsbDeviceState>(
+          listener: (context, state) {
+            // Capture reading when received and auto-save immediately
+            if (state.latestReading != null && _capturedReading == null) {
+              setState(() {
+                _capturedReading = state.latestReading;
+              });
+              HapticFeedback.heavyImpact();
+              // Auto-save to database immediately
+              _autoSaveReading(state.latestReading!);
+            }
+          },
+          builder: (context, state) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: _capturedReading != null
+                    ? _buildMeasurementResultView(l10n, isDark)
+                    : _buildConnectionView(state, l10n, isDark),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

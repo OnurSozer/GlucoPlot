@@ -226,6 +226,13 @@
   "selectLanguage": "Dil Seçin",
   "managePreferences": "Tercihlerinizi yönetin",
 
+  "discardMeasurement": "Ölçümü kaydetmeden çıkmak istiyor musunuz?",
+  "discard": "Sil",
+  "mealTimingFasting": "Açlık",
+  "mealTimingPostMeal": "Tokluk",
+  "mealTimingOther": "Diğer",
+  "selectMealTiming": "Ölçüm zamanı seçin",
+
   "pleaseEnterValue": "Lütfen bir değer girin",
   "pleaseEnterValidNumber": "Lütfen geçerli bir sayı girin",
   "pleaseEnterValidDiastolic": "Lütfen geçerli bir diastolik değer girin",

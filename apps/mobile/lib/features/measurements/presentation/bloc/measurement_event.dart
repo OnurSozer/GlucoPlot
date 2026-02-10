@@ -39,6 +39,7 @@ class MeasurementAddRequested extends MeasurementEvent {
     this.secondaryValue,
     this.unit,
     required this.measuredAt,
+    this.mealTiming,
     this.notes,
   });
 
@@ -47,10 +48,11 @@ class MeasurementAddRequested extends MeasurementEvent {
   final double? secondaryValue;
   final String? unit;
   final DateTime measuredAt;
+  final MealTiming? mealTiming;
   final String? notes;
 
   @override
-  List<Object?> get props => [type, value, secondaryValue, unit, measuredAt, notes];
+  List<Object?> get props => [type, value, secondaryValue, unit, measuredAt, mealTiming, notes];
 }
 
 /// Event to delete a measurement
