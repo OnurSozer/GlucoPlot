@@ -42,6 +42,8 @@ abstract class MeasurementRepository {
     MealTiming? mealTiming,
     String? notes,
     bool isAutoSaved = false,
+    String? deviceId,
+    String? source,
   });
 
   /// Update a measurement

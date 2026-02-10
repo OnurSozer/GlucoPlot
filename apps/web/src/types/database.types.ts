@@ -79,6 +79,8 @@ export interface Measurement {
     source: MeasurementSource;
     meal_timing: MealTiming | null;
     notes: string | null;
+    is_auto_saved: boolean;
+    device_id: string | null;
     created_at: string;
 }
 

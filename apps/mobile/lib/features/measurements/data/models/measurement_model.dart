@@ -13,6 +13,8 @@ class MeasurementModel extends Measurement {
     super.mealTiming,
     super.notes,
     super.isAutoSaved,
+    super.deviceId,
+    super.source,
     super.createdAt,
   });
 
@@ -31,6 +33,8 @@ class MeasurementModel extends Measurement {
       mealTiming: MealTiming.fromString(json['meal_timing'] as String?),
       notes: json['notes'] as String?,
       isAutoSaved: json['is_auto_saved'] as bool? ?? false,
+      deviceId: json['device_id'] as String?,
+      source: json['source'] as String?,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String).toLocal()
           : null,
@@ -50,6 +54,8 @@ class MeasurementModel extends Measurement {
       mealTiming: measurement.mealTiming,
       notes: measurement.notes,
       isAutoSaved: measurement.isAutoSaved,
+      deviceId: measurement.deviceId,
+      source: measurement.source,
       createdAt: measurement.createdAt,
     );
   }
@@ -66,6 +72,8 @@ class MeasurementModel extends Measurement {
       if (mealTiming != null) 'meal_timing': mealTiming!.value,
       if (notes != null) 'notes': notes,
       'is_auto_saved': isAutoSaved,
+      if (deviceId != null) 'device_id': deviceId,
+      if (source != null) 'source': source,
     };
   }
 
@@ -80,6 +88,8 @@ class MeasurementModel extends Measurement {
       'meal_timing': mealTiming?.value,
       'notes': notes,
       'is_auto_saved': isAutoSaved,
+      'device_id': deviceId,
+      'source': source,
     };
   }
 }

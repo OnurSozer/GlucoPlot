@@ -106,7 +106,7 @@ class _GlucoseMeasurementPageState extends State<GlucoseMeasurementPage> {
   String _getGlucoseUnit() => 'mg/dL';
 
   /// Auto-save the reading immediately when received from the device
-  Future<void> _autoSaveReading(GlucoseReading reading) async {
+  Future<void> _autoSaveReading(GlucoseReading reading, {String? deviceId}) async {
     try {
       final repository = sl<MeasurementRepository>();
       final result = await repository.addMeasurement(
@@ -115,6 +115,8 @@ class _GlucoseMeasurementPageState extends State<GlucoseMeasurementPage> {
         unit: 'mg/dL',
         measuredAt: reading.timestamp,
         isAutoSaved: true,
+        deviceId: deviceId,
+        source: 'device',
       );
 
       if (!mounted) return;
@@ -202,6 +204,7 @@ class _GlucoseMeasurementPageState extends State<GlucoseMeasurementPage> {
     HapticFeedback.mediumImpact();
 
     try {
+      final deviceId = context.read<UsbDeviceBloc>().state.deviceInfo?.deviceId;
       final repository = sl<MeasurementRepository>();
       final result = await repository.addMeasurement(
         type: MeasurementType.glucose,
@@ -210,6 +213,8 @@ class _GlucoseMeasurementPageState extends State<GlucoseMeasurementPage> {
         measuredAt: _capturedReading!.timestamp,
         mealTiming: _selectedMealTiming,
         isAutoSaved: false,
+        deviceId: deviceId,
+        source: 'device',
       );
 
       if (!mounted) return;
@@ -468,7 +473,7 @@ class _GlucoseMeasurementPageState extends State<GlucoseMeasurementPage> {
               });
               HapticFeedback.heavyImpact();
               // Auto-save to database immediately
-              _autoSaveReading(state.latestReading!);
+              _autoSaveReading(state.latestReading!, deviceId: state.deviceInfo?.deviceId);
             }
           },
           builder: (context, state) {

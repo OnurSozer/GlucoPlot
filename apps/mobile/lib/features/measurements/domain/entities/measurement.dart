@@ -113,6 +113,8 @@ class Measurement extends Equatable {
     this.mealTiming,
     this.notes,
     this.isAutoSaved = false,
+    this.deviceId,
+    this.source,
     this.createdAt,
   });
 
@@ -126,6 +128,8 @@ class Measurement extends Equatable {
   final MealTiming? mealTiming; // For glucose measurements
   final String? notes;
   final bool isAutoSaved; // True if auto-saved by device without user confirmation
+  final String? deviceId; // Physical device ID that produced this measurement
+  final String? source; // 'device' or 'manual'
   final DateTime? createdAt;
 
   @override
@@ -140,6 +144,8 @@ class Measurement extends Equatable {
         mealTiming,
         notes,
         isAutoSaved,
+        deviceId,
+        source,
         createdAt,
       ];
 
@@ -168,6 +174,8 @@ class Measurement extends Equatable {
     MealTiming? mealTiming,
     String? notes,
     bool? isAutoSaved,
+    String? deviceId,
+    String? source,
     DateTime? createdAt,
   }) {
     return Measurement(
@@ -181,6 +189,8 @@ class Measurement extends Equatable {
       mealTiming: mealTiming ?? this.mealTiming,
       notes: notes ?? this.notes,
       isAutoSaved: isAutoSaved ?? this.isAutoSaved,
+      deviceId: deviceId ?? this.deviceId,
+      source: source ?? this.source,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -198,6 +208,8 @@ class Measurement extends Equatable {
       'meal_timing': mealTiming?.value,
       'notes': notes,
       'is_auto_saved': isAutoSaved,
+      'device_id': deviceId,
+      'source': source,
       'created_at': createdAt?.toIso8601String(),
     };
   }
@@ -217,6 +229,8 @@ class Measurement extends Equatable {
       mealTiming: MealTiming.fromString(json['meal_timing'] as String?),
       notes: json['notes'] as String?,
       isAutoSaved: json['is_auto_saved'] as bool? ?? false,
+      deviceId: json['device_id'] as String?,
+      source: json['source'] as String?,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : null,
