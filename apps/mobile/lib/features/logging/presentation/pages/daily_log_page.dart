@@ -171,75 +171,6 @@ class _DailyLogPageState extends State<DailyLogPage> {
     );
   }
 
-  Future<void> _deleteMeasurement(Measurement measurement) async {
-    final l10n = AppLocalizations.of(context)!;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    // Show confirmation dialog
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          l10n.localeName == 'tr' ? 'Kaydı Sil' : 'Delete Record',
-        ),
-        content: Text(
-          l10n.localeName == 'tr'
-              ? 'Bu ölçümü silmek istediğinizden emin misiniz?'
-              : 'Are you sure you want to delete this measurement?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: isDark ? AppColors.errorDark : AppColors.error,
-            ),
-            child: Text(l10n.delete),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true) return;
-
-    // Delete from repository
-    final repository = sl<MeasurementRepository>();
-    final result = await repository.deleteMeasurement(measurement.id);
-
-    if (!mounted) return;
-
-    if (result is MeasurementSuccess) {
-      // Reload measurements
-      _loadMeasurements(_selectedDate);
-
-      HapticFeedback.mediumImpact();
-      ScaffoldMessenger.of(context).clearSnackBars();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.delete_outline_rounded, color: Colors.white),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  l10n.localeName == 'tr' ? 'Ölçüm silindi' : 'Measurement deleted',
-                  style: const TextStyle(fontWeight: FontWeight.w500),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: isDark ? AppColors.darkSurfaceHighest : AppColors.textSecondary,
-          duration: const Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
-    }
-  }
 
   String _getDeletedLabel(AppLocalizations l10n) =>
       l10n.localeName == 'tr' ? 'Kayıt silindi' : 'Entry deleted';
@@ -348,7 +279,6 @@ class _DailyLogPageState extends State<DailyLogPage> {
                                       measurement: item.measurement!,
                                       isDark: isDark,
                                       locale: l10n.localeName,
-                                      onDelete: () => _deleteMeasurement(item.measurement!),
                                     )
                                   : _LogEntryCard(
                                       log: item.log!,
@@ -575,7 +505,8 @@ class _LogEntryCard extends StatelessWidget {
     }
   }
 
-  String _getDescription() {
+  String _getDescription(String locale) {
+    final isTr = locale == 'tr';
     final parts = <String>[];
 
     // Add user description if available
@@ -588,52 +519,52 @@ class _LogEntryCard extends StatelessWidget {
       case LogType.food:
         final calories = log.calories;
         final carbs = log.carbsGrams;
-        if (carbs != null) parts.add('${carbs}g carbs');
+        if (carbs != null) parts.add(isTr ? '${carbs}g karbonhidrat' : '${carbs}g carbs');
         if (calories != null) parts.add('$calories cal');
-        if (parts.isEmpty) parts.add('Meal logged');
+        if (parts.isEmpty) parts.add(isTr ? 'Öğün kaydedildi' : 'Meal logged');
 
       case LogType.exercise:
         final duration = log.exerciseDuration;
         final intensity = log.exerciseIntensity?.displayName;
-        if (duration != null) parts.add('$duration min');
+        if (duration != null) parts.add(isTr ? '$duration dk' : '$duration min');
         if (intensity != null) parts.add(intensity);
-        if (parts.isEmpty) parts.add('Exercise logged');
+        if (parts.isEmpty) parts.add(isTr ? 'Egzersiz kaydedildi' : 'Exercise logged');
 
       case LogType.sleep:
         final hours = log.sleepHours;
         final quality = log.sleepQuality;
-        if (hours != null) parts.add('${hours.toStringAsFixed(1)} hours');
-        if (quality != null) parts.add('Quality: $quality');
-        if (parts.isEmpty) parts.add('Sleep logged');
+        if (hours != null) parts.add(isTr ? '${hours.toStringAsFixed(1)} saat' : '${hours.toStringAsFixed(1)} hours');
+        if (quality != null) parts.add(isTr ? 'Kalite: $quality' : 'Quality: $quality');
+        if (parts.isEmpty) parts.add(isTr ? 'Uyku kaydedildi' : 'Sleep logged');
 
       case LogType.medication:
         final dosage = log.metadata?['dosage'] as String?;
         if (dosage != null) parts.add(dosage);
-        if (parts.isEmpty) parts.add('Medication taken');
+        if (parts.isEmpty) parts.add(isTr ? 'İlaç alındı' : 'Medication taken');
 
       case LogType.symptom:
         final stressLevel = log.stressLevel;
-        if (stressLevel != null) parts.add('Stress: $stressLevel/10');
-        if (parts.isEmpty) parts.add('Symptom logged');
+        if (stressLevel != null) parts.add(isTr ? 'Stres: $stressLevel/10' : 'Stress: $stressLevel/10');
+        if (parts.isEmpty) parts.add(isTr ? 'Belirti kaydedildi' : 'Symptom logged');
 
       case LogType.note:
         final subType = log.metadata?['type'] as String?;
         if (subType == 'water') {
           final amount = log.amountMl;
           if (amount != null) parts.add('$amount ml');
-          if (parts.isEmpty) parts.add('Water logged');
+          if (parts.isEmpty) parts.add(isTr ? 'Su kaydedildi' : 'Water logged');
         } else if (subType == 'alcohol') {
           final amount = log.amountMl;
           final type = log.metadata?['alcohol_type'] as String?;
           if (amount != null) parts.add('$amount ml');
           if (type != null) parts.add(type);
-          if (parts.isEmpty) parts.add('Alcohol logged');
+          if (parts.isEmpty) parts.add(isTr ? 'Alkol kaydedildi' : 'Alcohol logged');
         } else if (subType == 'toilet') {
           final toiletType = log.metadata?['toilet_type'] as String?;
           if (toiletType != null) parts.add(toiletType);
-          if (parts.isEmpty) parts.add('Bathroom visit');
+          if (parts.isEmpty) parts.add(isTr ? 'Tuvalet kaydedildi' : 'Bathroom visit');
         } else {
-          if (parts.isEmpty) parts.add('Note logged');
+          if (parts.isEmpty) parts.add(isTr ? 'Not kaydedildi' : 'Note logged');
         }
     }
 
@@ -643,7 +574,8 @@ class _LogEntryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (color, icon, title) = _getLogTypeInfo();
-    final description = _getDescription();
+    final locale = Localizations.localeOf(context).languageCode;
+    final description = _getDescription(locale);
     final timeFormatter = DateFormat('HH:mm');
     final time = log.loggedAt != null
         ? timeFormatter.format(log.loggedAt!)
@@ -748,13 +680,11 @@ class _MeasurementCard extends StatelessWidget {
     required this.measurement,
     required this.isDark,
     required this.locale,
-    required this.onDelete,
   });
 
   final Measurement measurement;
   final bool isDark;
   final String locale;
-  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -843,18 +773,6 @@ class _MeasurementCard extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-          // Delete button
-          IconButton(
-            icon: Icon(
-              Icons.delete_outline_rounded,
-              color: isDark ? AppColors.errorDark : AppColors.error,
-              size: 22,
-            ),
-            onPressed: onDelete,
-            tooltip: 'Delete',
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
           ),
         ],
       ),
