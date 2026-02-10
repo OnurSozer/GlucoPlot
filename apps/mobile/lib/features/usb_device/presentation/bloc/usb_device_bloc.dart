@@ -79,14 +79,22 @@ class UsbDeviceBloc extends Bloc<UsbDeviceEvent, UsbDeviceState> {
     Emitter<UsbDeviceState> emit,
   ) async {
     print('[UsbBloc] Connection status changed: ${event.status}');
-    emit(state.copyWith(
-      connectionStatus: event.status,
-      isLoading: false,
-      // Reset device ready state when disconnected
-      isDeviceReady: event.status == UsbConnectionStatus.connected
-          ? state.isDeviceReady
-          : false,
-    ));
+    if (event.status == UsbConnectionStatus.connected) {
+      emit(state.copyWith(
+        connectionStatus: event.status,
+        isLoading: false,
+      ));
+    } else {
+      // Device disconnected: reset all device-related state
+      emit(state.copyWith(
+        connectionStatus: event.status,
+        isLoading: false,
+        isDeviceReady: false,
+        isMeasuring: false,
+        clearDeviceInfo: true,
+        clearError: true,
+      ));
+    }
 
     // Automatically request device ID when connected
     if (event.status == UsbConnectionStatus.connected) {

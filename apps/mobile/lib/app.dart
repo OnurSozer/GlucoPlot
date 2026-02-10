@@ -23,6 +23,8 @@ import 'features/logging/presentation/pages/daily_log_page.dart';
 import 'features/logging/presentation/pages/add_log_entry_page.dart';
 import 'features/settings/presentation/pages/settings_page.dart';
 import 'features/usb_device/presentation/bloc/usb_device_bloc.dart';
+import 'features/usb_device/presentation/bloc/usb_device_state.dart';
+import 'features/usb_device/domain/repositories/usb_device_repository.dart';
 import 'features/usb_device/presentation/pages/glucose_measurement_page.dart';
 import 'shell_page.dart';
 
@@ -169,30 +171,46 @@ class _GlucoPlotAppState extends State<GlucoPlotApp> {
                 create: (_) => sl<UsbDeviceBloc>(),
               ),
             ],
-            child: MaterialApp.router(
-              title: 'GlucoPlot',
-              debugShowCheckedModeBanner: false,
-              theme: AppTheme.light,
-              darkTheme: AppTheme.dark,
-              themeMode: settings.themeMode,
-              locale: settings.locale,
-              routerConfig: _router,
-              localizationsDelegates: const [
-                AppLocalizations.delegate,
-                GlobalMaterialLocalizations.delegate,
-                GlobalWidgetsLocalizations.delegate,
-                GlobalCupertinoLocalizations.delegate,
-              ],
-              supportedLocales: SettingsProvider.supportedLocales,
-              builder: (context, child) {
-                // Apply text scale factor from settings
-                return MediaQuery(
-                  data: MediaQuery.of(context).copyWith(
-                    textScaler: TextScaler.linear(settings.textScaleFactor),
-                  ),
-                  child: child ?? const SizedBox.shrink(),
-                );
+            child: BlocListener<UsbDeviceBloc, UsbDeviceState>(
+              listenWhen: (previous, current) =>
+                  previous.connectionStatus != UsbConnectionStatus.connected &&
+                  current.connectionStatus == UsbConnectionStatus.connected,
+              listener: (context, state) {
+                final session =
+                    Supabase.instance.client.auth.currentSession;
+                if (session == null) return;
+
+                final currentPath = _router
+                    .routeInformationProvider.value.uri.path;
+                if (currentPath == '/glucose-measurement') return;
+
+                _router.push('/glucose-measurement');
               },
+              child: MaterialApp.router(
+                title: 'GlucoPlot',
+                debugShowCheckedModeBanner: false,
+                theme: AppTheme.light,
+                darkTheme: AppTheme.dark,
+                themeMode: settings.themeMode,
+                locale: settings.locale,
+                routerConfig: _router,
+                localizationsDelegates: const [
+                  AppLocalizations.delegate,
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+                supportedLocales: SettingsProvider.supportedLocales,
+                builder: (context, child) {
+                  // Apply text scale factor from settings
+                  return MediaQuery(
+                    data: MediaQuery.of(context).copyWith(
+                      textScaler: TextScaler.linear(settings.textScaleFactor),
+                    ),
+                    child: child ?? const SizedBox.shrink(),
+                  );
+                },
+              ),
             ),
           );
         },

@@ -959,6 +959,35 @@ class _GlucoseMeasurementPageState extends State<GlucoseMeasurementPage> {
             fontWeight: FontWeight.w600,
           ),
         ),
+        if (_selectedMealTiming == null) ...[
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.arrow_downward_rounded,
+                size: 16,
+                color: glucoseColor.withValues(alpha: 0.7),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                l10n.localeName == 'tr'
+                    ? 'Lütfen birini seçin'
+                    : 'Please select one',
+                style: AppTypography.bodySmall.copyWith(
+                  color: glucoseColor.withValues(alpha: 0.7),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.arrow_downward_rounded,
+                size: 16,
+                color: glucoseColor.withValues(alpha: 0.7),
+              ),
+            ],
+          ),
+        ],
         const SizedBox(height: 16),
 
         Row(
@@ -1071,7 +1100,11 @@ class _GlucoseMeasurementPageState extends State<GlucoseMeasurementPage> {
                     ],
                   )
                 : Text(
-                    _getSaveButton(l10n),
+                    _selectedMealTiming != null
+                        ? _getSaveButton(l10n)
+                        : (l10n.localeName == 'tr'
+                            ? 'Ölçüm Zamanı Seçin'
+                            : 'Select Meal Timing'),
                     style: AppTypography.labelLarge.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
