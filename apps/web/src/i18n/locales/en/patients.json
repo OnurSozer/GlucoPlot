@@ -73,6 +73,7 @@
     "token": "Token",
     "done": "Done",
     "nameRequired": "Patient name is required",
+    "phoneRequired": "Phone number is required for patient login",
     "createFailed": "Failed to create patient"
   },
   "qrModal": {

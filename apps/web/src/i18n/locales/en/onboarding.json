@@ -3,6 +3,8 @@
   "subtitle": "Complete the form to register a new patient",
   "errors": {
     "title": "Error",
+    "nameRequired": "Patient name is required.",
+    "phoneRequired": "Phone number is required for patient login.",
     "submissionFailed": "Failed to create patient. Please try again."
   },
   "steps": {
@@ -151,6 +153,7 @@
     "medicationOptions": {
       "oralHypoglycemic": "Oral hypoglycemic",
       "insulin": "Insulin",
+      "both": "Both (Oral + Insulin)",
       "none": "No"
     }
   },

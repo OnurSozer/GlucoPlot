@@ -3,7 +3,7 @@
  * Main orchestrator component for the multi-step onboarding form
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertCircle } from 'lucide-react';
 
@@ -56,6 +56,7 @@ export function PatientOnboardingWizard({
     const [completedSteps, setCompletedSteps] = useState<number[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
 
     // Get visible steps based on current form data
     const visibleSteps = getVisibleSteps(formData);
@@ -63,6 +64,20 @@ export function PatientOnboardingWizard({
 
     // Navigation handlers
     const handleNext = useCallback(() => {
+        // Validate current step before proceeding
+        if (currentStep?.id === 'basic-info') {
+            if (!formData.basicInfo.full_name?.trim()) {
+                setError(t('errors.nameRequired'));
+                contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+            if (!formData.basicInfo.phone?.trim()) {
+                setError(t('errors.phoneRequired'));
+                contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+        }
+
         // Mark current step as completed
         if (!completedSteps.includes(currentStepIndex)) {
             setCompletedSteps((prev) => [...prev, currentStepIndex]);
@@ -76,7 +91,7 @@ export function PatientOnboardingWizard({
         }
 
         setError(null);
-    }, [currentStepIndex, completedSteps, formData]);
+    }, [currentStepIndex, currentStep, completedSteps, formData, t]);
 
     const handleBack = useCallback(() => {
         if (currentStepIndex > 0) {
@@ -209,7 +224,7 @@ export function PatientOnboardingWizard({
             </div>
 
             {/* Step Content */}
-            <div className="flex-1 overflow-y-auto px-6 py-6">
+            <div ref={contentRef} className="flex-1 overflow-y-auto px-6 py-6">
                 {/* Error message */}
                 {error && (
                     <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">

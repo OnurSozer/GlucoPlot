@@ -3,6 +3,8 @@
   "subtitle": "Yeni hasta kaydı için formu doldurun",
   "errors": {
     "title": "Hata",
+    "nameRequired": "Hasta adı zorunludur.",
+    "phoneRequired": "Hasta girişi için telefon numarası zorunludur.",
     "submissionFailed": "Hasta oluşturulamadı. Lütfen tekrar deneyin."
   },
   "steps": {
@@ -92,7 +94,7 @@
     "stressLevel": "Stres hissetmiyorum",
     "stressLow": "Stresliyim",
     "stressHigh": "Stresli değilim",
-    "hypoglycemicAttacks": "Hiposemik ataklar geçirmiyorum",
+    "hypoglycemicAttacks": "Bir ay içerisinde sık hipoglisemik ataklar geçiriyorum",
     "attacksFrequent": "Sık sık atak geçiriyorum",
     "attacksNone": "Hiç atak geçirmiyorum",
     "saltAwareness": "Düşük tuz/sodyum alımına dikkat ediyorum",
@@ -151,6 +153,7 @@
     "medicationOptions": {
       "oralHypoglycemic": "Oral hipoglisemik",
       "insulin": "İnsülin",
+      "both": "Her ikisi (Oral + İnsülin)",
       "none": "Hayır"
     }
   },

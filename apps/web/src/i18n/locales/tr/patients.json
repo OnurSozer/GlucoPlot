@@ -73,6 +73,7 @@
     "token": "Token",
     "done": "Tamam",
     "nameRequired": "Hasta adı zorunludur",
+    "phoneRequired": "Hasta girişi için telefon numarası zorunludur",
     "createFailed": "Hasta oluşturulamadı"
   },
   "qrModal": {

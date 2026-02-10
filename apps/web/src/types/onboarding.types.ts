@@ -17,7 +17,7 @@ export type DiabetesType =
   | 'secondary'
   | 'chemically_induced';
 
-export type MedicationClass = 'insulin' | 'oral_hypoglycemic' | 'none';
+export type MedicationClass = 'insulin' | 'oral_hypoglycemic' | 'both' | 'none';
 
 export type InsulinType =
   | 'nph'
@@ -211,13 +211,13 @@ export const WIZARD_STEPS: WizardStep[] = [
     id: 'insulin-schedule',
     titleKey: 'onboarding:steps.insulinSchedule',
     isConditional: true,
-    condition: (data) => data.medicalHistory.medication_type === 'insulin',
+    condition: (data) => data.medicalHistory.medication_type === 'insulin' || data.medicalHistory.medication_type === 'both',
   },
   {
     id: 'oral-medication',
     titleKey: 'onboarding:steps.oralMedication',
     isConditional: true,
-    condition: (data) => data.medicalHistory.medication_type === 'oral_hypoglycemic',
+    condition: (data) => data.medicalHistory.medication_type === 'oral_hypoglycemic' || data.medicalHistory.medication_type === 'both',
   },
   { id: 'chronic-diseases', titleKey: 'onboarding:steps.chronicDiseases' },
   { id: 'lab-info', titleKey: 'onboarding:steps.labInfo' },

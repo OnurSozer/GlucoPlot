@@ -125,10 +125,10 @@ export const onboardingService = {
         this.saveLabInfo(patientId, data.labInfo),
         this.saveNotificationPreferences(patientId, data.notificationPreferences.preferences),
         this.saveRelatives(patientId, data.basicInfo.relatives),
-        data.medicalHistory.medication_type === 'insulin' && data.insulinSchedule
+        (data.medicalHistory.medication_type === 'insulin' || data.medicalHistory.medication_type === 'both') && data.insulinSchedule
           ? this.saveMedicationSchedules(patientId, data.insulinSchedule.schedules, 'insulin')
           : Promise.resolve(),
-        data.medicalHistory.medication_type === 'oral_hypoglycemic' && data.oralMedicationSchedule
+        (data.medicalHistory.medication_type === 'oral_hypoglycemic' || data.medicalHistory.medication_type === 'both') && data.oralMedicationSchedule
           ? this.saveMedicationSchedules(patientId, data.oralMedicationSchedule.schedules, 'oral_hypoglycemic')
           : Promise.resolve(),
       ]);

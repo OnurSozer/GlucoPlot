@@ -202,7 +202,7 @@ export function BasicInfoStep({
 
       {/* Phone */}
       <PhoneInput
-        label={t('basicInfo.phone')}
+        label={`${t('basicInfo.phone')} *`}
         placeholder="505 555 55 **"
         value={data.phone || ''}
         onChange={(val) => handleChange('phone', val)}

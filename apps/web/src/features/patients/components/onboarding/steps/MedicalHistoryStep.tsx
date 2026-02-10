@@ -115,18 +115,21 @@ export function MedicalHistoryStep({ data, onChange }: MedicalHistoryStepProps) 
           {t('medicalHistory.medicationType')}
         </label>
         <div className="flex flex-col gap-2">
-          {(['oral_hypoglycemic', 'insulin', 'none'] as MedicationClass[]).map((type) => (
-            <label key={type} className="flex items-center gap-2 cursor-pointer p-2 hover:bg-white rounded-lg transition-colors">
-              <input
-                type="radio"
-                name="medicationType"
-                checked={data.medication_type === type}
-                onChange={() => onChange({ ...data, medication_type: type })}
-                className="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
-              />
-              <span className="text-sm">{t(`medicalHistory.medicationOptions.${type === 'oral_hypoglycemic' ? 'oralHypoglycemic' : type}`)}</span>
-            </label>
-          ))}
+          {(['oral_hypoglycemic', 'insulin', 'both', 'none'] as MedicationClass[]).map((type) => {
+            const labelKey = type === 'oral_hypoglycemic' ? 'oralHypoglycemic' : type;
+            return (
+              <label key={type} className="flex items-center gap-2 cursor-pointer p-2 hover:bg-white rounded-lg transition-colors">
+                <input
+                  type="radio"
+                  name="medicationType"
+                  checked={data.medication_type === type}
+                  onChange={() => onChange({ ...data, medication_type: type })}
+                  className="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
+                />
+                <span className="text-sm">{t(`medicalHistory.medicationOptions.${labelKey}`)}</span>
+              </label>
+            );
+          })}
         </div>
       </div>
     </div>
