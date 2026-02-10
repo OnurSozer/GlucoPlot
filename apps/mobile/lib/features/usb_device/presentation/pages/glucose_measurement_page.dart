@@ -862,95 +862,104 @@ class _GlucoseMeasurementPageState extends State<GlucoseMeasurementPage> {
 
     return Column(
       children: [
-        // Success icon
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: AppColors.success.withValues(alpha: isDark ? 0.2 : 0.15),
-          ),
-          child: const Icon(
-            Icons.check_circle_rounded,
-            size: 48,
-            color: AppColors.success,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          _getMeasurementComplete(l10n),
-          style: AppTypography.titleLarge.copyWith(
-            color: textPrimary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        // Result section — centered in the available space above the bottom controls
+        Expanded(
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Success icon
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.success.withValues(alpha: isDark ? 0.2 : 0.15),
+                  ),
+                  child: const Icon(
+                    Icons.check_circle_rounded,
+                    size: 48,
+                    color: AppColors.success,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  _getMeasurementComplete(l10n),
+                  style: AppTypography.titleLarge.copyWith(
+                    color: textPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
 
-        const SizedBox(height: 32),
+                const SizedBox(height: 32),
 
-        // Glucose reading card
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: isDark
-                  ? [glucoseColor.withValues(alpha: 0.3), glucoseColor.withValues(alpha: 0.15)]
-                  : [glucoseColor.withValues(alpha: 0.2), glucoseColor.withValues(alpha: 0.08)],
-            ),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: glucoseColor.withValues(alpha: 0.4),
-              width: 1.5,
-            ),
-          ),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    concentration.toStringAsFixed(0),
-                    style: AppTypography.displayLarge.copyWith(
-                      color: glucoseColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 64,
+                // Glucose reading card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: isDark
+                          ? [glucoseColor.withValues(alpha: 0.3), glucoseColor.withValues(alpha: 0.15)]
+                          : [glucoseColor.withValues(alpha: 0.2), glucoseColor.withValues(alpha: 0.08)],
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: glucoseColor.withValues(alpha: 0.4),
+                      width: 1.5,
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(
-                      _getGlucoseUnit(),
-                      style: AppTypography.titleMedium.copyWith(
-                        color: glucoseColor.withValues(alpha: 0.8),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            concentration.toStringAsFixed(0),
+                            style: AppTypography.displayLarge.copyWith(
+                              color: glucoseColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 64,
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Text(
+                              _getGlucoseUnit(),
+                              style: AppTypography.titleMedium.copyWith(
+                                color: glucoseColor.withValues(alpha: 0.8),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: statusColor.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          statusText,
+                          style: AppTypography.labelLarge.copyWith(
+                            color: statusColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
                 ),
-                child: Text(
-                  statusText,
-                  style: AppTypography.labelLarge.copyWith(
-                    color: statusColor,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
 
-        const SizedBox(height: 32),
-
+        // Bottom controls — pinned above safe area
         // Meal timing selection
         Text(
           _getSelectMealTiming(l10n),
@@ -1058,7 +1067,7 @@ class _GlucoseMeasurementPageState extends State<GlucoseMeasurementPage> {
           }).toList(),
         ),
 
-        const Spacer(),
+        const SizedBox(height: 16),
 
         // Save button
         SizedBox(
