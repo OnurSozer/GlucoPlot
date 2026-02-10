@@ -53,6 +53,8 @@ export function usePatientsFiltered(filters: PatientListFilters = {}, enabled = 
         },
         enabled,
         staleTime: 30 * 1000,
+        retry: 2,
+        retryDelay: 1000,
     });
 }
 

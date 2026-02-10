@@ -5,6 +5,7 @@
 
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
+import { queryClient } from '../lib/query-client';
 import type { User, Subscription } from '@supabase/supabase-js';
 import type { Admin, Doctor } from '../types/database.types';
 
@@ -134,9 +135,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                             set({ user: session.user, doctor: null, admin, isLoading: false });
                         }
                     } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-                        // Token refresh doesn't change user data, only the JWT
-                        // Don't update state - avoids unnecessary re-renders
+                        // Token was refreshed - invalidate all queries so they re-fetch
+                        // with the new valid JWT. This fixes empty data on first cold visit
+                        // where RLS returns empty results with an expired token.
                         console.log('Token refreshed for user:', session.user.id);
+                        queryClient.invalidateQueries();
                     } else if (event === 'SIGNED_OUT') {
                         set({ user: null, doctor: null, admin: null, isLoading: false });
                     } else if (event === 'USER_UPDATED' && session?.user) {
