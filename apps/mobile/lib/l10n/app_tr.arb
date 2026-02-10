@@ -240,5 +240,8 @@
   "systolic": "Sistolik",
   "whenMeasured": "Bu ölçüm ne zaman yapıldı?",
   "notesHint": "Bu ölçüm hakkında notlar ekleyin...",
-  "bloodGlucose": "Kan Şekeri"
+  "bloodGlucose": "Kan Şekeri",
+
+  "prescribedMedicines": "Doktorunuzun Belirlediği İlaçlar",
+  "selectMedicineOrType": "Bir ilaç seçin veya aşağıya yazın"
 }

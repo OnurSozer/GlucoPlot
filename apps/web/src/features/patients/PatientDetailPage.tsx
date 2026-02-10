@@ -20,9 +20,13 @@ import {
     Scale,
     Trash2,
     AlertTriangle,
-    X
+    X,
+    Pencil,
+    Check,
+    Loader2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '../../components/common/Card';
+import { PhoneInput } from '../../components/common/PhoneInput';
 import { Button } from '../../components/common/Button';
 import { StatusBadge } from '../../components/common/Badge';
 import { MeasurementChart } from './MeasurementChart';
@@ -61,7 +65,10 @@ export function PatientDetailPage() {
     const [activeTab, setActiveTab] = useState<TabType>('measurements');
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
-    const { invalidateAll: invalidatePatients } = useInvalidatePatients();
+    const [isEditingPhone, setIsEditingPhone] = useState(false);
+    const [editPhone, setEditPhone] = useState('');
+    const [isSavingPhone, setIsSavingPhone] = useState(false);
+    const { invalidateAll: invalidatePatients, invalidatePatient } = useInvalidatePatients();
 
     // SWR pattern: cached data shows instantly, refreshes in background
     const {
@@ -111,6 +118,32 @@ export function PatientDetailPage() {
         } finally {
             setIsDeleting(false);
             setShowDeleteModal(false);
+        }
+    };
+
+    const handleEditPhone = () => {
+        setEditPhone(patient?.phone || '');
+        setIsEditingPhone(true);
+    };
+
+    const handleCancelPhone = () => {
+        setIsEditingPhone(false);
+        setEditPhone('');
+    };
+
+    const handleSavePhone = async () => {
+        if (!id) return;
+        setIsSavingPhone(true);
+        try {
+            const { error } = await patientsService.updatePatient(id, { phone: editPhone || null });
+            if (error) throw error;
+            invalidatePatient(id);
+            setIsEditingPhone(false);
+        } catch (error) {
+            console.error('Failed to update phone:', error);
+            alert(t('patients:editPhone.failed'));
+        } finally {
+            setIsSavingPhone(false);
         }
     };
 
@@ -186,10 +219,40 @@ export function PatientDetailPage() {
                                         {patient.national_id}
                                     </span>
                                 )}
-                                {patient.phone && (
-                                    <span className="flex items-center gap-1.5">
+                                {isEditingPhone ? (
+                                    <span className="flex items-center gap-2">
                                         <Phone size={16} />
-                                        {formatPhone(patient.phone)}
+                                        <div className="w-56">
+                                            <PhoneInput
+                                                value={editPhone}
+                                                onChange={setEditPhone}
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={handleCancelPhone}
+                                            disabled={isSavingPhone}
+                                            className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                        <button
+                                            onClick={handleSavePhone}
+                                            disabled={isSavingPhone}
+                                            className="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
+                                        >
+                                            {isSavingPhone ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                                        </button>
+                                    </span>
+                                ) : (
+                                    <span className="flex items-center gap-1.5 group">
+                                        <Phone size={16} />
+                                        {patient.phone ? formatPhone(patient.phone) : '-'}
+                                        <button
+                                            onClick={handleEditPhone}
+                                            className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                                        >
+                                            <Pencil size={14} />
+                                        </button>
                                     </span>
                                 )}
                             </div>

@@ -1345,6 +1345,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Blood Glucose'**
   String get bloodGlucose;
+
+  /// No description provided for @prescribedMedicines.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Prescribed Medicines'**
+  String get prescribedMedicines;
+
+  /// No description provided for @selectMedicineOrType.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a medicine or type below'**
+  String get selectMedicineOrType;
 }
 
 class _AppLocalizationsDelegate

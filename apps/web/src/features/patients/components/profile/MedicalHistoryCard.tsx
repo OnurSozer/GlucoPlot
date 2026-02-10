@@ -1,8 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import { FileText, Calendar, AlertCircle } from 'lucide-react'; // Changed Activity to AlertCircle for conditions
+import { FileText, Calendar, AlertCircle } from 'lucide-react';
 import { ProfileSection } from './ProfileSection';
 import { Badge } from '../../../../components/common/Badge';
-import { formatDate } from '../../../../utils/format';
 import type { MedicalHistoryData, ChronicDiseasesData } from '../../../../types/onboarding.types';
 
 interface MedicalHistoryCardProps {
@@ -40,7 +39,7 @@ export function MedicalHistoryCard({ history, diseases }: MedicalHistoryCardProp
                         <div className="flex items-center gap-1.5 text-gray-900">
                             <Calendar size={16} className="text-gray-400" />
                             <span className="text-base font-medium">
-                                {formatDate(history.diagnosis_date)}
+                                {history.diagnosis_date || '-'}
                             </span>
                         </div>
                     </div>

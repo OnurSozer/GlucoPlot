@@ -154,7 +154,7 @@
       "oralHypoglycemic": "Oral hipoglisemik",
       "insulin": "İnsülin",
       "both": "Her ikisi (Oral + İnsülin)",
-      "none": "Hayır"
+      "none": "İlaç kullanılmıyor"
     }
   },
   "insulinSchedule": {
@@ -192,7 +192,9 @@
       "yes": "Var"
     },
     "dose": "Doz",
-    "time": "Saat"
+    "time": "Saat",
+    "medicationName": "İlaç Adı",
+    "medicationNamePlaceholder": "örn. Metformin"
   },
   "chronicDiseases": {
     "title": "Diğer Önemli Kronik Hastalıklar",

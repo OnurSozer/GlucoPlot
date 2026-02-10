@@ -217,7 +217,11 @@ export const onboardingService = {
           ? {
               has_diabetes: medicalHistoryResult.data.has_diabetes,
               diabetes_type: medicalHistoryResult.data.diabetes_type,
-              diagnosis_date: medicalHistoryResult.data.diagnosis_date,
+              // DB stores full date (e.g. "2018-01-01"), extract just the year
+              // for the form and display.
+              diagnosis_date: medicalHistoryResult.data.diagnosis_date
+                ? medicalHistoryResult.data.diagnosis_date.substring(0, 4)
+                : undefined,
               medication_type: medicalHistoryResult.data.medication_type,
             }
           : { has_diabetes: false, medication_type: 'none' },
@@ -266,6 +270,14 @@ export const onboardingService = {
         };
       }
 
+      // Infer 'both' when patient has both insulin and oral schedule rows,
+      // since the DB enum doesn't store 'both' directly.
+      if (insulinSchedules.length > 0 && oralSchedules.length > 0) {
+        onboardingData.medicalHistory.medication_type = 'both';
+      } else if (oralSchedules.length > 0 && onboardingData.medicalHistory.medication_type !== 'oral_hypoglycemic') {
+        onboardingData.medicalHistory.medication_type = 'oral_hypoglycemic';
+      }
+
       return { data: onboardingData, error: null };
     } catch (error) {
       return { data: null, error: error as Error };
@@ -311,14 +323,28 @@ export const onboardingService = {
   },
 
   async saveMedicalHistory(patientId: string, data: MedicalHistoryData): Promise<void> {
+    // The DB enum medication_class doesn't have 'both' — store 'insulin' as
+    // the DB value; the actual 'both' state is inferred on load by checking
+    // whether both insulin and oral schedule rows exist.
+    const dbMedicationType = data.medication_type === 'both' ? 'insulin' : data.medication_type;
+
+    // The form stores diagnosis year as a plain string like "2018",
+    // but the DB column is date type — convert to a proper date format.
+    let diagnosisDate: string | null = null;
+    if (data.diagnosis_date) {
+      diagnosisDate = data.diagnosis_date.length === 4
+        ? `${data.diagnosis_date}-01-01`
+        : data.diagnosis_date;
+    }
+
     await supabase
       .from('patient_medical_history')
       .upsert({
         patient_id: patientId,
         has_diabetes: data.has_diabetes,
-        diabetes_type: data.diabetes_type,
-        diagnosis_date: data.diagnosis_date || null,
-        medication_type: data.medication_type,
+        diabetes_type: data.diabetes_type || null,
+        diagnosis_date: diagnosisDate,
+        medication_type: dbMedicationType,
       }, { onConflict: 'patient_id' });
   },
 

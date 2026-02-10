@@ -640,4 +640,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bloodGlucose => 'Blood Glucose';
+
+  @override
+  String get prescribedMedicines => 'Your Prescribed Medicines';
+
+  @override
+  String get selectMedicineOrType => 'Select a medicine or type below';
 }

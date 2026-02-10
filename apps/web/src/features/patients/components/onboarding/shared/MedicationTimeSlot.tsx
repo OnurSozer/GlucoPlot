@@ -73,6 +73,14 @@ export function MedicationTimeSlot({
     });
   };
 
+  const handleMedicationNameChange = (name: string) => {
+    if (!value) return;
+    onChange({
+      ...value,
+      medication_name: name || undefined,
+    });
+  };
+
   const handleTimeChange = (time: string) => {
     if (!value) return;
     onChange({
@@ -89,7 +97,7 @@ export function MedicationTimeSlot({
     <div className="p-4 bg-purple-50/50 rounded-xl border border-purple-100 space-y-4">
       <h4 className="font-medium text-gray-900">{getTimePeriodLabel(timePeriod)}</h4>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className={`grid grid-cols-1 ${mode === 'oral' && isActive ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-4`}>
         {/* Type Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -122,6 +130,20 @@ export function MedicationTimeSlot({
             )}
           </select>
         </div>
+
+        {/* Medicine Name (oral only) */}
+        {mode === 'oral' && isActive && (
+          <div>
+            <Input
+              label={t('onboarding:oralMedication.medicationName')}
+              type="text"
+              value={value?.medication_name || ''}
+              onChange={(e) => handleMedicationNameChange(e.target.value)}
+              placeholder={t('onboarding:oralMedication.medicationNamePlaceholder')}
+              disabled={disabled}
+            />
+          </div>
+        )}
 
         {/* Dose */}
         {isActive && (

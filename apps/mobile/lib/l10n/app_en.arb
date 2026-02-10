@@ -240,5 +240,8 @@
   "systolic": "Systolic",
   "whenMeasured": "When was this measured?",
   "notesHint": "Add any notes about this measurement...",
-  "bloodGlucose": "Blood Glucose"
+  "bloodGlucose": "Blood Glucose",
+
+  "prescribedMedicines": "Your Prescribed Medicines",
+  "selectMedicineOrType": "Select a medicine or type below"
 }

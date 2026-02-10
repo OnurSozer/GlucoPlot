@@ -642,4 +642,10 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get bloodGlucose => 'Kan Şekeri';
+
+  @override
+  String get prescribedMedicines => 'Doktorunuzun Belirlediği İlaçlar';
+
+  @override
+  String get selectMedicineOrType => 'Bir ilaç seçin veya aşağıya yazın';
 }

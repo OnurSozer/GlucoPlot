@@ -154,7 +154,7 @@
       "oralHypoglycemic": "Oral hypoglycemic",
       "insulin": "Insulin",
       "both": "Both (Oral + Insulin)",
-      "none": "No"
+      "none": "No medication"
     }
   },
   "insulinSchedule": {
@@ -192,7 +192,9 @@
       "yes": "Yes"
     },
     "dose": "Dose",
-    "time": "Time"
+    "time": "Time",
+    "medicationName": "Medicine Name",
+    "medicationNamePlaceholder": "e.g., Metformin"
   },
   "chronicDiseases": {
     "title": "Other Chronic Diseases",

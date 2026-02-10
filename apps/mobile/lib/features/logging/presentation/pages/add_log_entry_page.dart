@@ -3,10 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../data/datasources/medication_schedule_remote_datasource.dart';
 import '../../domain/entities/daily_log.dart' as domain;
 import '../bloc/daily_log_bloc.dart';
 import '../widgets/log_type.dart';
@@ -54,6 +57,9 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
   String? _toiletType;
   String? _exerciseDuration;
 
+  // Medication presets from doctor's onboarding configuration
+  List<MedicationPreset> _medicationPresets = [];
+
   @override
   void initState() {
     super.initState();
@@ -63,6 +69,23 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
       _selectedType = LogType.fromString(widget.initialType) ?? LogType.food;
     }
     _initSpeech();
+    _loadMedicationPresets();
+  }
+
+  Future<void> _loadMedicationPresets() async {
+    try {
+      final session = Supabase.instance.client.auth.currentSession;
+      final patientId = session?.user.userMetadata?['patient_id'] as String?;
+      if (patientId == null) return;
+
+      final presets = await sl<MedicationScheduleRemoteDataSource>()
+          .getMedicationPresets(patientId);
+      if (mounted && presets.isNotEmpty) {
+        setState(() => _medicationPresets = presets);
+      }
+    } catch (_) {
+      // Silently fail — presets are optional enhancement
+    }
   }
 
   void _initFromExistingLog(domain.DailyLog log) {
@@ -1175,6 +1198,9 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
   }
 
   Widget _buildMedicationFields(AppLocalizations l10n, bool isDark, Color textSecondary) {
+    final primaryColor = isDark ? AppColors.primaryDarkMode : AppColors.primary;
+    final surfaceColor = isDark ? AppColors.darkSurfaceElevated : AppColors.surfaceVariant;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1183,6 +1209,82 @@ class _AddLogEntryPageState extends State<AddLogEntryPage> {
           style: AppTypography.labelMedium.copyWith(color: textSecondary),
         ),
         const SizedBox(height: 12),
+
+        // Quick-select chips for prescribed medicines (only if doctor configured them)
+        if (_medicationPresets.isNotEmpty) ...[
+          Text(
+            l10n.prescribedMedicines,
+            style: AppTypography.labelSmall.copyWith(
+              color: textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _medicationPresets.map((preset) {
+              final isSelected = _titleController.text == preset.name;
+              return GestureDetector(
+                onTap: () => _selectPreset(preset.name),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? primaryColor.withValues(alpha: isDark ? 0.2 : 0.15)
+                        : surfaceColor,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isSelected ? primaryColor : Colors.transparent,
+                      width: 2,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        preset.isInsulin
+                            ? Icons.bloodtype_rounded
+                            : Icons.medication_rounded,
+                        size: 18,
+                        color: isSelected ? primaryColor : textSecondary,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        preset.name,
+                        style: AppTypography.labelMedium.copyWith(
+                          color: isSelected ? primaryColor : textSecondary,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.selectMedicineOrType,
+            style: AppTypography.bodySmall.copyWith(
+              color: textSecondary,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+
+        // Title field for custom medicine name entry
+        _buildTextFieldWithVoice(
+          controller: _titleController,
+          label: l10n.hintMedication,
+          hint: l10n.hintMedication,
+          isDark: isDark,
+        ),
+        const SizedBox(height: 12),
+
+        // Dosage field
         _buildTextField(
           controller: _dosageController,
           label: l10n.dosage,

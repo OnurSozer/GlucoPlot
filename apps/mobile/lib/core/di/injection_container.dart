@@ -24,6 +24,7 @@ import '../../features/measurements/presentation/bloc/measurement_bloc.dart';
 
 // Logging
 import '../../features/logging/data/datasources/daily_log_remote_datasource.dart';
+import '../../features/logging/data/datasources/medication_schedule_remote_datasource.dart';
 import '../../features/logging/data/repositories/daily_log_repository_impl.dart';
 import '../../features/logging/domain/repositories/daily_log_repository.dart';
 import '../../features/logging/domain/usecases/get_daily_logs.dart';
@@ -103,6 +104,10 @@ Future<void> initDependencies() async {
   // Data sources
   sl.registerLazySingleton<DailyLogRemoteDataSource>(
     () => DailyLogRemoteDataSourceImpl(client: sl()),
+  );
+
+  sl.registerLazySingleton<MedicationScheduleRemoteDataSource>(
+    () => MedicationScheduleRemoteDataSource(client: sl()),
   );
 
   // Repositories

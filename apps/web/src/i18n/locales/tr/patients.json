@@ -90,6 +90,12 @@
     "exportPng": "PNG olarak indir",
     "close": "Kapat"
   },
+  "editPhone": {
+    "label": "Telefon Numarası",
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "failed": "Telefon numarası güncellenemedi"
+  },
   "deleteModal": {
     "title": "Hasta Sil",
     "message": "Bu hastayı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz ve aşağıdaki tüm hasta verileri kalıcı olarak silinecektir:",
