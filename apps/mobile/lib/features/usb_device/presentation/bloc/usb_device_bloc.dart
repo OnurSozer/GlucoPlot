@@ -26,6 +26,10 @@ class UsbDeviceBloc extends Bloc<UsbDeviceEvent, UsbDeviceState> {
   /// Maximum number of readings to keep in history
   static const int _maxHistorySize = 50;
 
+  /// Cooldown after receiving a glucose reading to ignore duplicates
+  static const _readingCooldown = Duration(seconds: 5);
+  DateTime? _lastReadingTimestamp;
+
   UsbDeviceBloc({required UsbDeviceRepository repository})
       : _repository = repository,
         super(const UsbDeviceState()) {
@@ -116,6 +120,15 @@ class UsbDeviceBloc extends Bloc<UsbDeviceEvent, UsbDeviceState> {
     UsbGlucoseReadingReceived event,
     Emitter<UsbDeviceState> emit,
   ) {
+    // Ignore duplicate readings that arrive within the cooldown window
+    final now = DateTime.now();
+    if (_lastReadingTimestamp != null &&
+        now.difference(_lastReadingTimestamp!) < _readingCooldown) {
+      print('[UsbBloc] Ignoring duplicate glucose reading (cooldown active)');
+      return;
+    }
+    _lastReadingTimestamp = now;
+
     // Add new reading to history (most recent first)
     final newHistory = [event.reading, ...state.readingHistory];
 
@@ -173,6 +186,9 @@ class UsbDeviceBloc extends Bloc<UsbDeviceEvent, UsbDeviceState> {
     UsbMeasurementStartedReceived event,
     Emitter<UsbDeviceState> emit,
   ) {
+    // Ignore duplicate measurement-started signals from the device
+    if (state.isMeasuring) return;
+
     // Measurement in progress — stop watching for strip removal
     _deviceReadyTimeoutTimer?.cancel();
     emit(state.copyWith(isMeasuring: true));

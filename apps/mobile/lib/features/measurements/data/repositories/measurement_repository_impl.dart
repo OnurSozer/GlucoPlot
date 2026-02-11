@@ -11,35 +11,53 @@ class MeasurementRepositoryImpl implements MeasurementRepository {
 
   final MeasurementRemoteDataSource _remoteDataSource;
 
-  // Cache the patient ID to avoid repeated lookups
+  // Cache the patient ID to avoid repeated lookups.
+  // _cachedAuthUserId tracks which auth user the cache belongs to,
+  // so the cache auto-invalidates when a different user logs in.
   String? _cachedPatientId;
+  String? _cachedAuthUserId;
 
   Future<String?> _getCurrentPatientId() async {
-    // Return cached value if available
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session == null) {
+      _cachedPatientId = null;
+      _cachedAuthUserId = null;
+      return null;
+    }
+
+    final authUserId = session.user.id;
+
+    // Invalidate cache if the auth user changed (different login)
+    if (_cachedAuthUserId != null && _cachedAuthUserId != authUserId) {
+      _cachedPatientId = null;
+      _cachedAuthUserId = null;
+    }
+
+    // Return cached value if available for the current user
     if (_cachedPatientId != null) return _cachedPatientId;
 
-    final session = Supabase.instance.client.auth.currentSession;
-    if (session == null) return null;
+    String? patientId;
 
-    // Try to get from user metadata first
-    final metadata = session.user.userMetadata;
-    var patientId = metadata?['patient_id'] as String?;
+    // Prefer DB lookup by auth_user_id — this is always up-to-date even if
+    // the patient was deleted and recreated (new UUID, same auth link).
+    final result = await Supabase.instance.client
+        .from('patients')
+        .select('id')
+        .eq('auth_user_id', authUserId)
+        .maybeSingle();
 
-    // If not in metadata, look up from patients table by auth_user_id
+    if (result != null) {
+      patientId = result['id'] as String?;
+    }
+
+    // Fall back to user metadata if DB lookup fails (e.g. RLS restrictions)
     if (patientId == null) {
-      final authUserId = session.user.id;
-      final result = await Supabase.instance.client
-          .from('patients')
-          .select('id')
-          .eq('auth_user_id', authUserId)
-          .maybeSingle();
-
-      if (result != null) {
-        patientId = result['id'] as String?;
-      }
+      final metadata = session.user.userMetadata;
+      patientId = metadata?['patient_id'] as String?;
     }
 
     _cachedPatientId = patientId;
+    _cachedAuthUserId = authUserId;
     return patientId;
   }
 
