@@ -41,7 +41,11 @@
   "chart": {
     "loading": "Loading chart...",
     "noData": "No measurement data available",
-    "noDataDesc": "Measurements will appear here once recorded"
+    "noDataDesc": "Measurements will appear here once recorded",
+    "rangeDaily": "Daily",
+    "rangeWeekly": "Weekly",
+    "rangeMonthly": "Monthly",
+    "rangeAll": "All"
   },
   "measurementTypes": {
     "glucose": "Glucose",

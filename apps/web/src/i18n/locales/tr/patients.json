@@ -41,7 +41,11 @@
   "chart": {
     "loading": "Grafik yükleniyor...",
     "noData": "Ölçüm verisi yok",
-    "noDataDesc": "Ölçümler kaydedildiğinde burada görünecek"
+    "noDataDesc": "Ölçümler kaydedildiğinde burada görünecek",
+    "rangeDaily": "Günlük",
+    "rangeWeekly": "Haftalık",
+    "rangeMonthly": "Aylık",
+    "rangeAll": "Tümü"
   },
   "measurementTypes": {
     "glucose": "Glukoz",

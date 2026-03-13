@@ -3,8 +3,9 @@
  * For glucose measurements, shows separate lines for fasting/post_meal/other
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { format } from 'date-fns';
 import {
     XAxis,
     YAxis,
@@ -17,6 +18,15 @@ import {
 import { measurementsService } from '../../services/measurements.service';
 import { formatDate, getMeasurementColor } from '../../utils/format';
 import type { MeasurementType, Measurement, MealTiming } from '../../types/database.types';
+
+type RangeMode = 'daily' | 'weekly' | 'monthly' | 'all';
+
+const RANGE_DAYS: Record<RangeMode, number> = {
+    daily: 1,
+    weekly: 7,
+    monthly: 30,
+    all: 3650,
+};
 
 interface MeasurementChartProps {
     patientId: string;
@@ -47,6 +57,102 @@ const MEAL_TIMING_COLORS: Record<MealTiming, string> = {
     other: '#6B7280',
 };
 
+/**
+ * Generate evenly-spaced tick timestamps based on range mode.
+ * For 'all' mode, ticks are derived from the actual data range.
+ */
+function generateTicks(rangeMode: RangeMode, dataPoints?: { timestamp: number }[]): number[] {
+    const now = new Date();
+    const ticks: number[] = [];
+
+    if (rangeMode === 'daily') {
+        // One tick per hour for the last 24 hours
+        const start = new Date(now);
+        start.setMinutes(0, 0, 0);
+        start.setHours(start.getHours() - 23);
+        for (let i = 0; i < 24; i++) {
+            const tick = new Date(start);
+            tick.setHours(start.getHours() + i);
+            ticks.push(tick.getTime());
+        }
+    } else if (rangeMode === 'weekly') {
+        // One tick every 6 hours for the last 7 days
+        const start = new Date(now);
+        start.setMinutes(0, 0, 0);
+        start.setHours(Math.floor(start.getHours() / 6) * 6);
+        start.setDate(start.getDate() - 7);
+        const end = now.getTime();
+        const cursor = new Date(start);
+        while (cursor.getTime() <= end) {
+            ticks.push(cursor.getTime());
+            cursor.setHours(cursor.getHours() + 6);
+        }
+    } else if (rangeMode === 'monthly') {
+        // Monthly: ticks at 09:00 and 21:00 each day for last 30 days
+        const start = new Date(now);
+        start.setHours(0, 0, 0, 0);
+        start.setDate(start.getDate() - 29);
+        for (let d = 0; d < 30; d++) {
+            const day = new Date(start);
+            day.setDate(start.getDate() + d);
+            day.setHours(9, 0, 0, 0);
+            ticks.push(day.getTime());
+            day.setHours(21, 0, 0, 0);
+            ticks.push(day.getTime());
+        }
+    } else {
+        // All: one tick per week from earliest data point to now
+        if (!dataPoints || dataPoints.length === 0) return ticks;
+        const minTs = dataPoints[0].timestamp;
+        const maxTs = dataPoints[dataPoints.length - 1].timestamp;
+        const rangeMs = maxTs - minTs;
+        const ONE_DAY = 86400000;
+
+        // Pick interval based on data span
+        let intervalMs: number;
+        if (rangeMs <= 7 * ONE_DAY) {
+            intervalMs = 6 * 3600000; // 6 hours
+        } else if (rangeMs <= 60 * ONE_DAY) {
+            intervalMs = 7 * ONE_DAY; // 1 week
+        } else {
+            intervalMs = 30 * ONE_DAY; // ~1 month
+        }
+
+        const start = new Date(minTs);
+        start.setHours(0, 0, 0, 0);
+        let cursor = start.getTime();
+        while (cursor <= maxTs + intervalMs) {
+            ticks.push(cursor);
+            cursor += intervalMs;
+        }
+    }
+
+    return ticks;
+}
+
+/**
+ * Format a tick timestamp for the X-axis label based on range mode.
+ */
+function formatTick(timestamp: number, rangeMode: RangeMode): string {
+    const date = new Date(timestamp);
+
+    if (rangeMode === 'daily') {
+        return format(date, 'HH:mm');
+    } else if (rangeMode === 'weekly') {
+        return format(date, 'EEE HH:mm');
+    } else if (rangeMode === 'monthly') {
+        // Monthly: show date at 09:00, time at 21:00
+        const hours = date.getHours();
+        if (hours === 9) {
+            return format(date, 'd MMM');
+        }
+        return format(date, 'HH:mm');
+    } else {
+        // All: show date
+        return format(date, 'd MMM yy');
+    }
+}
+
 export function MeasurementChart({ patientId, type, days = 14 }: MeasurementChartProps) {
     const { t } = useTranslation('patients');
     const [data, setData] = useState<ChartDataPoint[]>([]);
@@ -54,6 +160,7 @@ export function MeasurementChart({ patientId, type, days = 14 }: MeasurementChar
     const [isLoading, setIsLoading] = useState(true);
     const [stats, setStats] = useState<{ min: number; max: number; avg: number } | null>(null);
     const [glucoseStats, setGlucoseStats] = useState<Record<MealTiming | 'all', { min: number; max: number; avg: number; count: number } | null> | null>(null);
+    const [rangeMode, setRangeMode] = useState<RangeMode>('all');
 
     // Visibility state for glucose meal timing lines (default: show fasting and post_meal)
     const [visibleTimings, setVisibleTimings] = useState<Set<MealTiming>>(
@@ -61,6 +168,15 @@ export function MeasurementChart({ patientId, type, days = 14 }: MeasurementChar
     );
 
     const isGlucoseChart = type === 'glucose';
+
+    // Derive days from rangeMode for glucose charts; use prop for others
+    const effectiveDays = isGlucoseChart ? RANGE_DAYS[rangeMode] : days;
+
+    // Pre-compute ticks for glucose chart
+    const glucoseTicks = useMemo(
+        () => (isGlucoseChart ? generateTicks(rangeMode, glucoseData) : []),
+        [rangeMode, isGlucoseChart, glucoseData]
+    );
 
     useEffect(() => {
         const abortController = new AbortController();
@@ -71,7 +187,7 @@ export function MeasurementChart({ patientId, type, days = 14 }: MeasurementChar
 
                 if (isGlucoseChart) {
                     // Load glucose data with meal timing
-                    const result = await measurementsService.getGlucoseChartData(patientId, days);
+                    const result = await measurementsService.getGlucoseChartData(patientId, effectiveDays);
 
                     if (abortController.signal.aborted) return;
 
@@ -107,7 +223,7 @@ export function MeasurementChart({ patientId, type, days = 14 }: MeasurementChar
                     const { data: measurements, stats: measurementStats } = await measurementsService.getMeasurementStats(
                         patientId,
                         type,
-                        days
+                        effectiveDays
                     );
 
                     if (abortController.signal.aborted) return;
@@ -144,7 +260,7 @@ export function MeasurementChart({ patientId, type, days = 14 }: MeasurementChar
         return () => {
             abortController.abort();
         };
-    }, [patientId, type, days, isGlucoseChart]);
+    }, [patientId, type, effectiveDays, isGlucoseChart]);
 
     const toggleTiming = (timing: MealTiming) => {
         setVisibleTimings(prev => {
@@ -162,28 +278,73 @@ export function MeasurementChart({ patientId, type, days = 14 }: MeasurementChar
     const chartData = isGlucoseChart ? glucoseData : data;
     const hasData = chartData.length > 0;
 
+    const rangeSelectorUI = isGlucoseChart ? (
+        <div className="flex items-center rounded-lg border border-gray-200 overflow-hidden mb-4">
+            {(['daily', 'weekly', 'monthly', 'all'] as RangeMode[]).map((mode) => (
+                <button
+                    key={mode}
+                    onClick={() => setRangeMode(mode)}
+                    className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+                        rangeMode === mode
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-white text-gray-600 hover:bg-gray-50'
+                    }`}
+                >
+                    {t(`chart.range${mode.charAt(0).toUpperCase() + mode.slice(1)}` as 'chart.rangeDaily' | 'chart.rangeWeekly' | 'chart.rangeMonthly' | 'chart.rangeAll')}
+                </button>
+            ))}
+        </div>
+    ) : null;
+
     if (isLoading) {
         return (
-            <div className="h-64 bg-gray-50 rounded-xl animate-pulse flex items-center justify-center">
-                <p className="text-gray-400">{t('chart.loading')}</p>
+            <div>
+                {rangeSelectorUI}
+                <div className="h-64 bg-gray-50 rounded-xl animate-pulse flex items-center justify-center">
+                    <p className="text-gray-400">{t('chart.loading')}</p>
+                </div>
             </div>
         );
     }
 
     if (!hasData) {
         return (
-            <div className="h-64 bg-gray-50 rounded-xl flex flex-col items-center justify-center">
-                <p className="text-gray-500">{t('chart.noData')}</p>
-                <p className="text-sm text-gray-400 mt-1">{t('chart.noDataDesc')}</p>
+            <div>
+                {rangeSelectorUI}
+                <div className="h-64 bg-gray-50 rounded-xl flex flex-col items-center justify-center">
+                    <p className="text-gray-500">{t('chart.noData')}</p>
+                    <p className="text-sm text-gray-400 mt-1">{t('chart.noDataDesc')}</p>
+                </div>
             </div>
         );
     }
 
     return (
         <div>
-            {/* Meal Timing Toggles (glucose only) */}
+            {/* Range Mode Selector & Meal Timing Toggles (glucose only) */}
             {isGlucoseChart && (
                 <div className="flex flex-wrap items-center gap-4 mb-4">
+                    {/* Range Mode Buttons */}
+                    <div className="flex items-center rounded-lg border border-gray-200 overflow-hidden">
+                        {(['daily', 'weekly', 'monthly', 'all'] as RangeMode[]).map((mode) => (
+                            <button
+                                key={mode}
+                                onClick={() => setRangeMode(mode)}
+                                className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+                                    rangeMode === mode
+                                        ? 'bg-blue-500 text-white'
+                                        : 'bg-white text-gray-600 hover:bg-gray-50'
+                                }`}
+                            >
+                                {t(`chart.range${mode.charAt(0).toUpperCase() + mode.slice(1)}` as 'chart.rangeDaily' | 'chart.rangeWeekly' | 'chart.rangeMonthly' | 'chart.rangeAll')}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Divider */}
+                    <div className="w-px h-6 bg-gray-200" />
+
+                    {/* Meal Timing Toggles */}
                     {(Object.keys(MEAL_TIMING_COLORS) as MealTiming[]).map((timing) => {
                         const color = MEAL_TIMING_COLORS[timing];
                         const isVisible = visibleTimings.has(timing);
@@ -287,18 +448,29 @@ export function MeasurementChart({ patientId, type, days = 14 }: MeasurementChar
                             )}
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
-                        <XAxis
-                            dataKey="date"
-                            tick={{ fontSize: isGlucoseChart ? 11 : 12, fill: '#6B7280' }}
-                            tickLine={false}
-                            axisLine={{ stroke: '#E5E7EB' }}
-                            {...(isGlucoseChart ? {
-                                interval: 'preserveStartEnd',
-                                angle: -45,
-                                textAnchor: 'end',
-                                height: 60,
-                            } : {})}
-                        />
+                        {isGlucoseChart ? (
+                            <XAxis
+                                dataKey="timestamp"
+                                type="number"
+                                domain={['dataMin', 'dataMax']}
+                                ticks={glucoseTicks}
+                                tickFormatter={(ts: number) => formatTick(ts, rangeMode)}
+                                tick={{ fontSize: 10, fill: '#6B7280' }}
+                                tickLine={false}
+                                axisLine={{ stroke: '#E5E7EB' }}
+                                angle={-45}
+                                textAnchor="end"
+                                height={60}
+                                interval={rangeMode === 'monthly' || rangeMode === 'all' ? 1 : 0}
+                            />
+                        ) : (
+                            <XAxis
+                                dataKey="date"
+                                tick={{ fontSize: 12, fill: '#6B7280' }}
+                                tickLine={false}
+                                axisLine={{ stroke: '#E5E7EB' }}
+                            />
+                        )}
                         <YAxis
                             tick={{ fontSize: 12, fill: '#6B7280' }}
                             tickLine={false}
